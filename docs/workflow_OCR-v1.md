@@ -1,4 +1,8 @@
-# Whiteboard OCR Content
+# Flowchart of the SOMAteM pipeline 
+Sketched on whiteboard on 2025-05-13: Inputs from Todd Treangen
+OCR by Claude on 2025-05-30
+
+_Needs to be fixed by looking at the flowchart image_
 
 ## Initial Setup and Data Processing
 
