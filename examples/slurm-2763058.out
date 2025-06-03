@@ -1,0 +1,82 @@
+
+ N E X T F L O W   ~  version 25.04.2
+
+Launching `/path/to/SOMAteM/workflows/somatem_prep.nf` [adoring_goldberg] DSL2 - revision: 5fc14ecaef
+
+WARN: `params.output_dir` is defined multiple times -- Assignments following the first are ignored
+[-        ] RawNanoPlot1 -
+[-        ] HostCleanup  -
+[-        ] Chopper      -
+[-        ] NanoPlot2    -
+
+executor >  local (1)
+[-        ] RawNanoPlot1         | 0 of 2
+[52/565a12] HostCleanup (B011_2) | 0 of 2
+[-        ] Chopper              -
+[-        ] NanoPlot2            -
+
+executor >  local (2)
+[3d/90f595] RawNanoPlot1 (46_1)  | 0 of 2
+[52/565a12] HostCleanup (B011_2) | 0 of 2
+[-        ] Chopper              -
+[-        ] NanoPlot2            -
+
+executor >  local (2)
+[3d/90f595] RawNanoPlot1 (46_1)  | 0 of 2
+[52/565a12] HostCleanup (B011_2) | 1 of 2
+[-        ] Chopper              | 0 of 1
+[-        ] NanoPlot2            -
+
+executor >  local (3)
+[3d/90f595] RawNanoPlot1 (46_1)  | 1 of 2
+[51/18fcdf] HostCleanup (46_1)   | 1 of 2
+[-        ] Chopper              | 0 of 1
+[-        ] NanoPlot2            -
+
+executor >  local (4)
+[fa/e66613] RawNanoPlot1 (B011_2) | 1 of 2
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[-        ] Chopper               | 0 of 2
+[-        ] NanoPlot2             -
+
+executor >  local (5)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[dc/9fc8a2] Chopper (B011_2)      | 0 of 2
+[-        ] NanoPlot2             -
+
+executor >  local (6)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[02/0b1ed3] Chopper (46_1)        | 1 of 2
+[-        ] NanoPlot2             | 0 of 1
+
+executor >  local (6)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[02/0b1ed3] Chopper (46_1)        | 1 of 2
+[-        ] NanoPlot2             | 0 of 1
+
+executor >  local (7)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[02/0b1ed3] Chopper (46_1)        | 2 of 2 ✔
+[fb/fe4e55] NanoPlot2 (B011_2)    | 0 of 2
+
+executor >  local (8)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[02/0b1ed3] Chopper (46_1)        | 2 of 2 ✔
+[fb/fe4e55] NanoPlot2 (B011_2)    | 1 of 2
+
+executor >  local (8)
+[fa/e66613] RawNanoPlot1 (B011_2) | 2 of 2 ✔
+[51/18fcdf] HostCleanup (46_1)    | 2 of 2 ✔
+[02/0b1ed3] Chopper (46_1)        | 2 of 2 ✔
+[b2/9c1e0d] NanoPlot2 (46_1)      | 2 of 2 ✔
+Completed at: 02-Jun-2025 20:54:38
+Duration    : 2m 12s
+CPU hours   : 2.3
+Succeeded   : 8
+
+
