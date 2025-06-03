@@ -16,7 +16,7 @@ params.host_index  = 'human-t2t-hla'
 params.output_dir = params.output_dir.replaceAll('/+$','')
 
 // -------------------------
-// Process: RawNanoPlot1 (fixed)
+// Process: RawNanoPlot1
 // -------------------------
 process RawNanoPlot1 {
     tag "${sample_id}"
@@ -48,7 +48,7 @@ process RawNanoPlot1 {
 }
 
 // -------------------------
-// Process: HostCleanup (unchanged)
+// Process: HostCleanup
 // -------------------------
 process HostCleanup {
     tag "${sample_id}"
@@ -63,7 +63,6 @@ process HostCleanup {
         - hostile
         - minimap2
     """
-
     publishDir path: "${params.output_dir}", mode: 'copy', pattern: "cleaned_${sample_id}/*"
 
     input:
@@ -94,7 +93,7 @@ process HostCleanup {
 }
 
 // -------------------------
-// Process: Chopper (unchanged)
+// Process: Chopper
 // -------------------------
 process Chopper {
     tag "${sample_id}"
@@ -131,7 +130,7 @@ process Chopper {
 }
 
 // -------------------------
-// Process: NanoPlot2 (example, also fixed if needed)
+// Process: NanoPlot2
 // -------------------------
 process NanoPlot2 {
     tag "${sample_id}"
@@ -170,7 +169,7 @@ workflow {
     fastq_ch = Channel
         .fromPath("${params.input_dir}/*.fastq")
         .map { file ->
-            def name = file.getName()                 // e.g. "45_2.fastq"
+            def name = file.getName()
             def sample_id = name.replaceFirst(/\.fastq$/,'')
             tuple(sample_id, file)
         }
@@ -181,7 +180,7 @@ workflow {
 
     chopper_input_ch = host_clean_ch
         .map { path ->
-            def fname = path.getName()                // e.g. "45_2.clean.fastq.gz"
+            def fname = path.getName()
             def sample_id = fname.replaceFirst(/\.clean\.fastq\.gz$/,'')
             tuple(sample_id, path)
         }
@@ -190,7 +189,7 @@ workflow {
 
     nanoplot2_input_ch = chopper_out_ch
         .map { path ->
-            def fname = path.getName()                // e.g. "45_2.chopd.fastq.gz"
+            def fname = path.getName()
             def sample_id = fname.replaceFirst(/\.chopd\.fastq\.gz$/,'')
             tuple(sample_id, path)
         }
