@@ -5,7 +5,7 @@ Original plan from flowchart sketched on whiteboard on 2025-05-13: Inputs from T
 
 
 ## TODO:
-- [ ] Add github links and citations for these tools
+- [x] Add github links and citations for these tools
 - [ ] List the LLM questions that will lead to each step
 - [ ] Check and link the pipelines for which nextflow DSL1 or DSL2 implementation exists + citations
 
@@ -40,18 +40,18 @@ _@Austin working on this_
 _@Austin working on this_
 
 **Reference guided**
-- meta-compass
-- magnet?
+- [meta-compass](https://github.com/marbl/MetaCompass)
+- [MAGNET](https://github.com/treangenlab/magnet)
 
 **De novo assembly**: _Note: uses a lot of RAM: 32 GB minimum_
 
-- Autocycler
-- Flye
-- Canu
+- [Autocycler](https://github.com/rrwick/AutoCycler)
+- [Flye](https://github.com/fenderglass/Flye)
+- [Canu](https://github.com/marbl/canu)
 
 
 ### Binning
-- parsnp
+- [parsnp](https://github.com/marbl/parsnp)
 
 **Contig based**
 
@@ -59,42 +59,43 @@ _@Austin working on this_
 **Assembly graph based**
 
 ## Pangenomic
-- tmhg-finder
+- [TMHG-Finder](https://github.com/treangenlab/tmhg-finder)
 
 
 ### SNP and SV Detection
 Includes gene duplication loss
 
-- Rheaa: Shines well when there's multiple samples (1:n samples)
+- [RHEA](https://github.com/treangenlab/rhea): Shines well when there's multiple samples (1:n samples)
 
 
 ### Metabolic reconstruction
-- Bakdrive: _Can take in Emu output_
-  - micom: _Best to use with bakdrive_
-- apollo
+- [Bakdrive](https://gitlab.com/treangenlab/bakdrive) / [recent version](https://github.com/treangenlab/bakdrive): _Can take in Emu output_
+  - [micom](https://github.com/micom-dev/micom): _Best to use with bakdrive_
+- [Apollo](https://genomearchitect.readthedocs.io/en/latest/): interactive sequence annotation editor; [citation](https://link.springer.com/article/10.1186/gb-2002-3-12-research0082). _Is this even relevant for a nextflow workflow?_
 
 
 ### Taxonomic classification/profiling
-- Emu
-- Lemur + Magnet
-- Sylph
-- Centrifuge
+- [Emu](https://github.com/treangenlab/emu)
+- [Lemur](https://github.com/treangenlab/lemur): For rapid and accurate taxonomic profiling on long-read metagenomic datasets
+  - [MAGNET](https://github.com/treangenlab/magnet)
+- [Sylph](https://github.com/treangenlab/sylph)
+- [Centrifuge](https://github.com/DaehwanKimLab/centrifuge)
 
 ### Functional annotation
-- Seqscreen : Funcsocs: _includes antibiotic resistance genes_
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Funcsocs: _includes antibiotic resistance genes_
 
-- EggnoG mapper
-- Humann (? / Not for long reads - Austin? - *eukaryotic; RAM intensive*; )
+- [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper)
+- [HUMAnN](https://github.com/biobakery/humann) (? / Not for long reads - Austin? - *eukaryotic; RAM intensive*; )
 
 ### Read Classification
 _How is this different from taxonomic classification?_
 
-- Seqscreen
-- centrifuge
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen)
+- [Centrifuge](https://github.com/DaehwanKimLab/centrifuge)
 
 ### Pathogen identification
-- Magnet
-- Seqscreen
+- [MAGNET](https://github.com/treangenlab/magnet)
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen)
 
 
 ### Final: Validation / QC
@@ -103,12 +104,10 @@ _Check how MetAMOS implements this says Todd_
 
 
 ### Report
-- FastQC - Can have it enhanced with LLM (_like seqera AI report does it_)
+- [FastQC](https://github.com/s-andrews/FastQC) - Can have it enhanced with LLM (_like seqera AI report does it_)
 _Check how MetAMOS report was made from scratch says Todd_ 
 
 
 ### Databases
-- bacterial: RefSeq
-- viral: ?  
-
-
+- bacterial: [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/)
+- viral: [NCBI Viral Genomes](https://www.ncbi.nlm.nih.gov/genome/viruses/)
