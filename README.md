@@ -78,10 +78,10 @@ We are currently developing nextflow scripts for commons long-read sequencing ta
 # activate conda env
 conda activate somatem_prep
 
-# to specify your own parameters within the CLI you can run something like this
-nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf --input_dir /path/to/SOMAteM/examples/data --output_dir /path/to/SOMAteM/examples/soma_prep_out --threads 12 --maxlength 30000 --minq 10 --minlen 250 --host_index 'human-t2t-hla'
+# test on our example data
+gzip -d examples/data/*.fastq.gz
 
-# or for simplicity one can use a premade config file
+# for simplicity one can use a premade config file
 nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf -c /path/to/SOMAteM/confs/somatem_prep.config
 ```
 
