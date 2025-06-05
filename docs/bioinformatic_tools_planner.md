@@ -30,10 +30,10 @@ Original plan from flowchart sketched on whiteboard on 2025-05-13: Inputs from T
 ### Quality control / preprocessing
 _@Austin working on this_
 
-- [NanoPlot](https://github.com/wdecoster/NanoPlot): QC plotting suite for long read sequencing data and alignments. _for QC on the raw files / final reads after filtering_
-- [hostile](https://github.com/bede/hostile): A tool for filtering reads that align to a host genome (_removes host contamination from microbial metagenomes_)
-- [chopper](https://github.com/wdecoster/chopper): A tool to filter nanopore sequencing reads by quality and length ; *Use to filter out low quality and short reads*
-- [filtlong](https://github.com/rrwick/Filtlong): Quality filtering tool for long reads by removing the worst read segments
+- [NanoPlot](https://github.com/wdecoster/NanoPlot): QC plotting suite for long read sequencing data and alignments. _for QC on the raw files / final reads after filtering_. [nf-core/module](https://github.com/nf-core/modules/tree/master/modules/nf-core/nanoplot) | [citation](https://academic.oup.com/bioinformatics/article/39/5/btad311/7160911?login=true)
+- [hostile](https://github.com/bede/hostile): A tool for filtering reads that align to a host genome (_removes host contamination from microbial metagenomes_). nf-core/modules: [hostile-clean](https://nf-co.re/modules/hostile_clean/); [hostile-fetch](https://nf-co.re/modules/hostile_fetch/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/hostile) | [citation](https://doi.org/10.1093/bioinformatics/btad728)
+- [chopper](https://github.com/wdecoster/chopper): A tool to filter nanopore sequencing reads by quality and length ; *Use to filter out low quality and short reads*. [nf-core/module](https://nf-co.re/modules/chopper/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/chopper) | [citation](https://doi.org/10.1093/bioinformatics/bty149)
+- [filtlong](https://github.com/rrwick/Filtlong): Quality filtering tool for long reads by removing the worst read segments [nf-core/module](https://nf-co.re/modules/filtlong/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/filtlong) | no citation
 
 
 ### Assembly
@@ -41,17 +41,17 @@ _@Austin working on this_
 
 **Reference guided**
 - [meta-compass](https://github.com/marbl/MetaCompass): A metagenomic reference-guided assembler that leverages multiple reference genomes
-- [MAGnet](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit
+- [MAGnet](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit. [citation](https://www.biorxiv.org/content/10.1101/2024.06.01.596961v2.full)
 
 **De novo assembly**: _Note: uses a lot of RAM: 32 GB minimum_
 
 - [Autocycler](https://github.com/rrwick/AutoCycler): Automated long read assembly pipeline combining multiple assemblers
-- [Flye](https://github.com/fenderglass/Flye): De novo assembler for single-molecule sequencing reads, such as those produced by PacBio and Oxford Nanopore
-- [Canu](https://github.com/marbl/canu): A fork of the Celera Assembler designed for high-noise single-molecule sequencing (PacBio, Oxford Nanopore)
+- [Flye](https://github.com/fenderglass/Flye): De novo assembler for single-molecule sequencing reads, such as those produced by PacBio and Oxford Nanopore. [nf-core/module](https://nf-co.re/modules/flye/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/flye) | [citation](https://doi.org/10.1038/s41592-020-00971-x)
+- [Canu](https://github.com/marbl/canu): A fork of the Celera Assembler designed for high-noise single-molecule sequencing (PacBio, Oxford Nanopore). [nf-core/module](https://nf-co.re/modules/canu/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/canu) | [citation](https://doi.org/10.1101/gr.215087.116)
 
 
 ### Binning
-- [parsnp](https://github.com/marbl/parsnp): A fast core-genome alignment and SNP detection tool for microbial genomes
+- [parsnp](https://github.com/marbl/parsnp): A fast core-genome alignment and SNP detection tool for microbial genomes. [citation](https://academic.oup.com/bioinformatics/article/40/5/btae311/7667868)  
 
 **Contig based**
 
@@ -59,43 +59,43 @@ _@Austin working on this_
 **Assembly graph based**
 
 ## Pangenomic
-- [TMHG-Finder](https://github.com/treangenlab/tmhg-finder): Tool for identifying and analyzing tandem mobile genetic elements
+- [TMHG-Finder](https://github.com/treangenlab/tmhg-finder): Tool for identifying and analyzing tandem mobile genetic elements. [citation](https://www.biorxiv.org/content/10.1101/2025.03.16.643543v1.full)
 
 
 ### SNP and SV Detection
 Includes gene duplication loss
 
-- [rhea](https://github.com/treangenlab/rhea): Rapid haplotype estimation for large cohorts of related or similar genomes (1:n samples)
+- [rhea](https://github.com/treangenlab/rhea): Rapid haplotype estimation for large cohorts of related or similar genomes (1:n samples). [citation](https://academic.oup.com/bioinformatics/article/40/Supplement_1/i58/7700881): _Kristen et al., Bioinformatics, 2024_
 
 
 ### Metabolic reconstruction
-- [Bakdrive](https://gitlab.com/treangenlab/bakdrive) / [recent version](https://github.com/treangenlab/bakdrive): _Can take in Emu output_
-  - [micom](https://github.com/micom-dev/micom): _Best to use with bakdrive_
+- [Bakdrive](https://gitlab.com/treangenlab/bakdrive) / [recent/private version](https://github.com/treangenlab/bakdrive): _Can take in Emu output_. [citation](https://academic.oup.com/bioinformatics/article/39/Supplement_1/i47/7210449): _Wang et al., Bioinformatics, 2023_
+  - [micom](https://github.com/micom-dev/micom): _Best to use with bakdrive_. [citation](https://journals.asm.org/doi/10.1128/msystems.00606-19): _Diener et al., mSystems, 2020_
 - [Apollo](https://genomearchitect.readthedocs.io/en/latest/): interactive sequence annotation editor; [citation](https://link.springer.com/article/10.1186/gb-2002-3-12-research0082). _Is this even relevant for a nextflow workflow?_
 
 
 ### Taxonomic classification/profiling
-- [Emu](https://github.com/treangenlab/emu): Taxonomic classification of metagenomic reads from complex microbial communities
-- [Lemur](https://github.com/treangenlab/lemur): For rapid and accurate taxonomic profiling on long-read metagenomic datasets
-  - [MAGNET](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit
-- [Sylph](https://github.com/treangenlab/sylph): A tool for rapid and accurate taxonomic profiling of metagenomic data
-- [Centrifuge](https://github.com/DaehwanKimLab/centrifuge): A rapid and memory-efficient classification system for metagenomic sequences
+- [Emu](https://github.com/treangenlab/emu): Taxonomic classification, and abundance estimation of 16S rRNA reads for long-read data. Nextflow DSL2 implementation: [gms-16s](https://github.com/genomic-medicine-sweden/gms_16S) | [citation](https://www.nature.com/articles/s41592-022-01520-4)
+- [Lemur](https://github.com/treangenlab/lemur): For rapid and accurate taxonomic profiling on long-read metagenomic datasets. [citation](https://www.biorxiv.org/content/10.1101/2024.06.01.596961v2.full)
+  - [MAGnet](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit. _same citation as Lemur_
+- [Sylph](https://github.com/bluenote-1577/sylph): A tool for rapid and accurate taxonomic profiling of metagenomic data. [citation](https://www.nature.com/articles/s41587-024-02412-y): _Shaw et al., Nature Biotechnology, 2024_ | [documentation](https://sylph-docs.github.io/)
+- [Centrifuge](https://github.com/DaehwanKimLab/centrifuge): A rapid and memory-efficient classification system for metagenomic sequences. [nf-core/module](https://nf-co.re/modules/centrifuge_centrifuge/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/centrifuge) | [citation](https://doi.org/10.1101/gr.210641.116)
 
 ### Functional annotation
 - [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data
   - _includes antibiotic resistance genes_
 
-- [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper): Fast functional annotation of novel sequences using orthology assignments
+- [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper): Fast functional annotation of novel sequences using orthology assignments [nf-core/module](https://nf-co.re/modules/eggnogmapper/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/eggnogmapper) | [citation](https://doi.org/10.1093/molbev/msab293)
 - [HUMAnN](https://github.com/biobakery/humann): HMP Unified Metabolic Analysis Network - profiling microbial community metabolic potential (? / Not for long reads - Austin? - *eukaryotic; RAM intensive*; )
 
 ### Read Classification
 _How is this different from taxonomic classification?_
 
-- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data. [citation](https://link.springer.com/article/10.1186/s13059-022-02695-x): _Balaji et al., Genome Biology, 2022_
 - [Centrifuge](https://github.com/DaehwanKimLab/centrifuge): A rapid and memory-efficient classification system for metagenomic sequences
 
 ### Pathogen identification
-- [MAGNET](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit
+- [MAGnet](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit
 - [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data
 
 
@@ -105,7 +105,7 @@ _Check how MetAMOS implements this says Todd_
 
 
 ### Report
-- [FastQC](https://github.com/s-andrews/FastQC): A quality control tool for high throughput sequence data - Can have it enhanced with LLM (_like seqera AI report does it_)
+- [FastQC](https://github.com/s-andrews/FastQC): A quality control tool for high throughput sequence data - Can have it enhanced with LLM (_like seqera AI report does it_). [nf-core/module](https://nf-co.re/modules/fastqc/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc) | [documentation](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 _Check how MetAMOS report was made from scratch says Todd_ 
 
 
