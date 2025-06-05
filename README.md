@@ -3,6 +3,69 @@ LLM accessible long-read metagenomics pipeline with best practices
 ## Outline
 [Plannning tools](https://github.com/treangenlab/SOMAteM/#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
 
+## Installation
+
+To run the workflows you will need to clone the github and make conda environments for each of the workflows (and a couple extra finnicky cases.)
+
+For the `somatem_prep.nf` workflow, the install is as follows
+```
+# have a working conda install (module load conda or download sh file)
+
+# clone this branch of the repo and move to dir 
+git clone https://github.com/treangenlab/SOMAteM -b agm && cd SOMAteM
+
+# create the conda env with all the tools
+conda env create -n somatem_prep -f envs/somatem_prep.yml
+
+# activate the conda env
+conda activate somatem_prep
+
+# and you should be good to run!
+```
+
+### this one is still in progress, just wanted to make an update
+
+For the `somatem_mags.nf` workflow, the install is a little trickier...
+Make sure not to change the name of the repos or else you will need to alter the nextflow code to find the dependency (I believe)
+```
+# assuming you already have conda installed and git repo cloned
+
+# go to SOMAteM repo
+cd SOMAteM 
+
+# install the bulk of the dependencies (may want to do this in screen / tmux terminal)
+conda env create -n somatem_mags -f envs/somatem_mags.yml
+
+# now create a couple extra conda envs for the tough guys
+conda create -n checkm2 -y -c bioconda checkm2
+
+conda create -n rosella -y -c bioconda rosella
+
+conda create -n coverm -y -c bioconda coverm
+
+```
+
+For the `somatem_mags.nf` workflow there are also some databases you must download before use including the checkm2 and gtdbtk databases
+
+GTDB-Tk v2.4.1 requires ~140G of external data which needs to be downloaded and extracted. This can be done automatically, or manually.
+```
+# Automatic:
+# Run the command "download-db.sh" to automatically download and extract to:
+/path/to/miniforge3/envs/singlem/share/gtdbtk-2.4.1/db/
+
+# Manual:
+# Manually download the latest reference data:
+wget https://data.ace.uq.edu.au/public/gtdb/data/releases/release226/226.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz
+
+# Extract the archive to a target directory:
+tar -xvzf gtdbtk_r226_data.tar.gz -C "/path/to/target/db" --strip 1 › /dev/null
+rm gtdbtk_r226_data.tar.gz
+
+# Set the GTDBTK DATA PATH environment variable by running:
+conda env config vars set GTDBTK DATA PATH="/path/to/target/db"
+```
+
+
 
 ## Usage thus far
 
@@ -18,7 +81,13 @@ nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf --input_dir /path/to/SOM
 # or for simplicity one can use a premade config file
 nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf -c /path/to/SOMAteM/confs/somatem_prep.config
 ```
-*more to come soon!!!*
+
+`somatem_mags.nf`
+this is a much longer and more complicated script but is the *bees knees* in terms of MAG construction from long-reads
+```
+# coming soon
+```
+
 
 # Plannning tools
 _We will make a wiki to document the planning tools to be included in the pipeline ([flowchart](../docs/SOMAteM-sketch-v1.2.jpg)). This can be moved to the [wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages#cloning-wikis-to-your-computer) when it is created eventually._
