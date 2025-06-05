@@ -5,9 +5,9 @@ LLM accessible long-read metagenomics pipeline with best practices
 
 ## Installation
 
-To run the workflows you will need to clone the github and make conda environments for each of the workflows (and a couple extra finnicky cases.)
+To run the workflows you will need to clone the github and make conda environments for each of the workflows.
 
-For the `somatem_prep.nf` workflow, the install is as follows
+For the `somatem_prep.nf` workflow, the install is as follows:
 ```
 # have a working conda install (module load conda or download sh file)
 
@@ -23,10 +23,12 @@ conda activate somatem_prep
 # and you should be good to run!
 ```
 
-### this one is still in progress, just wanted to make an update
+### still in progress but wanted to update
 
 For the `somatem_mags.nf` workflow, the install is a little trickier...
-Make sure not to change the name of the repos or else you will need to alter the nextflow code to find the dependency (I believe)
+Make sure not to change the name of the repos or else you will need to alter the nextflow code to find the dependency (I believe).
+
+These take a long time to install on the classic conda solver so make sure you're using an up-to-date version of conda.
 ```
 # assuming you already have conda installed and git repo cloned
 
@@ -45,7 +47,7 @@ conda create -n coverm -y -c bioconda coverm
 
 ```
 
-For the `somatem_mags.nf` workflow there are also some databases you must download before use including the checkm2 and gtdbtk databases
+For the `somatem_mags.nf` workflow there are also some databases you must download before use including the [checkm2](https://github.com/chklovski/CheckM2) and [gtdbtk](https://gtdb.ecogenomic.org/) databases.
 
 GTDB-Tk v2.4.1 requires ~140G of external data which needs to be downloaded and extracted. This can be done automatically, or manually.
 ```
@@ -67,14 +69,15 @@ conda env config vars set GTDBTK DATA PATH="/path/to/target/db"
 
 
 
-## Usage thus far
+## Usage
 
 We are currently developing nextflow scripts for commons long-read sequencing tasks. The first of which is called `somatem_prep.nf` which will take in fastq files (found in examples/data) and run [NanoPlot](https://github.com/wdecoster/NanoPlot) on the raw files, then remove host contamination using [hostile](https://github.com/bede/hostile), followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), then one last __NanoPlot__ analysis to show the statistics of your final reads, ready for use in taxonomic classification and assembly pipelines _under active development_.
 
-### Usage:
-
 `somatem_prep.nf`
 ```
+# activate conda env
+conda activate somatem_prep
+
 # to specify your own parameters within the CLI you can run something like this
 nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf --input_dir /path/to/SOMAteM/examples/data --output_dir /path/to/SOMAteM/examples/soma_prep_out --threads 12 --maxlength 30000 --minq 10 --minlen 250 --host_index 'human-t2t-hla'
 
@@ -83,7 +86,7 @@ nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf -c /path/to/SOMAteM/conf
 ```
 
 `somatem_mags.nf`
-this is a much longer and more complicated script but is the *bees knees* in terms of MAG construction from long-reads
+this is a much longer and more complicated script but is the *bees knees* in terms of MAG construction from long-reads.
 ```
 # coming soon
 ```
