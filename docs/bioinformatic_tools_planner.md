@@ -1,5 +1,39 @@
 # Plannning tools
-_This is a temporary document to plan the tools to be included in the pipeline ([flowchart](../docs/SOMAteM-sketch-v1.2.jpg)). This should be moved to the [wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages#cloning-wikis-to-your-computer) when it is created eventually, for posterity._
+_This is a work in progress document to plan the tools to be included in the pipeline ([flowchart](../docs/SOMAteM-sketch-v1.2.jpg)). This should be moved to the [wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages#cloning-wikis-to-your-computer) when it is finalized, for posterity. A shorter summary of the tools and what they do will be in the readme_
+
+## Summary Table
+
+| Category | Tool | Nextflow Implementation |
+|----------|------|-------------------------|
+| **Quality Control** | [NanoPlot](https://github.com/wdecoster/NanoPlot) | [nf-core/nanoplot](https://github.com/nf-core/modules/tree/master/modules/nf-core/nanoplot) |
+| | [hostile](https://github.com/bede/hostile) | [nf-core/hostile](https://github.com/nf-core/modules/tree/master/modules/nf-core/hostile) |
+| | [chopper](https://github.com/wdecoster/chopper) | [nf-core/chopper](https://github.com/nf-core/modules/tree/master/modules/nf-core/chopper) |
+| | [filtlong](https://github.com/rrwick/Filtlong) | [nf-core/filtlong](https://github.com/nf-core/modules/tree/master/modules/nf-core/filtlong) |
+| **Assembly** | [MetaCompass](https://github.com/marbl/MetaCompass) | - |
+|*@Austin* | [MAGnet](https://github.com/treangenlab/magnet) | - |
+| | [AutoCycler](https://github.com/rrwick/AutoCycler) | - |
+| | [Flye](https://github.com/fenderglass/Flye) | [nf-core/flye](https://github.com/nf-core/modules/tree/master/modules/nf-core/flye) |
+| | [Canu](https://github.com/marbl/canu) | [nf-core/canu](https://github.com/nf-core/modules/tree/master/modules/nf-core/canu) |
+| **Binning** | [parsnp](https://github.com/marbl/parsnp) | - |
+| **Pangenomics** | [TMHG-Finder](https://github.com/treangenlab/tmhg-finder) | - |
+| **SNP/SV Detection** | [rhea](https://github.com/treangenlab/rhea) | - |
+| **Metabolic Reconstruction** | [Bakdrive](https://gitlab.com/treangenlab/bakdrive) | - |
+| | [micom](https://github.com/micom-dev/micom) | - |
+| | [Apollo](https://genomearchitect.readthedocs.io/) | - |
+| **Taxonomic Classification** | [Emu](https://github.com/treangenlab/emu) | [gms-16s](https://github.com/genomic-medicine-sweden/gms_16S) |
+| | [Lemur](https://github.com/treangenlab/lemur) | - |
+| | [Sylph](https://github.com/bluenote-1577/sylph) | - |
+| | [Centrifuge](https://github.com/DaehwanKimLab/centrifuge) | [nf-core/centrifuge](https://github.com/nf-core/modules/tree/master/modules/nf-core/centrifuge) |
+| **Functional Annotation** | [SeqScreen](https://gitlab.com/treangenlab/seqscreen) | - |
+| | [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper) | [nf-core/eggnogmapper](https://github.com/nf-core/modules/tree/master/modules/nf-core/eggnogmapper) |
+| | [HUMAnN](https://github.com/biobakery/humann) | - |
+| **Validation/QC** | [FastQC](https://github.com/s-andrews/FastQC) | [nf-core/fastqc](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc) |
+
+Total number of unique tools: 24
+
+---
+
+*Table summarizes all the tools listed below; tools are grouped by category and ordered by priority. Tools with available nextflow implementations are linked above. Tools are listed in order of priority within each category.*
 
 Original plan from flowchart sketched on whiteboard on 2025-05-13: Inputs from Todd Treangen
 
@@ -8,7 +42,6 @@ Original plan from flowchart sketched on whiteboard on 2025-05-13: Inputs from T
 - [x] Add github links and citations for these tools
 - [ ] List the LLM questions that will lead to each step
 - [ ] Check and link the pipelines for which nextflow DSL1 or DSL2 implementation exists + citations
-
 
 
 ## Major decision points
