@@ -1,0 +1,6 @@
+name: nf_base_env
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - nextflow >= 22.10
