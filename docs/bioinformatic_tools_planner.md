@@ -16,21 +16,22 @@ _This is a work in progress document to plan the tools to be included in the pip
 | **Binning**                  | ?                                                                                                   | -                                                                                                   |
 | **Pangenomics**              | [tMHG-Finder](https://github.com/yongze-yin/tMHG-Finder)                                            | -                                                                                                   |
 |                              | [parsnp](https://github.com/marbl/parsnp)<br>                                                       |                                                                                                     |
-| **SNP/SV Detection**         | [rhea](https://github.com/treangenlab/rhea)                                                         | -                                                                                                   |
-| **Metabolic Reconstruction** | [Bakdrive](https://gitlab.com/treangenlab/bakdrive)                                                 | -                                                                                                   |
-|                              | [micom](https://github.com/micom-dev/micom)                                                         | -                                                                                                   |
-|                              | [Apollo](https://genomearchitect.readthedocs.io/)                                                   | -                                                                                                   |
-| **Taxonomic Classification** | [Emu](https://github.com/treangenlab/emu)                                                           | [gms-16s](https://github.com/genomic-medicine-sweden/gms_16S)                                       |
+| **SNP/SV Detection**         | [rhea](https://github.com/treangenlab/rhea) (SV, timecourse)                                        | -                                                                                                   |
+| **Taxonomic Profiling**      | [Emu](https://github.com/treangenlab/emu)                                                           | [gms-16s](https://github.com/genomic-medicine-sweden/gms_16S)                                       |
 |                              | [Lemur](https://github.com/treangenlab/lemur) + [MAGnet](https://github.com/treangenlab/magnet)<br> | -                                                                                                   |
 |                              | [Sylph](https://github.com/bluenote-1577/sylph)                                                     | -                                                                                                   |
 |                              | [Centrifuge](https://github.com/DaehwanKimLab/centrifuge)                                           | [nf-core/centrifuge](https://github.com/nf-core/modules/tree/master/modules/nf-core/centrifuge)     |
-| **Functional Annotation**    | [SeqScreen](https://gitlab.com/treangenlab/seqscreen)                                               | -                                                                                                   |
+|                              | [Centrifuger](https://github.com/mourisl/centrifuger)                                               | -                                                                                                   |
+| **Functional Annotation**    | [SeqScreen](https://gitlab.com/treangenlab/seqscreen)                                               | [DSL1 to 2](https://gitlab.com/treangenlab/seqscreen/-/tree/to-dsl2?ref_type=heads)                 |
 |                              | [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper)                                          | [nf-core/eggnogmapper](https://github.com/nf-core/modules/tree/master/modules/nf-core/eggnogmapper) |
-|                              | [HUMAnN](https://github.com/biobakery/humann)                                                       | -                                                                                                   |
+|                              | [HUMAnN](https://github.com/biobakery/humann)?                                                      | -                                                                                                   |
+| **Metabolic Reconstruction** | [Bakdrive](https://gitlab.com/treangenlab/bakdrive)                                                 | -                                                                                                   |
+|                              | [micom](https://github.com/micom-dev/micom)                                                         | -                                                                                                   |
+|                              | [Apollo](https://genomearchitect.readthedocs.io/)                                                   | -                                                                                                   |
 | **Validation/QC**            | [FastQC](https://github.com/s-andrews/FastQC)                                                       | [nf-core/fastqc](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc)             |
 
-
 Total number of unique tools: 24
+Number with nextflow implmentations: 12/24
 
 ---
 
@@ -99,39 +100,37 @@ _@Austin working on this_
 ### SNP and SV Detection
 Includes gene duplication loss
 
-- [rhea](https://github.com/treangenlab/rhea): Rapid haplotype estimation for large cohorts of related or similar genomes (1:n samples). [citation](https://academic.oup.com/bioinformatics/article/40/Supplement_1/i58/7700881): _Kristen et al., Bioinformatics, 2024_
-
-
-### Metabolic reconstruction
-- [Bakdrive](https://gitlab.com/treangenlab/bakdrive) / [recent/private version](https://github.com/treangenlab/bakdrive): _Can take in Emu output_. [citation](https://academic.oup.com/bioinformatics/article/39/Supplement_1/i47/7210449): _Wang et al., Bioinformatics, 2023_
-  - [micom](https://github.com/micom-dev/micom): _Best to use with bakdrive_. [citation](https://journals.asm.org/doi/10.1128/msystems.00606-19): _Diener et al., mSystems, 2020_
-- [Apollo](https://genomearchitect.readthedocs.io/en/latest/): interactive sequence annotation editor; [citation](https://link.springer.com/article/10.1186/gb-2002-3-12-research0082). _Is this even relevant for a nextflow workflow?_
-
+- [rhea](https://github.com/treangenlab/rhea): Detects structural variants (SV, >10 bp indels) and HGT between temporally evolving microbial metagenomic samples for large cohorts of related or similar genomes (1:n samples). [citation](https://academic.oup.com/bioinformatics/article/40/Supplement_1/i58/7700881): _Kristen et al., Bioinformatics, 2024_
 
 ### Taxonomic classification/profiling
 - [Emu](https://github.com/treangenlab/emu): Taxonomic classification, and abundance estimation of 16S rRNA reads for long-read data. Nextflow DSL2 implementation: [gms-16s](https://github.com/genomic-medicine-sweden/gms_16S) + [gms-16S citation](https://link.springer.com/article/10.1007/s10096-025-05158-w) | [citation](https://www.nature.com/articles/s41592-022-01520-4)
 - [Lemur](https://github.com/treangenlab/lemur): For rapid and accurate taxonomic profiling on long-read metagenomic datasets. [citation](https://www.biorxiv.org/content/10.1101/2024.06.01.596961v2.full)
 	- [MAGnet](https://github.com/treangenlab/magnet): Refines taxonomic profiles for accuracy using reference genome mapping from all the reads. _same citation as Lemur_: [citation](https://www.biorxiv.org/content/10.1101/2024.06.01.596961v2.full)
-- [Sylph](https://github.com/bluenote-1577/sylph): A tool for rapid and accurate taxonomic profiling of metagenomic data. [citation](https://www.nature.com/articles/s41587-024-02412-y): _Shaw et al., Nature Biotechnology, 2024_ | [documentation](https://sylph-docs.github.io/)
+- [Sylph](https://github.com/bluenote-1577/sylph): A tool for rapid and accurate species level taxonomic profiling of metagenomic data using k-mer sketches. [citation](https://www.nature.com/articles/s41587-024-02412-y): _Shaw et al., Nature Biotechnology, 2024_ | [documentation](https://sylph-docs.github.io/)
 - [Centrifuge](https://github.com/DaehwanKimLab/centrifuge): A rapid and memory-efficient classification system for metagenomic sequences. [nf-core/module](https://nf-co.re/modules/centrifuge_centrifuge/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/centrifuge) | [citation](https://doi.org/10.1101/gr.210641.116)
+	- [Centrifuger](https://github.com/mourisl/centrifuger) might be better for large databases due to compression? | [citation](https://link.springer.com/article/10.1186/s13059-024-03244-4)
 
 ### Functional annotation
-- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data
-  - _includes antibiotic resistance genes_
-
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data.
+[nextflow: DSL1 to 2 transition](https://gitlab.com/treangenlab/seqscreen/-/tree/to-dsl2?ref_type=heads) | [citation](https://link.springer.com/article/10.1186/s13059-022-02695-x): _Balaji et al., Genome Biology, 2022_
+	- _includes **antibiotic resistance genes**_. 
 - [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper): Fast functional annotation of novel sequences using orthology assignments [nf-core/module](https://nf-co.re/modules/eggnogmapper/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/eggnogmapper) | [citation](https://doi.org/10.1093/molbev/msab293)
-- [HUMAnN](https://github.com/biobakery/humann): HMP Unified Metabolic Analysis Network - profiling microbial community metabolic potential (? / Not for long reads - Austin? - *eukaryotic; RAM intensive*; )
+- [HUMAnN](https://github.com/biobakery/humann): HMP Unified Metabolic Analysis Network - profiling microbial community metabolic potential (? / Not for long reads? (*says Austin*) - *eukaryotic; RAM intensive*; )
 
 ### Read Classification
 _How is this different from taxonomic classification?_
 
-- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data. [citation](https://link.springer.com/article/10.1186/s13059-022-02695-x): _Balaji et al., Genome Biology, 2022_
+- [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data. 
 - [Centrifuge](https://github.com/DaehwanKimLab/centrifuge): A rapid and memory-efficient classification system for metagenomic sequences
 
 ### Pathogen identification
 - [MAGnet](https://github.com/treangenlab/magnet): Metagenomic Analysis of Genomes in the ENvironmental Toolkit
 - [SeqScreen](https://gitlab.com/treangenlab/seqscreen): Functional screening of pathogenic sequences in metagenomic data
 
+### Metabolic reconstruction
+- [Bakdrive](https://gitlab.com/treangenlab/bakdrive) / [recent/private version](https://github.com/treangenlab/bakdrive): _Can take in Emu output_. [citation](https://academic.oup.com/bioinformatics/article/39/Supplement_1/i47/7210449): _Wang et al., Bioinformatics, 2023_
+  - [micom](https://github.com/micom-dev/micom): _Best to use with bakdrive_. [citation](https://journals.asm.org/doi/10.1128/msystems.00606-19): _Diener et al., mSystems, 2020_
+- [Apollo](https://genomearchitect.readthedocs.io/en/latest/): interactive sequence annotation editor; [citation](https://link.springer.com/article/10.1186/gb-2002-3-12-research0082). _Is this even relevant for a nextflow workflow?_
 
 ### Final: Validation / QC
 _Check how MetAMOS implements this says Todd_
