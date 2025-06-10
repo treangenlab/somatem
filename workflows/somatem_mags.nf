@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // Parameters (all configurable)
 // -------------------------
 params.input_dir = '/path/to/your/fastq/folder'
-params.out_dir = 'results'
+params.out_dir = '/home/tmhagm8/Documents/SOMAteM/examples/soma_test_out'
 params.threads = 16
 params.gtdb_db = '/path/to/gtdb/database'
 
@@ -16,7 +16,7 @@ params.gtdb_db = '/path/to/gtdb/database'
 // Process: myloasm (assembly & polish)
 //    - Takes (sample_id, reads) → emits (sample_id, assembly_primary.fa)
 // -------------------------
-process myloasm {
+process runMyloasm {
     tag "${sample_id}"
     cpus params.threads
     conda 'bioconda::myloasm'
@@ -59,9 +59,9 @@ process runSingleM {
 
     script:
     """
-    singlem predict \
-      --reads ${polished_fasta} \
-      --output singlem_report.tsv \
+    singlem pipe \\
+      --genome-fasta-files ${polished_fasta} \\
+      --taxonomic-profile singlem_report.tsv \\
       --threads ${task.cpus}
     """
 }
@@ -112,7 +112,7 @@ process runSemibin2 {
     tuple val(sample_id), path(polished_fasta), path(depth_file)
 
     output:
-    tuple val(sample_id), path("semibin2_bins"), emit: semibin_bins
+    tuple val(sample_id), path("semibin2_bins/semibin2_bin.*.fna"), emit: semibin_bins
 
     script:
     """
@@ -131,7 +131,7 @@ process runSemibin2 {
 //    - Takes (sample_id, polished_fasta, depth_file) → emits (sample_id, metabat2_bins/)
 // -------------------------
 process runMetabat2 {
-    tag "${sample_id}"
+    tag { sample_id }
     cpus params.threads
     conda 'bioconda::metabat2'
 
@@ -141,16 +141,21 @@ process runMetabat2 {
     tuple val(sample_id), path(polished_fasta), path(depth_file)
 
     output:
-    tuple val(sample_id), path("metabat2_bins"), emit: metabat2_bins
+    tuple val(sample_id), path("metabat2_bins/metabat2_bin.*.fna"), emit: metabat2_bins
 
     script:
     """
+    # Create output directory for bins
     mkdir -p metabat2_bins
+
+    # Run MetaBAT2 with precomputed depth file
     metabat2 \
       -i ${polished_fasta} \
       -a ${depth_file} \
+      -t ${task.cpus} \
+      -m 1500 \
       -o metabat2_bins/bin \
-      -t ${task.cpus}
+      --verbose
     """
 }
 
@@ -160,7 +165,7 @@ process runMetabat2 {
 //    - Takes (sample_id, polished_fasta, depth_file) → emits (sample_id, vamb_bins/)
 // -------------------------
 process runVamb {
-    tag "${sample_id}"
+    tag { sample_id }
     cpus params.threads
     conda 'bioconda::vamb'
 
@@ -170,16 +175,19 @@ process runVamb {
     tuple val(sample_id), path(polished_fasta), path(depth_file)
 
     output:
-    tuple val(sample_id), path("vamb_bins"), emit: vamb_bins
+    tuple val(sample_id), path("vamb_bins/vamb_bin_*.fna"), emit: vamb_bins
 
     script:
     """
-    mkdir -p vamb_bins
-    vamb \
+    # Ensure a clean output directory
+    rm -rf vamb_bins && mkdir -p vamb_bins
+
+    # Run Vamb with precomputed coverage and specified threads
+    vamb bin default \
       --fasta ${polished_fasta} \
-      --jgi ${depth_file} \
       --outdir vamb_bins \
-      --minfasta 200000
+      --minfasta 200000 \
+      -p ${task.cpus}
     """
 }
 
@@ -189,7 +197,7 @@ process runVamb {
 //    - Takes (sample_id, polished_fasta, depth_file) → emits (sample_id, rosella_bins/)
 // -------------------------
 process runRosella {
-    tag "${sample_id}"
+    tag { sample_id }
     cpus params.threads
     conda 'bioconda::rosella'
 
@@ -199,16 +207,19 @@ process runRosella {
     tuple val(sample_id), path(polished_fasta), path(depth_file)
 
     output:
-    tuple val(sample_id), path("rosella_bins"), emit: rosella_bins
+    tuple val(sample_id), path("rosella_bins/rosella_bin_*.fna"), emit: rosella_bins
 
     script:
     """
+    # Create output directory for bins
     mkdir -p rosella_bins
-    rosella bin \
-      --fasta ${polished_fasta} \
-      --coverage ${depth_file} \
-      --output rosella_bins \
-      --threads ${task.cpus}
+
+    # Run Rosella with precomputed coverage values (no CoverM step needed)
+    rosella recover \
+      -r ${polished_fasta} \
+      --coverage-file ${depth_file} \
+      -o rosella_bins \
+      -t ${task.cpus}
     """
 }
 
@@ -747,7 +758,7 @@ workflow {
     }
 
     // 2) Run MyLOASM → emits polished_tuple = (sample_id, assembly_primary.fa)
-    polished_tuple = myloasm(reads_ch)
+    polished_tuple = runMyloasm(reads_ch)
 
     // 3) Run SingleM → emits singlem_tuple = (sample_id, singlem_report.tsv)
     singlem_tuple = runSingleM(polished_tuple)
