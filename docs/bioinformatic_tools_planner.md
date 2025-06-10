@@ -12,7 +12,6 @@ _This is a work in progress document to plan the tools to be included in the pip
 | **Assembly**                 | [MetaCompass](https://github.com/marbl/MetaCompass)                                                 | same: [MetaCompass](https://github.com/marbl/MetaCompass)                                           |
 | *@Austin*                    | [AutoCycler](https://github.com/rrwick/AutoCycler)                                                  | -                                                                                                   |
 |                              | [Flye](https://github.com/fenderglass/Flye)                                                         | [nf-core/flye](https://github.com/nf-core/modules/tree/master/modules/nf-core/flye)                 |
-|                              | [Canu](https://github.com/marbl/canu)                                                               | [nf-core/canu](https://github.com/nf-core/modules/tree/master/modules/nf-core/canu)                 |
 | **Binning**                  | ?                                                                                                   | -                                                                                                   |
 | **Pangenomics**              | [tMHG-Finder](https://github.com/yongze-yin/tMHG-Finder)                                            | -                                                                                                   |
 |                              | [parsnp](https://github.com/marbl/parsnp)<br>                                                       |                                                                                                     |
@@ -28,7 +27,8 @@ _This is a work in progress document to plan the tools to be included in the pip
 | **Metabolic Reconstruction** | [Bakdrive](https://gitlab.com/treangenlab/bakdrive)                                                 | -                                                                                                   |
 |                              | [micom](https://github.com/micom-dev/micom)                                                         | -                                                                                                   |
 |                              | [Apollo](https://genomearchitect.readthedocs.io/)                                                   | -                                                                                                   |
-| **Validation/QC**            | [FastQC](https://github.com/s-andrews/FastQC)                                                       | [nf-core/fastqc](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc)             |
+| **Reporting, visualization** | [FastQC](https://github.com/s-andrews/FastQC)                                                       | [nf-core/fastqc](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc)             |
+|                              | [MetagenomeScope](https://github.com/marbl/MetagenomeScope)                                         | -                                                                                                   |
 
 Total number of unique tools: 24
 Number with nextflow implmentations: 12/24
@@ -141,6 +141,9 @@ _Check how MetAMOS implements this says Todd_
 - [FastQC](https://github.com/s-andrews/FastQC): A quality control tool for high throughput sequence data - Can have it enhanced with LLM (_like seqera AI report does it_). [nf-core/module](https://nf-co.re/modules/fastqc/), [code](https://github.com/nf-core/modules/tree/master/modules/nf-core/fastqc) | [documentation](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 _Check how MetAMOS report was made from scratch says Todd_ 
 
+
+### Visualization tools
+- [MetagenomeScope](https://github.com/marbl/MetagenomeScope): Web based visualization tool for metagenomic assembly graphs. 
 
 ### Databases
 - bacterial: [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/)
