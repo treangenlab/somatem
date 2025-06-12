@@ -72,8 +72,9 @@ skip_qc: false
 ```
 
 Usage:
+```sh
 nextflow run main.nf -params-file params.yaml
-
+```
 
 **Recommended Hybrid Approach**
 
