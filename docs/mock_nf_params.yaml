@@ -1,107 +1,345 @@
-params.yaml:
-input: "data/experiment1/*.fastq.gz"
-outdir: "results/experiment1"
-genome: "GRCh38"
-skip_qc: false
+# Nextflow Pipeline Parameters
+# This file contains configuration options for the SOMAteM workflow
 
-# copied from dadasnake: config.16s.yaml: https://github.com/ppreshant/dadasnake/blob/master/config/config.16S.yaml
-# GENERAL INFORMATION
-# you will always want to change these directories
-raw_directory: "/work/$USER"
-sample_table: "/work/$USER/samples.tsv"
-outputdir: "/work/$USER/output16S"
+# ======================
+# Input/Output Settings
+# ======================
+input:
+  # Sequencing data inputs
+  reads: "data/experiment1/*.fastq.gz"  # Input reads (supports glob patterns)
+  sample_sheet: ""      # Optional sample metadata
+  
+  # Reference databases
+  databases:
+    host_genome: "path/to/host/genome.fa"  # For host read filtering
+    centrifuge_db: "path/to/centrifuge/db"
+    emu_db: "path/to/emu/database"
+    seqscreen_db: "path/to/seqscreen/db"
+    
+output:
+  dir: "results/experiment1"           # Base output directory
+  reports: "${output.dir}/reports"      # Directory for reports
+  processed: "${output.dir}/processed"  # Processed data
+  
+# ======================
+# Pipeline Configuration
+# ======================
+pipeline:
+  # Pipeline modes
+  mode: "metagenomic"  # Options: 16s, metagenomic, assembly
+  
+  # Data type
+  data_type: "nanopore"  # Options: nanopore, pacbio, illumina
+  
+  # Analysis modules to run
+  modules:
+    quality_control: true
+    assembly: false
+    binning: false
+    taxonomic_profiling: true
+    functional_annotation: true
+    pangenomics: false
+    snp_sv_detection: false
+    metabolic_reconstruction: false
+  
+# ======================
+# Quality Control
+# ======================
+quality_control:
+  # Initial QC
+  nanoplot:
+    enabled: true
+    options: "--loglength --N50 --title 'NanoPlot Analysis'"
+    
+  # Host read filtering
+  hostile:
+    enabled: true
+    min_identity: 0.95
+    min_coverage: 0.9
+    
+  # Read filtering and trimming
+  chopper:
+    enabled: true
+    min_quality: 7
+    min_length: 1000
+    headcrop: 50
+    
+  filtlong:
+    enabled: true
+    min_length: 1000
+    target_bases: 5000000000
+    keep_percent: 90
+    
+  # General QC options
+  fastqc:
+    enabled: true
+    options: "--threads 4 --kmers 7"
+    
+  multiqc:
+    enabled: true
+    options: "-f --interactive"
 
-paired: true
-# change to false for single-end
-email: ""
+# ======================
+# Assembly
+# ======================
+assembly:
+  # Reference-guided assembly
+  metacompass:
+    enabled: true
+    mode: "quick"  # quick, sensitive, or very-sensitive
+    min_contig_length: 1000
+    
+  # De novo assembly
+  flye:
+    enabled: true
+    genome_size: "5m"  # Expected genome size (e.g., 5m, 100k)
+    read_type: "nano"  # nano, pacbio, pacbio-raw, pacbio-corr, pacbio-hifi
+    
+  autocycler:
+    enabled: true
+    min_overlap: 1000
+    min_identity: 95
 
-# STEPS
-# by default everything is run
-do_primers: true
-do_dada: true
-do_taxonomy: true
-do_postprocessing: true
+# ======================
+# Binning
+# ======================
+binning:
+  # Contig-based binning
+  metabat2:
+    enabled: true
+    min_contig_length: 1500
+    max_p: 95
+    min_s: 60
+    
+  # Assembly graph-based binning
+  vamb:
+    enabled: true
+    min_contig_length: 1500
+    num_epochs: 500
 
-hand_off:
-  biom: false
-  phyloseq: true
+# ======================
+# Taxonomic Profiling
+# ======================
+taxonomic_profiling:
+  # 16S profiling
+  emu:
+    enabled: true
+    db: "${input.databases.emu_db}"
+    min_abundance: 0.01
+    
+  # Long-read metagenomic profiling
+  lemur:
+    enabled: true
+    min_abundance: 0.1
+    kmer_size: 21
+    
+  # Metagenomic classification
+  sylph:
+    enabled: true
+    kmer_size: 21
+    min_abundance: 0.1
+    
+  # Rapid metagenomic classification
+  centrifuge:
+    enabled: true
+    db: "${input.databases.centrifuge_db}"
+    min_hit_length: 21
+    min_confidence: 0.0
+    
+  # MAG-based refinement
+  magnet:
+    enabled: true
+    min_contig_length: 1000
+    min_aln_identity: 90
 
-# PRIMER REMOVAL SETTINGS
-primers:
-  fwd:
-    sequence: GTGYCAGCMGCCGCGGTAA
-    name: 515F
-  rvs:
-    sequence: GGACTACNVGGGTWTCTAAT
-    name: 806R
-# these are also the default primers, by the way
-sequencing_direction: "unknown"
-# can be unknown, fwd_1, or rvs_1 (fwd_1 means the first read contains the fwd primer)
+# ======================
+# Pangenomics
+# ======================
+pangenomics:
+  # Core genome alignment
+  parsnp:
+    enabled: true
+    min_conserved: 2
+    min_region_length: 100
+    
+  # Maximal homologous group identification
+  tmhg_finder:
+    enabled: true
+    min_group_size: 2
+    min_identity: 0.9
 
-# READ FILTERING SETTINGS (in DADA2)
-filtering:
-  trunc_length:
-    fwd: 170
-    rvs: 130
-  trunc_qual:
-    fwd: 13
-    rvs: 13
-  max_EE:
-    fwd: 0.2
-    rvs: 0.2
-# these settings were evaluated for 515-806 on a HiSeq dataset in the original publication
+# ======================
+# SNP and SV Detection
+# ======================
+snp_sv_detection:
+  # Structural variant detection
+  rhea:
+    enabled: true
+    min_sv_size: 10
+    min_read_support: 3
+    min_mapq: 20
 
-# DOWNSAMPLING IS OFF BY DEFAULT
-downsampling:
-  do: false
+# ======================
+# Functional Annotation
+# ======================
+functional_annotation:
+  # Pathogen screening
+  seqscreen:
+    enabled: true
+    db: "${input.databases.seqscreen_db}"
+    min_confidence: 0.9
+    
+  # Orthology-based annotation
+  eggnog_mapper:
+    enabled: true
+    db: "eggnog"  # eggnog, bact, arch, euk
+    dmnd_db: ""  # Path to custom DIAMOND database
+    
+  # Metabolic profiling
+  humann:
+    enabled: true
+    protein_database: "uniref90"  # uniref50, uniref90, or custom
+  
+  # Diversity analysis
+  diversity:
+    rarefaction_depth: 10000
+    metrics:
+      alpha: ["shannon", "observed_features", "faith_pd"]
+      beta: ["braycurtis", "unweighted_unifrac", "weighted_unifrac"]
+    pcoa_components: 3
+    heatmap_top_n: 50
 
-# DADA2 SETTINGS
-dada:
-  pool: false
-  errorEstimationFunction: loessErrfun
-  error_nbases: 1e8
-# default is per-sample analysis using the standard error function trained on 1e8 reads
-chimeras:
-  remove: true
+# ======================
+# Metabolic Reconstruction
+# ======================
+metabolic_reconstruction:
+  # Metabolic modeling
+  bakdrive:
+    enabled: true
+    min_abundance: 0.1
+    
+  # Microbial community modeling
+  micom:
+    enabled: true
+    solver: "cplex"  # cplex, gurobi, or cplex
+    
+  # SNP and differential abundance
+  differential:
+    method: "ancom"  # Options: ancom, deseq2, lefse, maaslin2
+    group_column: ""  # Column in metadata to group by
+    reference_group: ""  # Reference group for comparisons
+    alpha: 0.05  # Significance threshold
 
-# SETTINGS FOR TAXONOMIC ANNOTATION
-taxonomy:
-  mothur:
-    do: true
-    db_path: "../DBs/amplicon"
-    tax_db: "SILVA_138_SSURef_NR99_prok.515F.806R"
-# You'll have to set these
-    run_on:
-      - ASV
-      - cluster
-# other classifiers are implemented, check the documentation (but mothur is most efficient)
-blast:
-  do: true
-  run_basta: true
-  all: true
-  db_path: "../DBs/ncbi_16S_ribosomal_RNA"
-  basta_db: "../DBs/ncbi_taxonomy"
-# You'll have to set these
+# ======================
+# Visualization and Reporting
+# ======================
+visualization:
+  # Assembly graph visualization
+  metagenomescope:
+    enabled: true
+    min_contig_length: 1000
+    
+  # Interactive reports
+  report:
+    interactive: true
+    format: "html"  # Options: html, pdf, both
+    include:
+      quality_metrics: true
+      assembly_stats: true
+      taxonomic_profiles: true
+      functional_annotation: true
+      diversity_analysis: true
+      differential_abundance: true
 
-# SETTINGS FOR CLUSTERING ASV TABLE AT e.g. 97%
-post_clustering:
-  do: true
-  cutoff: 0.97
+# ======================
+# Resource Allocation
+# ======================
+resources:
+  # Global resource limits
+  max_cpus: 64
+  max_memory: "512 GB"
+  max_time: "720h"  # 30 days
+  
+  # Process-specific overrides
+  process_resources:
+    # Default resources
+    "*":
+      cpus: 1
+      memory: "8 GB"
+      time: "1h"
+    
+    # Assembly processes
+    "assembly:flye":
+      cpus: 32
+      memory: "256 GB"
+      time: "168h"  # 7 days
+      
+    # Binning processes
+    "binning:vamb":
+      cpus: 16
+      memory: "128 GB"
+      time: "72h"
+      
+    # Taxonomic profiling
+    "taxonomic_profiling:centrifuge":
+      cpus: 16
+      memory: "64 GB"
+      time: "24h"
+      
+    # Functional annotation
+    "functional_annotation:humann":
+      cpus: 16
+      memory: "64 GB"
+      time: "48h"
+      
+    # Pangenomics
+    "pangenomics:parsnp":
+      cpus: 8
+      memory: "32 GB"
+      time: "24h"
 
-final_table_filtering:
-  do: true
-  keep_target_taxa: "."
-  target_min_length: 245
-  target_max_length: 275
-# this will remove most mitochondrial and plastid sequences
-
-postprocessing:
-  rarefaction_curve: true
-  picrust2:
-    do: true
-    stratified: true
-    per_sequence_contrib: true
-    skip_norm: false
-
-  treeing:
-    do: true
+# ======================
+# Execution Control
+# ======================
+execution:
+  # Execution options
+  resume: true           # Resume from last successful step
+  max_retries: 3         # Number of times to retry failed steps
+  error_strategy: "retry" # retry, ignore, terminate
+  
+  # Container configuration
+  container:
+    enabled: true
+    engine: "singularity"  # singularity or docker
+    auto_pull: true
+    
+  # Email notifications
+  email:
+    enabled: false
+    to: ""
+    from: ""
+    smtp: "smtp.example.com"
+    
+  # Nextflow configuration
+  nextflow:
+    work_dir: "${launchDir}/work"
+    cache_dir: "${launchDir}/.nextflow"
+    report: "${output.dir}/reports/execution_report.html"
+    timeline: "${output.dir}/reports/execution_timeline.html"
+    dag: "${output.dir}/reports/pipeline_dag.html"
+    
+  # Cluster/Cloud execution
+  executor: "local"  # local, slurm, awsbatch, etc.
+  
+  # AWS Batch configuration (if using AWS)
+  aws:
+    region: ""
+    queue: ""
+    job_role: ""
+    
+  # SLURM configuration (if using SLURM)
+  slurm:
+    account: ""
+    partition: ""
+    qos: ""
+  email_on_fail: false
