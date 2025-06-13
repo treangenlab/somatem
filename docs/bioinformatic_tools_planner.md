@@ -148,3 +148,16 @@ _Check how MetAMOS report was made from scratch says Todd_
 ### Databases
 - bacterial: [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/)
 - viral: [NCBI Viral Genomes](https://www.ncbi.nlm.nih.gov/genome/viruses/)
+
+
+# Derivatives of this doc
+
+*Stuff from this document was re-formatted/summarized into a few other documents for easier access. I used Windsurf AI for this so keeping these in the same repo keeps them easy to iterate on with AI when changes occur*
+
+List
+- `tool_voting.csv`: Contains tool names with category for Todd to vote on/suggest new ones
+- `tool_links.csv`: contains links to the github and citations for easy parsing into embeddings making by Sahil
+- `mock_nf_params.yaml`: is a dadasnake inspired yaml formatted with the tools in this list
+	- I want sahil to edit this file as appropriate (write access needed); so will need to copy ~~move~~ it into the `omi` repo.
+	- will explore making a sub-module that's shared in both repos in the future if > 2 changes are being made by Sahil..
+	- (*Not possible to use git supported soft links to share with another computer*) But need some simlink mechanism to keep the files linked // need some way to sync their commit history as well - *currently will need to do this manually?*
