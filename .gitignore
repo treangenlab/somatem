@@ -1,3 +1,9 @@
+# nextflow outputs and logs
+.nextflow.log*
+work/
+.nextflow/
+
+
 # vscode files
 SOMAteM.code-workspace
 
