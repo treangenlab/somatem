@@ -3,25 +3,25 @@
 
 
 process lemur {
-    conda "bioconda::lemur"
+    // conda "bioconda::lemur"
     
     input:
-    path reads
-    path database_dir
-    path taxonomy
-    val rank
+      path reads
+      path database_dir
+      path taxonomy
+      val rank
 
     output:
-    path output_dir
+      path output_dir
 
     script:
-    output_dir = "${reads.baseName}-lemur-output"
+      output_dir = "${reads.baseName}-lemur-output"
     """
-    lemur -i $reads \
-      -o $output_dir \
-      -d $database_dir \
-      --tax-path $taxonomy \
-      -r $rank
+    lemur -i ${reads} \
+      -o ${output_dir} \
+      -d ${database_dir} \
+      --tax-path ${taxonomy} \
+      -r ${rank}
     """
 }
 
