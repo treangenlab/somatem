@@ -1,5 +1,8 @@
 #!/usr/bin/env nextflow
 
+// enable dsl2 syntax
+nextflow.enable.dsl = 2
+
 include { lemur } from "./modules/local/lemur/main.nf"
 
 // -------------------------
