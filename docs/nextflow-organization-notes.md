@@ -1,12 +1,33 @@
 # Nextflow Organization Notes
 
 ## Rough outline of the plan
-- Start with making working pipelines
-- Then break the pipelines into modules
+- Start with making working pipelines as modules. Test module in isolation with example data
+- Then connect the module to previous modules in a workflow or sub-workflow
   - Use [nf-core modules](https://nf-co.re/modules) if available. Installation with `nf-core modules install <module_name>` puts them under `./modules/nf-core/modules` directory
   - If not, create a module following the [nf-core module template](https://nf-co.re/modules#module-template)
 - Try to incorporate the conda env of each module/process into the nextflow definition. 
-  - The path of an environment file can be specified using the conda directive [as follows](https://www.nextflow.io/docs/latest/conda.html#use-conda-environment-files):
+  - Will start with a conda env with a pegged version of the package from bioconda etc.
+  - Later we can use conda-lock files or apptainer containers for further reproducibility
+  - side note: The path of an environment file can be specified using the conda directive [as follows](https://www.nextflow.io/docs/latest/conda.html#use-conda-environment-files):
+
+### Conda vs apptainer
+- conda in nextflow: *[enable](https://www.nextflow.io/docs/latest/conda.html#enabling-conda-environment) with nextflow.config directive: `conda.enabled = True`*. Extra: use [conda lockfiles](https://www.nextflow.io/docs/latest/conda.html#conda-lock-files) for faster env without resolution. 
+	- can use [mamba](https://www.nextflow.io/docs/latest/conda.html#use-mamba-to-resolve-packages) for faster env resolves ; can use [existing env](https://www.nextflow.io/docs/latest/conda.html#use-existing-conda-environments) ~ no too reproducible ;  
+	- Best Practices for Your Workflow (*seqera AI*)
+	1. **Development phase**: Use mamba with environment.yml files for flexibility
+	2. **Production/publication**: Switch to conda lock files for reproducibility
+	3. **Use Wave**: Enable Wave to automatically generate both containers and lock files
+	4. **Version pinning**: Pin critical tool versions in your environment.yml files
+
+
+### How do we trade-off functioning vs updating over time?
+Given that people will use this without contined supervision/development we are looking at tradeoff between continuous release vs periodic updates?
+
+- We can use conda-lock files/apptainer containers to lock the versions of the packages but that prevents things from updating automatically
+ - will need some manual update or some update script to go through and update the conda-lock files/apptainer containers. If this can be triggered by LLM that would be nice!
+ - Same principle should apply to databases as well
+
+
 
 ```nextflow
 process hello {
