@@ -3,11 +3,11 @@
 
 
 process lemur {
-    conda "bioconda::lemur" // issue with bioconda::lemur:1.0.1
+    conda "bioconda::lemur" // peg version with bioconda::lemur=1.0.1
 
     // optional: More reproducible than conda
     container "oras://community.wave.seqera.io/library/lemur:1.0.1--8e0c5d342d286d0b" 
-    
+
     input:
       path reads
       path database_dir
