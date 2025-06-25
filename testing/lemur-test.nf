@@ -3,14 +3,16 @@
 // enable dsl2 syntax
 nextflow.enable.dsl = 2
 
-include { lemur } from "./modules/local/lemur/main.nf"
+include { lemur } from "../modules/local/lemur/main.nf"
 
 // -------------------------
 // Parameters
 // -------------------------
+// Note: Paths are relative to the base directory of the workflow (where nextflow is run from)
+
 params.reads = "./examples/lemur/example-data/example.fastq"
 
-params.database_dir = "./examples/lemur/example-db"
+params.database_dir = "./examples/lemur/example-db/"
 params.taxonomy = "./examples/lemur/example-db/taxonomy.tsv"
 params.rank = "species"
 
