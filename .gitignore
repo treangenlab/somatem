@@ -1,5 +1,5 @@
-# Large files
-databases/ # databases
+# databases (large files)
+databases/
 
 # nextflow outputs and logs
 .nextflow.log*
