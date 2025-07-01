@@ -1,11 +1,48 @@
 # Tool Status
 _First test each module independently with example data from each tool's own repo_
 
+## Taxonomic profiling
 - Lemur: working with example from repo
   - Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- Magnet: Trying to make a conda env by packaging the named dependencies in readme (in the `dependencies.yml` file)
-  - Micromamba makes an empty env for some reason ; troubleshoot this
+- Magnet: Trying to make a conda env by packaging the named dependencies in README (in the `dependencies.yml` file)
+  - (_without version numbers_) python 3.9 has conflict with biopython; Need to figure out which version supports this: biopython 1.70 + conflict with other packages as well :( (experiment with fixed versions of few of them)
+  - (_with version numbers_) conflicts with other named versions as well (see output below)
+
+```sh
+error    libmamba Could not solve for environment specs
+    The following packages are incompatible
+    ├─ biopython =* * is installable with the potential options
+    │  ├─ biopython [1.66|1.67|1.68|1.69|1.70] would require
+    │  │  └─ python =2.7 *, which can be installed;
+    │  ├─ biopython [1.66|1.67|1.68|1.69|1.70] would require
+    │  │  └─ python =3.5 *, which can be installed;
+    │  ├─ biopython [1.66|1.67|1.69|1.70] would require
+    │  │  └─ python =3.6 *, which can be installed;
+    │  ├─ biopython 1.68 would require
+    │  │  └─ python =3.4 *, which can be installed;
+    │  └─ biopython [1.70|1.71|...|1.85] conflicts with any installable versions previously reported;
+    ├─ ete3 =3.1.2 * is not installable because it conflicts with any installable versions previously reported;
+    ├─ minimap2 =2.24.r1122 * does not exist (perhaps a typo or a missing channel);
+    ├─ python =3.9 * is not installable because it conflicts with any installable versions previously reported;
+    └─ samtools =1.15.1 * is not installable because there are no viable options
+       ├─ samtools 1.15.1 would require
+       │  └─ htslib >=1.15,<1.23.0a0 * but there are no viable options
+       │     ├─ htslib [1.15|1.15.1] would require
+       │     │  └─ libdeflate >=1.10,<1.25.0a0 *, which conflicts with any installable versions previously reported;
+       │     ├─ htslib [1.15.1|1.16|1.17] would require
+       │     │  └─ libdeflate >=1.13,<1.25.0a0 *, which conflicts with any installable versions previously reported;
+       │     ├─ htslib [1.17|1.18|1.19|1.19.1|1.20] would require
+       │     │  └─ libdeflate >=1.18,<1.25.0a0 *, which conflicts with any installable versions previously reported;
+       │     ├─ htslib [1.20|1.21] would require
+       │     │  └─ libdeflate >=1.20,<1.25.0a0 *, which conflicts with any installable versions previously reported;
+       │     └─ htslib [1.21|1.22] would require
+       │        └─ libdeflate >=1.22,<1.25.0a0 *, which conflicts with any installable versions previously reported;
+       └─ samtools 1.15.1 would require
+          └─ htslib >=1.16,<1.23.0a0 *, which cannot be installed (as previously explained).
+```
+
+
 - EMU: 
   - Copied example from EMU repo
   - Not working due to the `meta` input issue

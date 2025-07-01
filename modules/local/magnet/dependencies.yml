@@ -17,7 +17,7 @@ channels:
     - bioconda
     - conda-forge
 dependencies:
-    # - python=3.9 # has conflict with biopython; 
+    # - python=3.9 # has conflict with biopython, use biopython 1.70+ and test other package versions 
         # installed 3.5.5 automatically, magnet.py fails, f-string incompatibility
     # - ncbi-datasets # not found in bioconda/conda-forge
     - minimap2
