@@ -149,6 +149,12 @@ _Check how MetAMOS report was made from scratch says Todd_
 - bacterial: [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/)
 - viral: [NCBI Viral Genomes](https://www.ncbi.nlm.nih.gov/genome/viruses/)
 
+# Other workflows to learn from
+- [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
+  - Sylph
+- [BugBuster](https://github.com/gene2dis/BugBuster)
+  - _No tool in our list_
+
 
 # Derivatives of this doc
 
