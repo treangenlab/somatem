@@ -16,9 +16,10 @@ name: magnet
 channels:
     - bioconda
     - conda-forge
-packages:
-    - python=3.9
-    - ncbi-datasets
+dependencies:
+    # - python=3.9 # has conflict with biopython; 
+        # installed 3.5.5 automatically, magnet.py fails, f-string incompatibility
+    # - ncbi-datasets # not found in bioconda/conda-forge
     - minimap2
     - samtools
     - biopython
