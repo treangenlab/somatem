@@ -9,6 +9,8 @@ _First test each module independently with example data from each tool's own rep
   - (_without version numbers_) python 3.9 has conflict with biopython; Need to figure out which version supports this: biopython 1.70 + conflict with other packages as well :( (experiment with fixed versions of few of them)
   - (_with version numbers_) conflicts with other named versions as well (see output below)
 
+- Sylph: test module for profile with example data from repo works
+
 ```sh
 error    libmamba Could not solve for environment specs
     The following packages are incompatible
@@ -62,3 +64,16 @@ Handling unexpected condition for
 4. Check for the tool's conda repo to call in the module-process's conda definition
 5. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
   
+
+# Database notes
+
+What makes certain databases automatic install from nextflow and not others?
+[mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
+
+> The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the usage documentation for more details.
+
+> Following tools need manual creation or download of required databases:
+  - Bowtie2 (for host genome removal)
+  - Kraken2 (with Braken)
+  - Sylph
+  - Salmon
