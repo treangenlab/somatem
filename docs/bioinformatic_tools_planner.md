@@ -151,7 +151,7 @@ _Check how MetAMOS report was made from scratch says Todd_
 
 # Other workflows to learn from
 - [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
-  - Sylph
+  - [Sylph module](https://github.com/ikmb/TOFU-MAaPO/blob/master/modules/sylph.nf)
 - [BugBuster](https://github.com/gene2dis/BugBuster)
   - _No tool in our list_
 
