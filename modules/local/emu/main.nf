@@ -34,7 +34,8 @@ process EMU_ABUNDANCE {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     //  Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(reads)
+    val(meta)
+    path(reads)
 
     output:
     tuple val(meta), path("*abundance.tsv")                     , emit: report
