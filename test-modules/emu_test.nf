@@ -15,12 +15,12 @@ workflow {
     
     reads = Channel.fromPath(params.reads)
     meta = Channel.of([id: 'test', single_end: false]) // meta is required by EMU, initialize with dummy values
-    temp_meta_reads = tuple(meta, reads)
-
+    
     // output_dir = Channel.fromPath(params.output_dir)
     
-    // temp_meta_reads.view { meta, reads -> "meta: $meta, reads: $reads" }
+    meta.view { m -> "meta: $m" }
+    reads.view { r -> "reads: $r" }
 
-    EMU_ABUNDANCE(temp_meta_reads)  
+    EMU_ABUNDANCE(meta, reads)  
     // ch_versions = ch_versions.mix(EMU_ABUNDANCE.out.versions.first())
 }
