@@ -17,9 +17,9 @@ workflow {
     reads = Channel.fromPath(params.reads)
     classification = Channel.fromPath(params.classification)
 
-    reads.view()
-    classification.view()
+    // reads.view()
+    // classification.view()
 
-    // MAGNET(reads, classification)
+    MAGNET(reads, classification)
 }
     

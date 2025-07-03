@@ -1,24 +1,25 @@
 
 
 process MAGNET {
-    conda "bioconda::magnet=version" // peg version with bioconda::name=version
+    conda "${moduleDir}/spec-file.txt" // peg version with bioconda::name=version
 
     // optional: More reproducible than conda
-    container "oras://community.wave.seqera.io/library/name:version--build"  // generate with `wave containerize`
+    // container "oras://community.wave.seqera.io/library/name:version--build"  // generate with `wave containerize`
 
     input:
       path reads
       path classification
-      path output
 
     output:
-      path output
+      path output_dir
 
     script:
+      output_dir = "${reads.baseName}-magnet-output"
     """
-    magnet.py -i ${reads} \
-      -o ${output} \
-      -c ${classification}
+    python ${moduleDir}/magnet-repo/magnet.py \
+      -i ${reads} \
+      -c ${classification} \
+      -o ${output_dir}
     """
 }
 
