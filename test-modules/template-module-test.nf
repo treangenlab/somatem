@@ -7,9 +7,10 @@ include { TOOL } from "../modules/local/module_template.nf"
 // Parameters
 // -------------------------
 // note: paths are relative to the workflow directory (from where nextflow is run)
-params.reads = './examples/data/emu_full_length.fa'
-params.database = './examples/data/lemur_report.csv'
-params.other = './examples/data/lemur_report.csv'
+params.reads = "${projectDir}/examples/data/emu_full_length.fa"
+params.database = "${projectDir}/examples/data/lemur_report.csv"
+params.taxonomy = "${projectDir}/examples/data/lemur_report.csv"
+params.rank = 'species'
 
 // -------------------------
 // Workflow
@@ -18,8 +19,9 @@ workflow {
 
     reads = Channel.fromPath(params.reads)
     database = Channel.fromPath(params.database)
-    other = Channel.fromPath(params.other)
+    taxonomy = Channel.fromPath(params.taxonomy)
+    rank = Channel.of(params.rank)
 
-    TOOL(reads, database, other)
+    TOOL(reads, database, taxonomy, rank)
 }
     

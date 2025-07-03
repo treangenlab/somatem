@@ -1,6 +1,6 @@
 
 
-process NAMEINCAPS {
+process TOOL {
     conda "bioconda::name=version" // peg version with bioconda::name=version
 
     // optional: More reproducible than conda
