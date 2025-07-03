@@ -1,0 +1,3 @@
+[submodule "modules/local/magnet/magnet-repo"]
+	path = modules/local/magnet/magnet-repo
+	url = git@github.com:treangenlab/magnet.git
