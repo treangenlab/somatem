@@ -5,8 +5,10 @@ _First test each module independently with example data from each tool's own rep
 - **Lemur**: working with example from repo
   - Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- **Magnet**: conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
-  - Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
+- **Magnet**: Almost works ; need to test with a proper example with WGS fastq data?
+  - conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
+  - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
+  - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
 
 - **Sylph**: test module for profile with example data from repo works
 
