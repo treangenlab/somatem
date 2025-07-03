@@ -10,10 +10,10 @@ include { lemur } from "../modules/local/lemur/main.nf"
 // -------------------------
 // Note: Paths are relative to the base directory of the workflow (where nextflow is run from)
 
-params.reads = "./examples/lemur/example-data/example.fastq"
+params.reads = "${projectDir}/../examples/lemur/example-data/example.fastq"
 
-params.database_dir = "./examples/lemur/example-db/"
-params.taxonomy = "./examples/lemur/example-db/taxonomy.tsv"
+params.database_dir = "${projectDir}/../examples/lemur/example-db/"
+params.taxonomy = "${projectDir}/../examples/lemur/example-db/taxonomy.tsv"
 params.rank = "species"
 
 // params.output_dir = "./examples/lemur/example-output"
