@@ -5,14 +5,21 @@ include { MAGNET } from "../modules/local/magnet/main.nf"
 // -------------------------
 // Parameters
 // -------------------------
-params.reads = './examples/data/emu_full_length.fa'
-params.classification = './examples/data/lemur_report.csv'
-params.output = './examples/data/lemur_report.csv'
+params.reads = "${projectDir}/../examples/lemur/example-data/example.fastq"
+params.classification = "${projectDir}/../examples/lemur/example-output-ref/relative_abundance.tsv"
+// /home/pbk1/somatem/examples/lemur/example-output-ref/relative_abundance.tsv
 
 // -------------------------
 // Workflow
 // -------------------------
 workflow {
-    MAGNET(params.reads, params.classification, params.output)
+
+    reads = Channel.fromPath(params.reads)
+    classification = Channel.fromPath(params.classification)
+
+    reads.view()
+    classification.view()
+
+    // MAGNET(reads, classification)
 }
     
