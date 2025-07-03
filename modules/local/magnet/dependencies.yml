@@ -25,4 +25,4 @@ dependencies:
     - pandas
     - ete3
     - bwa
-    
+    - scikit-learn
