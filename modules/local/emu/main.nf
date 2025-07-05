@@ -1,6 +1,22 @@
 // Source: gms-16S/emu module. 25/Jun/25
 // https://github.com/genomic-medicine-sweden/gms_16S
 
+// Note on databases also obtained from above repo: (databases/emu/)
+// Note sure if there are from the original emu? : https://osf.io/56uf7/files/osfstorage#
+// > GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases
+// from gms_16S/ paper : https://link.springer.com/article/10.1007/s10096-025-05158-w
+
+// Other arguments needed to invoke Emu might be a subset of these (From readme):
+// nextflow run main.nf \
+//   --input sample_sheet.csv
+//   --outdir [absolute path]/gms_16S/results \
+//   --db /[absolute path]/gms_16S/assets/databases/emu_database \
+//   --seqtype map-ont \
+//    -profile singularity,test \
+//   --quality_filtering \
+//   --longread_qc_qualityfilter_minlength 1200 \
+//   --longread_qc_qualityfilter_maxlength 1800
+
 
 //  A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
@@ -36,6 +52,7 @@ process EMU_ABUNDANCE {
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
     val(meta)
     path(reads)
+    path(db)
 
     output:
     tuple val(meta), path("*abundance.tsv")                     , emit: report
@@ -49,15 +66,15 @@ process EMU_ABUNDANCE {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    def args = task.ext.args ?: '' // capture user args (ref/process/ext)
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     emu \\
         abundance \\
-        $args \\
+        --db $db \\ # database path
+        $args \\ insert user arguments here; such as db, threads, etc.
         --threads $task.cpus \\
         $reads
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         emu: \$(echo \$(emu --version 2>&1) | sed 's/^.*emu //; s/Using.*\$//' )
