@@ -12,14 +12,15 @@ _First test each module independently with example data from each tool's own rep
 
 - **Sylph**: test module for profile with example data from repo works
 
-- **EMU**: fixed `meta` input with dummy value; solved conda issues with channel priority; database not specified error
+- **Emu**: Missing query/-d/something error. (5/Jul/25). Can't find this option in the [EMU repo](https://github.com/treangenlab/emu?tab=readme-ov-file#abundance-estimation-parameters).
   - Copied example from EMU repo
-
+  - fixed `meta` input with dummy value; solved conda issues with channel priority;
+  - Added `--db` copied from gms_16S repo
 Error:
 ```sh
-Handling unexpected condition for
-  task: name=EMU_ABUNDANCE; work-dir=null
-  error [nextflow.exception.ProcessUnrecoverableException]: Not a valid path value type: groovyx.gpars.dataflow.DataflowBroadcast (DataflowBroadcast around DataflowStream[?])
+Command error:
+  [ERROR] missing input: please specify a query file to map or option -d to keep the index
+  Traceback (most recent call last):
 ```
 
 # Process to make a nextflow module
