@@ -12,15 +12,17 @@ _First test each module independently with example data from each tool's own rep
 
 - **Sylph**: test module for profile with example data from repo works
 
-- **Emu**: Missing query/-d/something error. (5/Jul/25). Can't find this option in the [EMU repo](https://github.com/treangenlab/emu?tab=readme-ov-file#abundance-estimation-parameters).
-  - Copied example from EMU repo
-  - fixed `meta` input with dummy value; solved conda issues with channel priority;
-  - Added `--db` copied from gms_16S repo
+- **Emu**: Missing query/-d/something error. (5/Jul/25). Can't find this option in the [EMU repo](https://github.com/treangenlab/emu?tab=readme-ov-file#abundance-estimation-parameters). 
+  - This is strange:: Works fine running emu directly in the env `(/home/pbk1/micromamba/other-envs/env-ca18e434b14574137dd432ba06605711)` with `emu abundance --db databases/emu/  examples/data/emu_full_length.fa --output-dir work/emutest/` (see work/emutest)
+  1. Copied example from EMU repo
+  2. fixed `meta` input with dummy value; solved conda issues with channel priority;
+  3. Added `--db` copied from gms_16S repo
+  4. Removed # -- comments from the script section and added back the blank link after `$reads` (fixed the missing input error)
+  - I assume the cat .. END_VERSIONS section is for the meta outputs? This might be useful to emulate for other tools. Run gms_16S by itself with nextflow to see the output and what's going on here
+
 Error:
 ```sh
-Command error:
-  [ERROR] missing input: please specify a query file to map or option -d to keep the index
-  Traceback (most recent call last):
+Missing output file(s) `*abundance.tsv` expected by process `EMU_ABUNDANCE (test)`
 ```
 
 # Process to make a nextflow module
