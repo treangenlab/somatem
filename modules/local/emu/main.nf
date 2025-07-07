@@ -71,10 +71,11 @@ process EMU_ABUNDANCE {
     """
     emu \\
         abundance \\
-        --db $db \\ # database path
-        $args \\ insert user arguments here; such as db, threads, etc.
+        --db $db \\
+        $args \\
         --threads $task.cpus \\
         $reads
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         emu: \$(echo \$(emu --version 2>&1) | sed 's/^.*emu //; s/Using.*\$//' )
