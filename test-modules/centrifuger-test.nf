@@ -8,7 +8,7 @@ include { CENTRIFUGER_CLASSIFY } from "../modules/local/centrifuger/main.nf"
 // -------------------------
 // note: paths are relative to the workflow directory (from where nextflow is run)
 params.reads = "${projectDir}/../examples/data/46_1_sub10k.fastq.gz"
-params.index_prefix = "${projectDir}/../examples/centrifuger/centrifuger_index"
+params.index_prefix = "${projectDir}/../databases/legionella_idx/cfr_ref_idx"
 params.threads = 4
 
 // -------------------------
