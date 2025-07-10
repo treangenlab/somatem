@@ -1,7 +1,7 @@
+```mermaid
 ---
 config:
       theme: redux
-<!-- [MermaidChart: c988b8c2-b491-4b89-b79f-1269e1af65d0] -->
 ---
 flowchart TD
 
@@ -37,4 +37,5 @@ subgraph Downstream
 end
 
 preprocess --> QC["QC<br>(check if tools ran correctly)"]
+```
 
