@@ -5,7 +5,7 @@ config:
 flowchart TD
 
  subgraph Preprocess
-    direction LR
+     direction LR
      trimming["Quality/adapter trimming<br>(chopper | fitlong)"]
      dehost["Remove host contamination<br>(hostile)"]
      QC["QC<br>(NanoPlot)"]
@@ -22,12 +22,12 @@ flowchart TD
 
  subgraph Workstation_Mode["Workstation mode<br>(assembly-based)"]
      assembly["Assembly"]
-     denovo["De novo<br>(Flye, AutoCycler)"]
-     refguided["Reference-guided<br>(MetaCompass)"]
-     binning["Binning"]
+     denovo(["De novo<br>(Flye, AutoCycler)"]) --> binning
+     refguided(["Reference-guided<br>(MetaCompass)"]) --> annotation
+     binning(["Binning"]) --> annotation
      annotation["Genome annotation<br>(pangenomics, ARGs, etc)"]
-     assembly --> denovo --> refguided --> binning --> annotation
+     assembly --> denovo & refguided 
  end
 
- QC --> taxonomic
- QC --> assembly
+ QC --"16S/metagenomic"--> taxonomic
+ QC --"metagenomic"--> assembly
