@@ -1,0 +1,33 @@
+---
+config:
+  theme: redux
+---
+flowchart TD
+
+ subgraph Preprocess
+    direction LR
+     trimming["Quality/adapter trimming<br>(chopper | fitlong)"]
+     dehost["Remove host contamination<br>(hostile)"]
+     QC["QC<br>(NanoPlot)"]
+     trimming --> dehost --> QC
+ end
+
+ subgraph Laptop_Mode["Laptop mode<br>(taxonomic profiling)"]
+     taxonomic["Taxonomic profiling<br>(Emu, Lemur, Centrifuge, Sylph)"]
+     classification["Read classification<br>(SeqScreen, Centrifuge)"]
+     pathogen["Pathogen identification<br>(MAGnet, SeqScreen)"]
+     functional["Functional annotation<br>(SeqScreen, EggNOG-mapper, HUMAnN)"]
+     taxonomic --> classification --> pathogen --> functional
+ end
+
+ subgraph Workstation_Mode["Workstation mode<br>(assembly-based)"]
+     assembly["Assembly"]
+     denovo["De novo<br>(Flye, AutoCycler)"]
+     refguided["Reference-guided<br>(MetaCompass)"]
+     binning["Binning"]
+     annotation["Genome annotation<br>(pangenomics, ARGs, etc)"]
+     assembly --> denovo --> refguided --> binning --> annotation
+ end
+
+ QC --> taxonomic
+ QC --> assembly
