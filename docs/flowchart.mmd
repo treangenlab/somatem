@@ -14,29 +14,38 @@ flowchart TD
 
  subgraph Laptop_Mode["Laptop mode<br>(read based)"]
      tax16s["Taxonomic profiling<br>(Emu)"]
-     readanalysis["Read based analysis"]
      taxonomic["Taxonomic profiling<br>(Lemur + MAGnet | Centrifuge | Sylph)"]
+     
+     readanalysis(["Other read based analysis"])
      classification["Read classification<br>(SeqScreen, Centrifuge)"]
      pathogen["Pathogen identification<br>(MAGnet, SeqScreen)"]
      functional["Functional annotation<br>(SeqScreen, EggNOG-mapper, HUMAnN)"]
-    readanalysis --> taxonomic 
-    readanalysis --> classification 
-    readanalysis --> pathogen 
-    readanalysis --> functional
+    
+    readanalysis --> classification & pathogen & functional
  end
 
  subgraph Workstation_Mode["Workstation mode<br>(assembly-based)"]
-     assembly["Assembly"]
-     denovo(["De novo<br>(Flye | Canu | AutoCycler)"]) --> binning
-     refguided(["Reference-guided<br>(MetaCompass)"]) --> annotation
-     binning(["Binning"]) --> annotation
-     annotation["Genome annotation<br>(pangenomics, ARGs, etc)"]
+     assembly(["Assembly"])
+     denovo["De novo<br>(Flye | Canu | AutoCycler)"] --> binning
+     refguided["Reference-guided<br>(MetaCompass)"]
+     binning["Binning"]
+     annotation["Genome annotation"]
+     
+     othergenomic(["multi-genomic analyses"])
+     pangenomics["Pangenomics<br>(tmhg-finder)"]
+     genesnp["Structural variation<br> Gene duplication/loss<br>(rhea)"]
+     metabolic["Metabolic reconstruction<br>(bakdrive | micom | apollo)"]
+     
      assembly --> denovo & refguided 
+     refguided & binning --> annotation
+     annotation --> othergenomic
+     othergenomic --> pangenomics & genesnp & metabolic
+
  end
 
  QC --"metagenomic"--> assembly
  QC --"16S amplicon"--> tax16s
- QC --"metagenomic"--> readanalysis
+ QC --"metagenomic"--> taxonomic & readanalysis
  
 
 %% Notes:
