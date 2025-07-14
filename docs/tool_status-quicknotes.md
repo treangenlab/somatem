@@ -23,17 +23,24 @@ _First test each module independently with example data from each tool's own rep
   5. Added `--output-dir ./` to the command line arguments
     - The module was missing an output directory argument that is present in the `modules.config` of `gms_16S` repo. Adding this helps in making the module reusable without the config; other default outputs saved within results/ and not found by nextflow
     - Strange, it works fine running emu directly in the env `(/home/pbk1/micromamba/other-envs/env-ca18e434b14574137dd432ba06605711)` with `emu abundance --db databases/emu/  examples/data/emu_full_length.fa --output-dir work/emutest/` (see work/emutest)
+    Error:
+    ```sh
+    Missing output file(s) `*abundance.tsv` expected by process `EMU_ABUNDANCE (test)`
+    ```
 
-Error:
-```sh
-Missing output file(s) `*abundance.tsv` expected by process `EMU_ABUNDANCE (test)`
-```
+- **Centrifuger**: Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.
+  
+  - Database issue: (_figured that you need all 4 cfr_ref_idx files; hence created database from example files for the 2 legionella genomes in the example directory_)
+    - Downloaded GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) ; _Downloaded only the `cfr_gtdb_r226.2.cfr` file_ ;
+    - Getting same error when running directly in conda env `/home/pbk1/micromamba/other-envs/env-0ae31dcc1c5dffe0dcb45b228367f9cc` too. `centrifuger -u examples/data/46_1_sub10k.fastq.gz -x databases/cfr_gtdb_r226.2.cfr -t 4 > work/centrifugertest/test.tsv` ; _I think the database needs all 4 files_
+    - Tried creating database from example files for the 2 legionella genomes in the example directory (`examples/centrifuger/ref.fa`). 
 
-- **Centrifuger**: Segfaults : `.command.sh: line 2: 753314 Segmentation fault      (core dumped)`
-  - Downloaded GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) ; _Downloaded only the `cfr_gtdb_r226.2.cfr` file_ ;
-  - Getting same error when running directly in conda env too. `centrifuger -u examples/data/46_1_sub10k.fastq.gz -x databases/cfr_gtdb_r226.2.cfr -t 4 > work/centrifugertest/test.tsv` ; _I think the database needs all 4 files_
-  - Tried creating database from example files for the 2 legionella genomes in the example directory. Still gives the same sagmentation fault error when classifying with this. _Could be something wrong with the input file?_ 
-  - Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
+  - Still having segmentation fault error when classifying with this: Segfaults : `.command.sh: line 2: 753314 Segmentation fault      (core dumped)`
+    - (ruled out) _Could be something wrong with the input file?_ Austin confirms that it works for him.. 
+    - Identified that nextflow doesn't copy all the index files by just specifying the `index_prefix` path; since there are 4 separate files. _Find out how nf-core/centrifuge does it?_ : Copied their approach and it works now!
+    - (Mock run works) when run directly in conda env `/home/pbk1/micromamba/other-envs/env-0ae31dcc1c5dffe0dcb45b228367f9cc` with original files works `centrifuger -u examples/data/46_1_sub10k.fastq.gz -x databases/legionella_cfr_idx/cfr_ref_idx -t 4 > work/centrifugertest/test.tsv`
+
+  - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
 # Process to make a nextflow module
 
