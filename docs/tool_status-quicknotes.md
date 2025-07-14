@@ -62,6 +62,12 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
         .set { ch_samplesheet }
 ```
 
+## Pre-processing
+- Identify nf-core modules
+    - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf)
+    - [chopper](https://nf-co.re/modules/chopper)
+    - [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch))
+
 
 # Database notes
 
