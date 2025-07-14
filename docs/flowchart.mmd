@@ -17,9 +17,9 @@ flowchart TD
      taxonomic["Taxonomic profiling<br>(Lemur + MAGnet | Centrifuge | Sylph)"]
      
      readanalysis(["Other read based analysis"])
-     classification["Read classification<br>(SeqScreen, Centrifuge)"]
-     pathogen["Pathogen identification<br>(MAGnet, SeqScreen)"]
-     functional["Functional annotation<br>(SeqScreen, EggNOG-mapper, HUMAnN)"]
+     classification["Read classification<br>(SeqScreen | Centrifuge)"]
+     pathogen["Pathogen identification<br>(MAGnet | SeqScreen)"]
+     functional["Functional annotation<br>(SeqScreen | EggNOG-mapper | HUMAnN)"]
     
     readanalysis --> classification & pathogen & functional
  end
