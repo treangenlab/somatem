@@ -66,7 +66,7 @@ process EMU_ABUNDANCE {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: '' // capture user args (ref/process/ext)
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     emu \\
@@ -74,6 +74,7 @@ process EMU_ABUNDANCE {
         --db $db \\
         $args \\
         --threads $task.cpus \\
+        --output-dir ./ \\
         $reads
         
     cat <<-END_VERSIONS > versions.yml
