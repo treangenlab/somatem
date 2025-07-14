@@ -1,13 +1,12 @@
 flowchart TD
  subgraph laptop["Laptop mode"]
+      direction LR
         asm["Assembly<br>(meta)"]
         metacomp["MetaCompass"]
         flye["Flye"]
         autocycler["AutoCycler"]
-  end
+        asm --> flye & autocycler
+ end
  subgraph cluster["Cluster mode (MetaCompass, Flye, AutoCycler)"]
-        asm["Assembly<br>(meta)"]
-        metacomp["MetaCompass"]
-        flye["Flye"]
-        autocycler["AutoCycler"]
-  end
+        Xyz --> asm
+ end
