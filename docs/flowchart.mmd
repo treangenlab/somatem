@@ -36,8 +36,9 @@ flowchart TD
      genesnp["Structural variation<br> Gene duplication/loss<br>(rhea)"]
      metabolic["Metabolic reconstruction<br>(bakdrive | micom | apollo)"]
      
-     assembly --> denovo & refguided 
-     refguided & binning --> annotation
+     assembly --> denovo
+     assembly -."future".-> refguided -.-> binning 
+     binning --> annotation
      annotation --> othergenomic
      othergenomic --> pangenomics & genesnp & metabolic
 
