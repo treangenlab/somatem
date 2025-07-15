@@ -42,13 +42,24 @@ _First test each module independently with example data from each tool's own rep
 
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
-# Process to make a nextflow module
+## Pre-processing
+- Identify nf-core modules
+    - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf)
+    - [chopper](https://nf-co.re/modules/chopper)
+    - [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch))
+
+
+---
+# Process to make a local nextflow module
 
 1. Clone the tool's repo into a temp directory (outside this repo)
 2. (optional) Test the tool with example data from the tool's own repo
 3. Copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
 4. Check for the tool's conda repo to call in the module-process's conda definition
 5. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+
+Install an nf-core module using `nf-core modules install ..`
+
 
 # to nf-core or not?
 - modules of nf-core require a tuple input (`tuple val(meta), path(fasta)`). I was having problems with this for the emu module.
@@ -62,11 +73,7 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
         .set { ch_samplesheet }
 ```
 
-## Pre-processing
-- Identify nf-core modules
-    - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf)
-    - [chopper](https://nf-co.re/modules/chopper)
-    - [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch))
+
 
 
 # Database notes
