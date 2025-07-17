@@ -8,6 +8,3 @@ work/
 
 # vscode files
 SOMAteM.code-workspace
-
-# temp/auxilliary files
-scripts/parse_tools_to_csv.py
