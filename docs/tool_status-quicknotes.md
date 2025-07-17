@@ -78,6 +78,20 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
 
 # Database notes
 
+Need to record the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
+
+## Example files
+- centrifuger: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
+- data/46_1_sub10k.fastq.gz and B01_1_sub10k.fastq.gz: From Austin's own generated nanopore data of gut microbiome samples
+- data/emu_full_length.fa: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
+- lemur: from original repo
+- Sylph: from original repo
+
+## Database files
+
+
+
+## Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
 [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
 
