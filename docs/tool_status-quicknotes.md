@@ -88,6 +88,9 @@ Need to record the source of each example dataset and database in the database f
 - Sylph: from original repo
 
 ## Database files
+- Emu: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
+  - Note sure if there were from the original emu? : https://osf.io/56uf7/files/osfstorage#
+  - GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
 
 
 

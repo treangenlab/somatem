@@ -1,3 +1,18 @@
+# Source: gms-16S/emu module. 25/Jun/25
+# https://github.com/genomic-medicine-sweden/gms_16S
+
+# NOTES:
+# Other arguments needed to invoke Emu might be a subset of these (From readme):
+# nextflow run main.nf \
+#   --input sample_sheet.csv
+#   --outdir [absolute path]/gms_16S/results \
+#   --db /[absolute path]/gms_16S/assets/databases/emu_database \
+#   --seqtype map-ont \
+#   -profile singularity,test \
+#   --quality_filtering \
+#   --longread_qc_qualityfilter_minlength 1200 \
+#   --longread_qc_qualityfilter_maxlength 1800
+
 name: "emu_abundance"
 ##  Add a description of the module and list keywords
 description: A taxonomic profiler for metagenomic 16S data optimized for error prone long reads.
@@ -49,17 +64,17 @@ output:
       type: file
       description: Report (tsv file) over detected species and estimated number of reads and relative abundance
       pattern: "*{.tsv}"
-  //sam files
+  # sam files
   - samfile
       type: file
       description: File containing alignment data
       pattern: "*{.sam}
-  //unclassified and mapped fasta file
+  # unclassified and mapped fasta file
   - unclassified_fa
       type: file
       description: File containing reads that mapped to the database but was presumed to be not in the sample by EMU´s algorithm. 
       pattern: "*{.fastq_unclassified_mapped.fasta}
-  //unmapped fasta file
+  # unmapped fasta file
   - unclassified_unmapped_fa
       type: file
       description: File containing reads that was not mapped to the database. 
@@ -67,10 +82,10 @@ output:
 
 
   # emu log. Put on ice.
- // - emulog
- //     type: file
- //     description: File containing emu stdou & stderror
- //     pattern: "emu_log*{.txt}"
+  # - emulog
+  #     type: file
+  #     description: File containing emu stdou & stderror
+  #     pattern: "emu_log*{.txt}"
 
 
 authors:
