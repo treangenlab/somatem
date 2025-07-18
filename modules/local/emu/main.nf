@@ -1,23 +1,3 @@
-// Source: gms-16S/emu module. 25/Jun/25
-// https://github.com/genomic-medicine-sweden/gms_16S
-
-// Note on databases also obtained from above repo: (databases/emu/)
-// Note sure if there are from the original emu? : https://osf.io/56uf7/files/osfstorage#
-// > GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases
-// from gms_16S/ paper : https://link.springer.com/article/10.1007/s10096-025-05158-w
-
-// Other arguments needed to invoke Emu might be a subset of these (From readme):
-// nextflow run main.nf \
-//   --input sample_sheet.csv
-//   --outdir [absolute path]/gms_16S/results \
-//   --db /[absolute path]/gms_16S/assets/databases/emu_database \
-//   --seqtype map-ont \
-//    -profile singularity,test \
-//   --quality_filtering \
-//   --longread_qc_qualityfilter_minlength 1200 \
-//   --longread_qc_qualityfilter_maxlength 1800
-
-
 //  A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
