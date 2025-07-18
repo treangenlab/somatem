@@ -93,9 +93,10 @@ Need to record the source of each example dataset and database in the database f
 
 ## Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
-[mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
-
+- [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
 > The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the usage documentation for more details.
+
+- [aviary](https://github.com/rhysnewell/aviary) has a nice way to determine database location (through `config`) and download them with the `--download` flag. _Check if this can use latest database or links to static versions?_
 
 > Following tools need manual creation or download of required databases:
   - Bowtie2 (for host genome removal)
