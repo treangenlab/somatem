@@ -80,18 +80,25 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
 
 Need to record the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
-## Example files
-- centrifuger: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
-- data/46_1_sub10k.fastq.gz and B01_1_sub10k.fastq.gz: From Austin's own generated nanopore data of gut microbiome samples
-- data/emu_full_length.fa: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
-- lemur: from original repo
-- Sylph: from original repo
+## Example files (`examples/`)
+- `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
+- `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples
+- `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
+- `lemur`: from original repo
+- `Sylph`: from original repo
 
-## Database files
-- Emu: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
+## Database files (`databases/`)
+- `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
   - Note sure if there were from the original emu? : https://osf.io/56uf7/files/osfstorage#
   - GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
+- legionella_cfr_idx`: From centrifuger example files
+  - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 
+## Download log
+- centrifuger: 
+  - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
+  - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
+- emu: link retrieved from ?
 
 
 ## Updating databases, best practices
@@ -107,9 +114,3 @@ What makes certain databases automatic install from nextflow and not others?
   - Sylph
   - Salmon
 
-## Download log
-- centrifuger: 
-  - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
-  - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
-  - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
-- emu: link retrieved from ?
