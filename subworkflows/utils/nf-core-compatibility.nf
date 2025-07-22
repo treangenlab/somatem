@@ -12,7 +12,7 @@ workflow convert_to_nfcore_tuple {
             .map { r ->
                 def meta = [:] // Use dummy values; meta is required by nf-core modules
                 meta.id = "test"
-                meta.single_end = false
+                meta.single_end = true
                 return [meta, r] }
 
     emit:
