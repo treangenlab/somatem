@@ -43,10 +43,11 @@ _First test each module independently with example data from each tool's own rep
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
 ## Pre-processing
-- Identify nf-core modules
-    - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf)
-    - [chopper](https://nf-co.re/modules/chopper)
-    - [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch))
+- [x] Identify nf-core modules
+- [chopper](https://nf-co.re/modules/chopper). works.
+- [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf). Getting some issue `ModuleNotFoundError: No module named 'kaleido.scopes'`
+  - test in conda env `/home/pbk1/micromamba/other-envs/env-dbb0881eb12a6a46-f15e056cde8296457e44df4488e27ca5`
+- [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch)). 
 
 
 ---
