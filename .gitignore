@@ -1,5 +1,7 @@
 # databases (large files)
 databases/
+examples/data/46_1.fastq.gz
+
 
 # nextflow outputs and logs
 .nextflow.log*

@@ -46,8 +46,10 @@ _First test each module independently with example data from each tool's own rep
 - [x] Identify nf-core modules
 - [chopper](https://nf-co.re/modules/chopper). works.
 - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf). Getting some issue `ModuleNotFoundError: No module named 'kaleido.scopes'`
-  - test in conda env `/home/pbk1/micromamba/other-envs/env-dbb0881eb12a6a46-f15e056cde8296457e44df4488e27ca5`
-- [hostile_clean](https://nf-co.re/modules/hostile_clean) (and [hostile_fetch](https://nf-co.re/modules/hostile_fetch)). 
+  - test in conda env `/home/pbk1/micromamba/other-envs/env-dbb0881eb12a6a46-f15e056cde8296457e44df4488e27ca5`. Some [issue](https://github.com/wdecoster/NanoPlot/issues/417) with latest version of `python-kaleido` 1.0.
+  - Tried downgrading to `python-kaleido` 0.2.1. Module runs but makes empty plots (known issue; `NanoPlot-report.html` works file)
+    - Tried remaking the whole env with this dependancy locked in the `environment.yml` file (_will take care of any dependancy conflicts_)  
+- [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
 
 ---
@@ -83,7 +85,8 @@ Need to record the source of each example dataset and database in the database f
 
 ## Example files (`examples/`)
 - `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
-- `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples
+- `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples. Subsampled to 10k reads.
+  - `data/46_1.fastq.gz`: From google drive/[example_data/agm..](https://drive.google.com/drive/u/1/folders/1MUR6sXAJSTaKXrqhVu6-rLFDw7lao5v5)
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
