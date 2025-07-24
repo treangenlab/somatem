@@ -5,3 +5,4 @@ channels:
   - bioconda
 dependencies:
   - bioconda::nanoplot=1.44.1
+  - conda-forge::python-kaleido=0.2.1
