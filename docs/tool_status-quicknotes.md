@@ -43,6 +43,17 @@ _First test each module independently with example data from each tool's own rep
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
 ## Pre-processing
+- Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
+- something wrong with the hostile subworkflow? 
+  1. Not going into the `if` block (seems fixed now after adding .mmi extension)
+  2. Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
+    - How come it runs fine with testing then? _Might need to test the subworkflow runHostile separately?_
+```log
+Command error:
+19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
+``` 
+
+
 - [x] Identify nf-core modules
 - [chopper](https://nf-co.re/modules/chopper). works.
 - [nanoplot](https://nf-co.re/modules/nanoplot) | [module scripts](https://github.com/nf-core/modules/blob/master/modules/nf-core/nanoplot/main.nf). Getting some issue `ModuleNotFoundError: No module named 'kaleido.scopes'`
@@ -76,8 +87,13 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
         .set { ch_samplesheet }
 ```
 
-
-
+# nextflow tips
+## Input files
+- Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
+   - Need to use Channel.fromPath().simpleName to create meta.id from the file name
+- nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
+  - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
+- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)
 
 # Database notes
 
