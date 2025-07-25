@@ -20,13 +20,13 @@ workflow runHostile {
     database_name // string: name of the database file *with extension* (e.g. 'human-t2t-hla-argos985-mycob140.mmi')
 
     main:
-    database_name = Channel.of(database_name)
+    database_ch = Channel.of(database_name)
 
     // if database is in the default directory, use it
     if ( database_name == 'human-t2t-hla-argos985-mycob140.mmi' ) {
 
         database_dir = Channel.of(params.database_dir)
-        database_tuple = database_name.combine(database_dir)
+        database_tuple = database_ch.combine(database_dir)
 
         HOSTILE_CLEAN(reads, database_tuple)
 
@@ -34,7 +34,7 @@ workflow runHostile {
         // if database is not in the default directory, fetch it
 
         printf("fetching database: ${database_name}")
-        HOSTILE_FETCH(database_name)
+        HOSTILE_FETCH(database_ch)
         HOSTILE_CLEAN(reads, HOSTILE_FETCH.out.reference)
     }
 
