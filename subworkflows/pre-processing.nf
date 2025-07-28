@@ -27,7 +27,7 @@ params.host_index  = 'human-t2t-hla-argos985-mycob140.mmi'
 
 workflow {
     in_ch = convert_to_nfcore_tuple(params.input_dir)
-    contam_ref = Channel.empty() // empty channel for now
+    contam_ref = Channel.value() // empty channel for now
     
     RawNanoPlot(in_ch) // initial QC
     runHostile(in_ch, params.host_index) // host contamination removal

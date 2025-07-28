@@ -43,7 +43,7 @@ workflow runHostile {
     
 
     emit:
-    HOSTILE_CLEAN.out.fastq
+    HOSTILE_CLEAN.out.fastq // de-hosted fastq file
     // note: this is first draft, Need to add versions etc for nf-core compatibility
 }
     

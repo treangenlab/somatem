@@ -44,14 +44,22 @@ _First test each module independently with example data from each tool's own rep
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
-- something wrong with the hostile subworkflow? 
-  1. Not going into the `if` block (seems fixed now after adding .mmi extension)
-  2. Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
+  - something wrong with the hostile subworkflow? Is only running hostile on 1 input instead of all 3
+  - ```log
+    [b5/6a6c5a] RawNanoPlot (46_1)              [100%] 3 of 3 ✔
+    [ae/242f67] runHostile:HOSTILE_CLEAN (46_1) [  0%] 0 of 1
+    [-        ] CHOPPER                         -
+    [-        ] FinalNanoPlot                   -
+  ``` 
+  - Something to do with the empty `contam_ref` channel being used up. Needs to be a value channel; [source](https://bioinformatics.stackexchange.com/questions/22161/nextflow-properly-chaining-process-outputs)
+  - (_fixed: was doing single_read is 'false' instead of 'true'_) 
+    - Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
     - How come it runs fine with testing then? _Might need to test the subworkflow runHostile separately?_
 ```log
 Command error:
 19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
 ``` 
+  - Not going into the `if` block (seems fixed now after adding .mmi extension)
 
 
 - [x] Identify nf-core modules
