@@ -4,3 +4,4 @@ channels:
   - bioconda
 dependencies:
   - nextflow >= 22.10
+  - nf-core
