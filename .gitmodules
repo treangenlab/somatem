@@ -1,0 +1,6 @@
+[submodule "modules/local/magnet/magnet-repo"]
+	path = modules/local/magnet/magnet-repo
+	url = git@github.com:treangenlab/magnet.git
+[submodule "docs/somatem-docs"]
+	path = docs/somatem-docs
+	url = git@github.com:ppreshant/somatem-docs.git
