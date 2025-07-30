@@ -44,7 +44,7 @@ _First test each module independently with example data from each tool's own rep
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
-  - Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
+  - (_fixed: fixed the stalling workflow with `channel.value([])` input to chopper_) Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
   - (_fixed: using value process `Channel.value()` for reusing single value channels_) something wrong with the runHostile subworkflow? Is only running hostile on 1 input instead of 2 ; and is getting stuck 
   - ```log
     [84/0fb496] RawNanoPlot (B011_2_sub10k)              | 2 of 2 ✔
