@@ -34,20 +34,9 @@ process print_name {
     input:
     tuple val(meta), path(reads)
     output:
-    stdout    
+    name   // how do I return a value ; the script only runs bash?
     script:
     """
-    echo "${reads.simpleName}"
-    """
-}
-
-process print_extension {
-    input:
-    tuple val(meta), path(reads)
-    output:
-    stdout    
-    script:
-    """
-    echo "${reads.extension}"
+    name = "${reads.simpleName}"
     """
 }
