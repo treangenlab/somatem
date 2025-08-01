@@ -2,6 +2,13 @@
 databases/
 examples/data/archive/46_1.fastq.gz
 
+# for the mag testing
+examples/data/input4mags/s4_final.fastq.gz
+examples/work
+examples/data/mag_output
+examples/soma_test.sh
+examples/slurm-2136779.out
+
 
 # nextflow outputs and logs
 .nextflow.log*

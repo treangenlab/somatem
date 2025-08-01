@@ -3,5 +3,7 @@
 channels:
   - conda-forge
   - bioconda
+
 dependencies:
-  - nanoplot
+  - minimap2
+  - samtools
