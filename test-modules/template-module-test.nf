@@ -6,7 +6,7 @@ include { TOOL } from "../modules/local/module_template.nf"
 // -------------------------
 // Parameters
 // -------------------------
-// note: paths are relative to the workflow directory (from where nextflow is run)
+// note: paths are relative to the directory containing this file
 params.reads = "${projectDir}/../examples/data/emu_full_length.fa"
 params.database = "${projectDir}/../examples/data/lemur_report.csv"
 params.taxonomy = "${projectDir}/../examples/data/lemur_report.csv"

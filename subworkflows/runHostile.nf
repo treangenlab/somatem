@@ -20,24 +20,22 @@ workflow runHostile {
     database_name // string: name of the database file *with extension* (e.g. 'human-t2t-hla-argos985-mycob140.mmi')
 
     main:
-    database_ch = Channel.of(database_name)
-
     // if database is in the default directory, use it
     if ( database_name == 'human-t2t-hla-argos985-mycob140.mmi' ) {
-
-        database_dir = Channel.of(params.database_dir)
-        database_tuple = database_ch.combine(database_dir)
-
-        HOSTILE_CLEAN(reads, database_tuple)
+        database_input = Channel.value([database_name, params.database_dir])
 
     } else { 
-        // if database is not in the default directory, fetch it
-
-        printf("fetching database: ${database_name}")
-        HOSTILE_FETCH(database_ch)
-        HOSTILE_CLEAN(reads, HOSTILE_FETCH.out.reference)
+        // If database is not in the default directory, fetch it (warning: Takes a while)
+        log.info "Fetching database: ${database_name}. Will take > 5 min"
+        database_name_ch = Channel.value(database_name)
+        HOSTILE_FETCH(database_name_ch)
+        
+        // Make sure this is a value channel if it should be reused
+        database_input = HOSTILE_FETCH.out.reference.first()
     }
-
+    
+    HOSTILE_CLEAN(reads, database_input)
+    
     // note: need to copy the fetched database to the default directory
     // and implement dynamic matching of the database name to the fetched database
     

@@ -17,3 +17,12 @@ work/
 
 # vscode files
 SOMAteM.code-workspace
+
+# nf-core template files
+data/
+results/
+.DS_Store
+testing/
+testing*
+*.pyc
+null/
