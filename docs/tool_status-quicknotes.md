@@ -44,6 +44,8 @@ _First test each module independently with example data from each tool's own rep
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
+  - pipeline works ; but trying to incorporate default parameters that Austin wrote in as `task.ext.args` ; 
+    - Switching to nf-core template for full compatibility to this one
   - (_fixed: fixed the stalling workflow with `channel.value([])` input to chopper_) Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
   - (_fixed: using value process `Channel.value()` for reusing single value channels_) something wrong with the runHostile subworkflow? Is only running hostile on 1 input instead of 2 ; and is getting stuck 
   - ```log
@@ -70,6 +72,13 @@ Command error:
   - Tried downgrading to `python-kaleido` 0.2.1. Module runs but makes empty plots (known issue; `NanoPlot-report.html` works file)
     - Tried remaking the whole env with this dependancy locked in the `environment.yml` file (_will take care of any dependancy conflicts_)  
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
+
+## nf-core compatibility
+- Created a template using `nf-core pipelines create` with custom settings
+  - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
+  - Still want to keep the nf-core template for composability with nf-core modules and any future forks people might make.
+- Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
+  - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
 
 
 ---
