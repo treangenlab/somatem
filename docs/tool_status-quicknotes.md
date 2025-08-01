@@ -44,13 +44,16 @@ _First test each module independently with example data from each tool's own rep
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
-  - something wrong with the hostile subworkflow? Is only running hostile on 1 input instead of all 3
+  - pipeline works ; but trying to incorporate default parameters that Austin wrote in as `task.ext.args` ; 
+    - Switching to nf-core template for full compatibility to this one
+  - (_fixed: fixed the stalling workflow with `channel.value([])` input to chopper_) Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
+  - (_fixed: using value process `Channel.value()` for reusing single value channels_) something wrong with the runHostile subworkflow? Is only running hostile on 1 input instead of 2 ; and is getting stuck 
   - ```log
-    [b5/6a6c5a] RawNanoPlot (46_1)              [100%] 3 of 3 ✔
-    [ae/242f67] runHostile:HOSTILE_CLEAN (46_1) [  0%] 0 of 1
-    [-        ] CHOPPER                         -
-    [-        ] FinalNanoPlot                   -
-  ``` 
+    [84/0fb496] RawNanoPlot (B011_2_sub10k)              | 2 of 2 ✔
+    [b0/3ecac9] runHostile:HOSTILE_CLEAN (B011_2_sub10k) | 1 of 1 ✔
+    [-        ] CHOPPER                                  -
+    [-        ] FinalNanoPlot                            -
+    ``` 
   - Something to do with the empty `contam_ref` channel being used up. Needs to be a value channel; [source](https://bioinformatics.stackexchange.com/questions/22161/nextflow-properly-chaining-process-outputs)
   - (_fixed: was doing single_read is 'false' instead of 'true'_) 
     - Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
@@ -69,6 +72,13 @@ Command error:
   - Tried downgrading to `python-kaleido` 0.2.1. Module runs but makes empty plots (known issue; `NanoPlot-report.html` works file)
     - Tried remaking the whole env with this dependancy locked in the `environment.yml` file (_will take care of any dependancy conflicts_)  
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
+
+## nf-core compatibility
+- Created a template using `nf-core pipelines create` with custom settings
+  - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
+  - Still want to keep the nf-core template for composability with nf-core modules and any future forks people might make.
+- Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
+  - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
 
 
 ---
