@@ -1,16 +1,25 @@
 #! /bin/bash
 
-#SBATCH --time=04-00:00:00
-#SBATCH --partition=defq
-#SBATCH --mail-user=email@myemail.org
-#SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --ntasks-per-node=64
-#SBATCH --mem=256GB
-#SBATCH --nodes=1
 #SBATCH --job-name=somatem
-#SBATCH --comment=somatem
+#SBATCH --account=commons
+#SBATCH --partition=commons
+#SBATCH --time=23:30:00
+#SBATCH --mail-user=mail@mail.edu
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=96
+#SBATCH --threads-per-core=1
+#SBATCH --mem=250GB
+#SBATCH --export=ALL
 
-module load mamba
+source /path/to/miniforge3/etc/profile.d/conda.sh
+conda activate somatemtest
 
-nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf --input_dir /path/to/SOMAteM/examples/data --output_dir /path/to/SOMAteM/examples/soma_prep_out --threads 12 --maxlength 30000 --minq 10 --minlen 250 --host_index 'human-t2t-hla' 
-
+nextflow run /path/to/Documents/SOMAteM/subworkflows/somatem_mags.nf \
+  --input_dir   /path/to/Documents/SOMAteM/examples/data/input4mags \
+  --output_dir  /path/to/Documents/SOMAteM/examples/data/mag_output \
+  --threads     96 \
+  --flye_mode nano-hq \
+  --semibin_environment human_gut \
+  --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
+  --bakta_db    /path/to/bakta/db \
+  -c /path/to/Documents/SOMAteM/confs/somatem_mags.config
