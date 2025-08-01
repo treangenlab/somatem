@@ -2,7 +2,7 @@
 
 params.input_dir = 'examples/data/'
 
-include { convert_to_nfcore_tuple } from './subworkflows/utils/nf-core-compatibility.nf'
+include { convert_to_nfcore_tuple } from '../subworkflows/utils/nf-core-compatibility.nf'
 
 workflow {
 
@@ -12,6 +12,12 @@ workflow {
 // test the convert_to_nfcore_tuple subworkflow
 in_ch = convert_to_nfcore_tuple(params.input_dir)
 in_ch.view { r -> "tuple: ${r}"}
+
+// // check directories of nextflow: projectDir, workDir, baseDir
+// println("projectDir: ${projectDir}")
+// println("workDir: ${workDir}")
+// println("moduleDir: ${moduleDir}") // same as projectDir if the script is not a module
+// println("launchDir: ${launchDir}")
 
 // // test using queue channel twice
 // print_name(in_ch) | view()
@@ -34,20 +40,9 @@ process print_name {
     input:
     tuple val(meta), path(reads)
     output:
-    stdout    
+    name   // how do I return a value ; the script only runs bash?
     script:
     """
-    echo "${reads.simpleName}"
-    """
-}
-
-process print_extension {
-    input:
-    tuple val(meta), path(reads)
-    output:
-    stdout    
-    script:
-    """
-    echo "${reads.extension}"
+    name = "${reads.simpleName}"
     """
 }

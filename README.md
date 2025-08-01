@@ -1,7 +1,7 @@
-# SOMAteM
+# Somatem
 LLM accessible long-read metagenomics pipeline with best practices
 ## Outline
-[Plannning tools](https://github.com/treangenlab/SOMAteM/blob/main/docs/bioinformatic_tools_planner.md#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
+[Plannning tools](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
 
 ## Installation
 
