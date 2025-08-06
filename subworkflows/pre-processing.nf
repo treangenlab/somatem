@@ -16,10 +16,6 @@ include { CHOPPER } from '../modules/nf-core/chopper/main.nf'
 params.input_dir   = 'examples/data'
 // params.output_dir  = 'results'
 // params.threads     = 64
-// params.maxlength   = 30000
-// params.minq        = 10
-// params.minlen      = 250
-params.host_index  = 'human-t2t-hla-argos985-mycob140.mmi'
 
 // -------------------------
 // Workflow Definition
