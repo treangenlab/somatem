@@ -8,7 +8,6 @@ include { FLYE }                    from '../modules/nf-core/flye/main'
 include { MINIMAP2_INDEX }          from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN }          from '../modules/nf-core/minimap2/align/main'
 include { SAMTOOLS_SORT }           from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_INDEX }          from '../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_COVERAGE }       from '../modules/nf-core/samtools/coverage/main'
 include { SEMIBIN_SINGLEEASYBIN }   from '../modules/nf-core/semibin/singleeasybin/main'
 include { CHECKM2_PREDICT }         from '../modules/nf-core/checkm2/predict/main'
@@ -63,17 +62,21 @@ workflow SOMATEM_MAGS {
     SAMTOOLS_SORT(MINIMAP2_ALIGN.out.bam, FLYE.out.fasta)
     ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions)
 
-    // Index sorted BAM files
-    SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions)
-
-    // Calculate coverage
-    ch_bam_idx = SAMTOOLS_SORT.out.bam.join(SAMTOOLS_INDEX.out.bai, by: [0])
+    // Calculate coverage - Handle the actual SAMTOOLS_SORT output structure
+    ch_bam_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, bam ->
+        [meta, bam, []] // Add empty index slot
+    }
+    
+    ch_fasta_for_coverage = FLYE.out.fasta
+    
+    ch_fqi_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, bam ->
+        [meta, file('OPTIONAL_FILE')]
+    }
     
     SAMTOOLS_COVERAGE(
-        ch_bam_idx, 
-        FLYE.out.fasta, 
-        Channel.empty()
+        ch_bam_for_coverage,
+        ch_fasta_for_coverage,
+        ch_fqi_for_coverage
     )
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
 
@@ -109,11 +112,11 @@ workflow SOMATEM_MAGS {
     CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
-    // Run SingleM pipe on bins (genomes) for appraisal
+    // Run SingleM pipe on bins - Keep the SAME meta.id for successful joining
     ch_bins_for_singlem = SEMIBIN_SINGLEEASYBIN.out.output_fasta.map { meta, bins ->
-        def new_meta = meta.clone()
-        new_meta.input_type = 'genome'
-        // Keep the same ID for joining later
+        // Use the exact same meta structure as the metagenome channel
+        def new_meta = meta.clone()  // Keep all original meta properties
+        new_meta.input_type = 'genome'  // Just add the input_type
         [new_meta, bins]
     }
     
@@ -121,15 +124,55 @@ workflow SOMATEM_MAGS {
     SINGLEM_PIPE_BINS(ch_bins_for_singlem, singlem_metapackage)
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
-    // Prepare SingleM appraise input - Fix to match module input structure
-    ch_appraise_input = SINGLEM_PIPE.out.otu_table
-        .join(SINGLEM_PIPE_BINS.out.otu_table, by: [0])
-        .map { meta, metagenome_otu, bins_otu ->
-            def new_meta = [id: "${meta.id}_appraisal"]
-            // Module expects: tuple val(meta), path(metagenome_otu_tables), path(genome_otu_tables), path(assembly_otu_tables)
-            [new_meta, metagenome_otu, bins_otu, []]
+    // FIXED: SingleM appraise - Resolve filename collision using Nextflow's staging
+    ch_metagenome_otu = SINGLEM_PIPE.out.otu_table
+        .map { meta, otu -> 
+            println "DEBUG: Metagenome OTU - meta.id: ${meta.id}, file: ${otu.name}"
+            // Use Nextflow's staging to rename the file
+            def clean_meta = [id: meta.id]
+            return [clean_meta, otu]
         }
     
+    ch_bins_otu = SINGLEM_PIPE_BINS.out.otu_table
+        .map { meta, otu -> 
+            println "DEBUG: Bins OTU - meta.id: ${meta.id}, file: ${otu.name}"
+            // Use Nextflow's staging to rename the file
+            def clean_meta = [id: meta.id]
+            return [clean_meta, otu]
+        }
+
+    // Use cross product to ensure both channels are processed
+    ch_appraise_input = ch_metagenome_otu
+        .cross(ch_bins_otu) { it[0].id }  // Cross by meta.id
+        .map { metagenome_tuple, bins_tuple ->
+            def meta = metagenome_tuple[0]
+            def metOtu = metagenome_tuple[1]
+            def binOtu = bins_tuple[1]
+            
+            def new_meta = [id: "${meta.id}_appraisal"]
+            println "DEBUG: Creating appraise input - meta: ${new_meta.id}"
+            println "  - Metagenome OTU: ${metOtu.name}"
+            println "  - Bins OTU: ${binOtu.name}"
+            
+            // FIXED: Create the renamed OTU files in the appraise output directory
+            def appraise_dir = file("${params.output_dir}/appraise")
+            appraise_dir.mkdirs()
+            
+            def staged_metOtu = file("${appraise_dir}/${meta.id}_metagenome_otu_table.csv")
+            def staged_binOtu = file("${appraise_dir}/${meta.id}_bins_otu_table.csv")
+            
+            metOtu.copyTo(staged_metOtu)
+            binOtu.copyTo(staged_binOtu)
+            
+            println "  - Staged Metagenome OTU: ${staged_metOtu}"
+            println "  - Staged Bins OTU: ${staged_binOtu}"
+            
+            // SINGLEM_APPRAISE expects: metagenome_otu_tables, genome_otu_tables, assembly_otu_tables
+            [new_meta, staged_metOtu, staged_binOtu, []]
+        }
+        .view { "DEBUG: Final appraise input: $it" }
+
+    // Run SINGLEM_APPRAISE
     SINGLEM_APPRAISE(ch_appraise_input, singlem_metapackage)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
 
@@ -151,7 +194,6 @@ workflow SOMATEM_MAGS {
     assembly_gfa    = FLYE.out.gfa
     assembly_log    = FLYE.out.log
     bam_sorted      = SAMTOOLS_SORT.out.bam
-    bam_index       = SAMTOOLS_INDEX.out.bai
     coverage        = SAMTOOLS_COVERAGE.out.coverage
     bins            = SEMIBIN_SINGLEEASYBIN.out.output_fasta
     bins_csv        = SEMIBIN_SINGLEEASYBIN.out.csv
@@ -172,6 +214,8 @@ workflow SOMATEM_MAGS {
     appraise_summary = SINGLEM_APPRAISE.out.summary
     appraise_binned_otu = SINGLEM_APPRAISE.out.binned_otu_table
     appraise_unbinned_otu = SINGLEM_APPRAISE.out.unbinned_otu_table
+    appraise_assembled_otu = SINGLEM_APPRAISE.out.assembled_otu_table
+    appraise_unaccounted_otu = SINGLEM_APPRAISE.out.unaccounted_otu_table
     appraise_plot = SINGLEM_APPRAISE.out.plot
     
     versions        = ch_versions
@@ -222,7 +266,7 @@ workflow {
         params.semibin_environment
     )
 
-    // Publish results to output directory with explicit copying
+    // Publish results with proper null checking
     SOMATEM_MAGS.out.assembly
         .subscribe { meta, fasta ->
             def dest = file("${params.output_dir}/assembly/${meta.id}.fasta")
@@ -233,10 +277,12 @@ workflow {
 
     SOMATEM_MAGS.out.coverage
         .subscribe { meta, coverage ->
-            def dest = file("${params.output_dir}/coverage/${meta.id}_coverage.txt")
-            dest.parent.mkdirs()
-            coverage.copyTo(dest)
-            println "Coverage saved: ${dest}"
+            if (coverage) {
+                def dest = file("${params.output_dir}/coverage/${meta.id}_coverage.txt")
+                dest.parent.mkdirs()
+                coverage.copyTo(dest)
+                println "Coverage saved: ${dest}"
+            }
         }
 
     SOMATEM_MAGS.out.bins
@@ -274,8 +320,9 @@ workflow {
             println "TaxBurst visualization saved: ${dest}"
         }
 
-    // SingleM appraise outputs
+    // SingleM appraise outputs - Fixed null handling
     SOMATEM_MAGS.out.appraise_summary
+        .filter { meta, summary -> summary != null }
         .subscribe { meta, summary ->
             def dest = file("${params.output_dir}/appraise/${meta.id}_summary.txt")
             dest.parent.mkdirs()
@@ -283,7 +330,26 @@ workflow {
             println "SingleM appraise summary saved: ${dest}"
         }
 
+    SOMATEM_MAGS.out.appraise_binned_otu
+        .filter { meta, binned -> binned != null }
+        .subscribe { meta, binned ->
+            def dest = file("${params.output_dir}/appraise/${meta.id}_binned.csv")
+            dest.parent.mkdirs()
+            binned.copyTo(dest)
+            println "SingleM appraise binned OTU table saved: ${dest}"
+        }
+
+    SOMATEM_MAGS.out.appraise_unbinned_otu
+        .filter { meta, unbinned -> unbinned != null }
+        .subscribe { meta, unbinned ->
+            def dest = file("${params.output_dir}/appraise/${meta.id}_unbinned.csv")
+            dest.parent.mkdirs()
+            unbinned.copyTo(dest)
+            println "SingleM appraise unbinned OTU table saved: ${dest}"
+        }
+
     SOMATEM_MAGS.out.appraise_plot
+        .filter { meta, plot -> plot != null }
         .subscribe { meta, plot ->
             def dest = file("${params.output_dir}/appraise/${meta.id}_plot.svg")
             dest.parent.mkdirs()
