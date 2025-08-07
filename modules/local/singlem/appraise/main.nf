@@ -27,10 +27,34 @@ process SINGLEM_APPRAISE {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     
-    // Build input arguments
-    def metagenome_args = metagenome_otu_tables ? "--metagenome-otu-tables ${metagenome_otu_tables.join(' ')}" : ""
-    def genome_args = genome_otu_tables ? "--genome-otu-tables ${genome_otu_tables.join(' ')}" : ""
-    def assembly_args = assembly_otu_tables ? "--assembly-otu-tables ${assembly_otu_tables.join(' ')}" : ""
+    // Build input arguments - handle both single files and lists
+    def metagenome_args = ""
+    if (metagenome_otu_tables) {
+        if (metagenome_otu_tables instanceof List) {
+            metagenome_args = "--metagenome-otu-tables ${metagenome_otu_tables.join(' ')}"
+        } else {
+            metagenome_args = "--metagenome-otu-tables ${metagenome_otu_tables}"
+        }
+    }
+    
+    def genome_args = ""
+    if (genome_otu_tables) {
+        if (genome_otu_tables instanceof List) {
+            genome_args = "--genome-otu-tables ${genome_otu_tables.join(' ')}"
+        } else {
+            genome_args = "--genome-otu-tables ${genome_otu_tables}"
+        }
+    }
+    
+    def assembly_args = ""
+    if (assembly_otu_tables && assembly_otu_tables.size() > 0) {
+        if (assembly_otu_tables instanceof List) {
+            assembly_args = "--assembly-otu-tables ${assembly_otu_tables.join(' ')}"
+        } else {
+            assembly_args = "--assembly-otu-tables ${assembly_otu_tables}"
+        }
+    }
+    
     def metapackage_args = metapackage ? "--metapackage ${metapackage}" : ""
     
     // Build output arguments
@@ -60,6 +84,22 @@ process SINGLEM_APPRAISE {
         ${output_args} \\
         ${args} \\
         > ${prefix}_appraise_summary.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        singlem: \$(singlem --version 2>&1 | sed 's/singlem //')
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_appraise_summary.txt
+    touch ${prefix}_binned.csv
+    touch ${prefix}_unbinned.csv
+    touch ${prefix}_assembled.csv
+    touch ${prefix}_unaccounted.csv
+    touch ${prefix}_plot.svg
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
