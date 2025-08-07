@@ -67,8 +67,14 @@ workflow SOMATEM_MAGS {
     SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
     ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions)
 
-    // Calculate coverage
-    ch_bam_idx = SAMTOOLS_SORT.out.bam.join(SAMTOOLS_INDEX.out.bai, by: [0])
+    // Calculate coverage - Fix the channel join
+    ch_bam_idx = SAMTOOLS_SORT.out.bam
+        .join(SAMTOOLS_INDEX.out.bai, by: [0])
+        .map { meta, bam, bai -> 
+            // Debug: print what we're getting
+            println "Coverage input: meta=${meta}, bam=${bam}, bai=${bai}"
+            [meta, bam, bai]
+        }
     
     SAMTOOLS_COVERAGE(
         ch_bam_idx, 
@@ -109,11 +115,12 @@ workflow SOMATEM_MAGS {
     CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
-    // Run SingleM pipe on bins (genomes) for appraisal
+    // Run SingleM pipe on bins (genomes) for appraisal - Fix metadata matching
     ch_bins_for_singlem = SEMIBIN_SINGLEEASYBIN.out.output_fasta.map { meta, bins ->
-        def new_meta = meta.clone()
+        def new_meta = [:]
+        new_meta.id = meta.id  // Keep the original ID for joining
         new_meta.input_type = 'genome'
-        // Keep the same ID for joining later
+        new_meta.original_id = meta.id
         [new_meta, bins]
     }
     
@@ -121,13 +128,14 @@ workflow SOMATEM_MAGS {
     SINGLEM_PIPE_BINS(ch_bins_for_singlem, singlem_metapackage)
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
-    // Prepare SingleM appraise input - Fix to match module input structure
+    // Run SingleM appraise to compare metagenome vs bins - Fix the join
     ch_appraise_input = SINGLEM_PIPE.out.otu_table
         .join(SINGLEM_PIPE_BINS.out.otu_table, by: [0])
         .map { meta, metagenome_otu, bins_otu ->
+            // Debug: print what we're joining
+            println "Appraise input: meta=${meta}, metagenome_otu=${metagenome_otu}, bins_otu=${bins_otu}"
             def new_meta = [id: "${meta.id}_appraisal"]
-            // Module expects: tuple val(meta), path(metagenome_otu_tables), path(genome_otu_tables), path(assembly_otu_tables)
-            [new_meta, metagenome_otu, bins_otu, []]
+            [new_meta, [metagenome_otu], [bins_otu], []]
         }
     
     SINGLEM_APPRAISE(ch_appraise_input, singlem_metapackage)
@@ -276,6 +284,7 @@ workflow {
 
     // SingleM appraise outputs
     SOMATEM_MAGS.out.appraise_summary
+        .ifEmpty { println "Warning: No appraise summary generated" }
         .subscribe { meta, summary ->
             def dest = file("${params.output_dir}/appraise/${meta.id}_summary.txt")
             dest.parent.mkdirs()
@@ -284,6 +293,7 @@ workflow {
         }
 
     SOMATEM_MAGS.out.appraise_plot
+        .ifEmpty { println "Warning: No appraise plot generated" }
         .subscribe { meta, plot ->
             def dest = file("${params.output_dir}/appraise/${meta.id}_plot.svg")
             dest.parent.mkdirs()
