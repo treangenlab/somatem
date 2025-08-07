@@ -1,0 +1,6 @@
+name: singlem_appraise
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - singlem

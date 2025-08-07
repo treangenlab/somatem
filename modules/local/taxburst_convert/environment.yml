@@ -1,0 +1,5 @@
+name: taxburst_convert
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.8
