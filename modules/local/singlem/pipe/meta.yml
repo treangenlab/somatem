@@ -1,0 +1,72 @@
+name: "singlem_pipe"
+description: Taxonomic profiling and OTU table generation from shotgun metagenomes using SingleM
+keywords:
+  - metagenomics
+  - microbial
+  - taxonomy
+  - profiling
+  - otu
+  - marker genes
+tools:
+  - "singlem":
+      description: "Novelty-inclusive microbial community profiling of shotgun metagenomes"
+      homepage: "https://github.com/wwood/singlem"
+      documentation: "https://wwood.github.io/singlem/"
+      tool_dev_url: "https://github.com/wwood/singlem"
+      doi: "10.1038/s41587-025-02738-1"
+      licence: "['GPL v3']"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false, input_type:'reads' ]
+        input_type can be 'reads', 'genome', or 'sra'
+  - reads:
+      type: file
+      description: |
+        Input sequence files. Can be:
+        - Single or paired-end FASTQ/FASTA files (raw reads)
+        - Genome FASTA files
+        - SRA files
+      pattern: "*.{fastq,fq,fasta,fa,sra}{,.gz}"
+  - metapackage:
+      type: directory
+      description: SingleM metapackage directory containing marker gene HMMs and reference sequences
+      pattern: "*"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - taxonomic_profile:
+      type: file
+      description: Condensed taxonomic profile in TSV format
+      pattern: "*_profile.tsv"
+  - krona_profile:
+      type: file
+      description: Krona HTML visualization of taxonomic profile
+      pattern: "*_krona.html"
+  - otu_table:
+      type: file
+      description: OTU table with operational taxonomic units
+      pattern: "*_otu_table.csv"
+  - archive_otu_table:
+      type: file
+      description: Archive format OTU table for database creation
+      pattern: "*_archive_otu_table.csv"
+  - jplace:
+      type: file
+      description: Phylogenetic placement files in jplace format
+      pattern: "*.jplace"
+
+authors:
+  - "@wwood" # Original author
+  - "@microbemarsh" # for nextflow
