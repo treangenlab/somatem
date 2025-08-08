@@ -1,0 +1,6 @@
+name: singlem_pipe
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - singlem

@@ -1,0 +1,51 @@
+name: "taxburst_convert"
+description: Convert various taxonomic classification outputs to taxburst-compatible format
+keywords:
+  - taxonomy
+  - classification
+  - conversion
+  - centrifuge
+  - sylph
+  - emu
+  - lemur
+  - magnet
+tools:
+  - "python":
+      description: "Python programming language"
+      homepage: "https://www.python.org/"
+      documentation: "https://docs.python.org/"
+      licence: "['Python Software Foundation License']"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - classification_file:
+      type: file
+      description: Classification results file from various tools
+      pattern: "*.{csv,tsv,txt}"
+  - tool_name:
+      type: string
+      description: |
+        Name of the classification tool that generated the input file.
+        Supported tools: centrifuge, sylph, emu, lemur, magnet, lemur_magnet
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - converted:
+      type: file
+      description: Converted classification file in taxburst-compatible format
+      pattern: "*.converted.tsv"
+
+authors:
+  - "@microbemarsh"

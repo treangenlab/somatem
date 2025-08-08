@@ -14,12 +14,14 @@
 source /path/to/miniforge3/etc/profile.d/conda.sh
 conda activate somatemtest
 
-nextflow run /path/to/Documents/SOMAteM/subworkflows/somatem_mags.nf \
-  --input_dir   /path/to/Documents/SOMAteM/examples/data/input4mags \
-  --output_dir  /path/to/Documents/SOMAteM/examples/data/mag_output \
+nextflow run /path/to/Somatem/subworkflows/somatem_mags_nf \
+  --input_dir   /path/to/Somatem/examples/data/input4mags \
+  --output_dir  /path/to/Somatem/examples/data/mag_output3 \
   --threads     96 \
   --flye_mode nano-hq \
   --semibin_environment human_gut \
+  --completeness_threshold 50 \
   --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
   --bakta_db    /path/to/bakta/db \
-  -c /path/to/Documents/SOMAteM/confs/somatem_mags.config
+  --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
+  -c /path/to/SOMAteM/conf/simple_somatem_mags.config \
