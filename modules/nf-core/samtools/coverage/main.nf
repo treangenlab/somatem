@@ -10,11 +10,11 @@ process SAMTOOLS_COVERAGE {
     input:
     tuple val(meta), path(input), path(input_index)
     tuple val(meta2), path(fasta)
-    tuple val(meta3), path(fai)
+    tuple val(meta3), path(fqi)
 
     output:
-    tuple val(meta), path("*.txt"), emit: coverage
-    path "versions.yml"           , emit: versions
+    tuple val(meta), path("*.coverage.txt"), emit: coverage
+    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,12 +22,15 @@ process SAMTOOLS_COVERAGE {
     script:
     def args   = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def reference = fasta && !fasta.name.startsWith('OPTIONAL_FILE') ? "--reference ${fasta}" : ""
+    def fqi_param = fqi && !fqi.name.startsWith('OPTIONAL_FILE') ? "--fqi ${fqi}" : ""
     """
     samtools \\
         coverage \\
         $args \\
-        -o ${prefix}.txt \\
-        --reference ${fasta} \\
+        $reference \\
+        $fqi_param \\
+        -o ${prefix}.coverage.txt \\
         $input
 
     cat <<-END_VERSIONS > versions.yml
@@ -39,7 +42,7 @@ process SAMTOOLS_COVERAGE {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.txt
+    touch ${prefix}.coverage.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

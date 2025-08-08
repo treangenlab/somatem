@@ -24,6 +24,10 @@ process BAKTA_BAKTA {
     tuple val(meta), path("${prefix}.hypotheticals.faa"), emit: hypotheticals_faa
     tuple val(meta), path("${prefix}.tsv")              , emit: tsv
     tuple val(meta), path("${prefix}.txt")              , emit: txt
+    tuple val(meta), path("${prefix}.inference.tsv")    , emit: inference_tsv
+    tuple val(meta), path("${prefix}.png"), optional: true, emit: png
+    tuple val(meta), path("${prefix}.svg"), optional: true, emit: svg
+    tuple val(meta), path("${prefix}.json")             , emit: json
     path "versions.yml"                                 , emit: versions
 
     when:
@@ -34,6 +38,20 @@ process BAKTA_BAKTA {
     prefix   = task.ext.prefix ?: "${meta.id}"
     def proteins_opt = proteins ? "--proteins ${proteins[0]}" : ""
     def prodigal_tf = prodigal_tf ? "--prodigal-tf ${prodigal_tf[0]}" : ""
+    
+    // Check if this bin should have plots based on completeness threshold from params
+    def skip_plot = ""
+    if (meta.completeness != null && meta.completeness < params.completeness_threshold) {
+        skip_plot = "--skip-plot"
+        println "Skipping plots for ${meta.id} (completeness: ${meta.completeness}% < ${params.completeness_threshold}%)"
+    } else if (meta.completeness != null && meta.completeness >= params.completeness_threshold) {
+        println "Generating plots for ${meta.id} (completeness: ${meta.completeness}% >= ${params.completeness_threshold}%)"
+    } else {
+        // If completeness is not available, skip plots by default
+        skip_plot = "--skip-plot"
+        println "Skipping plots for ${meta.id} (completeness unknown)"
+    }
+    
     """
     bakta \\
         $fasta \\
@@ -41,8 +59,10 @@ process BAKTA_BAKTA {
         --threads $task.cpus \\
         --prefix $prefix \\
         --meta \\
+        --compliant \\
         $proteins_opt \\
         $prodigal_tf \\
+        $skip_plot \\
         --db $db
 
     cat <<-END_VERSIONS > versions.yml
@@ -64,6 +84,14 @@ process BAKTA_BAKTA {
     touch ${prefix}.hypotheticals.faa
     touch ${prefix}.tsv
     touch ${prefix}.txt
+    touch ${prefix}.inference.tsv
+    touch ${prefix}.json
+    
+    # Only create PNG/SVG if completeness >= threshold
+    if [[ "${meta.completeness}" != "null" ]] && (( \$(echo "${meta.completeness} >= ${params.completeness_threshold}" | bc -l) )); then
+        touch ${prefix}.png
+        touch ${prefix}.svg
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
