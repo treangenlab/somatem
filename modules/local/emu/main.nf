@@ -30,9 +30,7 @@ process EMU_ABUNDANCE {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     //  Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    val(meta)
-    path(reads)
-    path(db)
+    tuple val(meta), path(reads)
 
     output:
     tuple val(meta), path("*abundance.tsv")                     , emit: report
@@ -51,12 +49,10 @@ process EMU_ABUNDANCE {
     """
     emu \\
         abundance \\
-        --db $db \\
         $args \\
         --threads $task.cpus \\
-        --output-dir ./ \\
         $reads
-        
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         emu: \$(echo \$(emu --version 2>&1) | sed 's/^.*emu //; s/Using.*\$//' )
