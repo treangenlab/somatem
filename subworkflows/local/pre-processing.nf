@@ -2,9 +2,9 @@
 
 include { convert_to_nfcore_tuple } from './utils/nf-core-compatibility.nf'
 
-include { NANOPLOT as RawNanoPlot; NANOPLOT as FinalNanoPlot } from '../modules/nf-core/nanoplot/main.nf'
+include { NANOPLOT as RawNanoPlot; NANOPLOT as FinalNanoPlot } from '../../modules/nf-core/nanoplot/main.nf'
 include { runHostile } from './runHostile.nf'
-include { CHOPPER } from '../modules/nf-core/chopper/main.nf'
+include { CHOPPER } from '../../modules/nf-core/chopper/main.nf'
 
 
 
