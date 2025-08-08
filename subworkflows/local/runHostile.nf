@@ -1,14 +1,14 @@
 #!/usr/bin/env nextflow
 
-include { HOSTILE_FETCH } from "../modules/nf-core/hostile/fetch/main.nf"
-include { HOSTILE_CLEAN } from "../modules/nf-core/hostile/clean/main.nf"
-include { convert_to_nfcore_tuple } from "../subworkflows/utils/nf-core-compatibility.nf"
+include { HOSTILE_FETCH } from "../../modules/nf-core/hostile/fetch/main.nf"
+include { HOSTILE_CLEAN } from "../../modules/nf-core/hostile/clean/main.nf"
+include { convert_to_nfcore_tuple } from "./utils/nf-core-compatibility.nf"
 // note: path of module is relative to the directory containing this file! (./testing/)
 
 // -------------------------
 // Parameters
 // -------------------------
-params.database_dir = "${projectDir}/../databases/hostile/reference"
+params.database_dir = "${projectDir}/../../databases/hostile/reference"
 
 // -------------------------
 // Workflow
