@@ -1,0 +1,9 @@
+name: taxburst
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.8
+  - pip
+  - pip:
+    - taxburst>=0.3.0

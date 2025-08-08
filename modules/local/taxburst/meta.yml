@@ -1,0 +1,61 @@
+name: "taxburst"
+description: Create interactive sunburst charts for taxonomic data
+keywords:
+  - taxonomy
+  - visualization
+  - metagenomics
+  - sunburst
+  - krona
+tools:
+  - "taxburst":
+      description: "Sunburst charts for taxonomy, based on Krona"
+      homepage: "https://github.com/taxburst/taxburst"
+      documentation: "https://taxburst.github.io/taxburst/"
+      tool_dev_url: "https://github.com/taxburst/taxburst"
+      licence: "['BSD-3-Clause-Clear']"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - classification_file:
+      type: file
+      description: Classification results file from various tools (centrifuge, sylph, lemur+magnet, emu, etc.)
+      pattern: "*.{csv,tsv,txt}"
+  - input_format:
+      type: string
+      description: |
+        Input format specification. Supported formats:
+        - csv_summary: sourmash tax metagenome summary format
+        - tax_annotate: sourmash tax annotate format  
+        - SingleM: SingleM profile format
+        - krona: Krona-style TSV format
+        - json: JSON format
+        - centrifuge: Centrifuge classification output (requires conversion)
+        - sylph: Sylph classification output (requires conversion)
+        - emu: Emu classification output (requires conversion)
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - html:
+      type: file
+      description: Interactive HTML sunburst chart
+      pattern: "*.html"
+  - json:
+      type: file
+      description: JSON representation of taxonomy data (optional)
+      pattern: "*.json"
+
+authors:
+  - "@ctb" # Original author
+  - "@microbemarsh" # to get the taxburst nextflow
