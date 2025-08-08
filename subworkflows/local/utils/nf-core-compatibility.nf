@@ -9,7 +9,8 @@ workflow convert_to_nfcore_tuple {
     main:
 
     // read single file
-    if (reads.endsWith(".fastq.gz") || reads.endsWith(".fastq")) {
+    is_single_file = reads.endsWith(".fastq.gz") || reads.endsWith(".fastq") || reads.endsWith(".fa") || reads.endsWith(".fasta")
+    if (is_single_file) {
         tuple_out = Channel.fromPath(reads)
             .map { r ->
                 def meta = [:] // Use dummy values; meta is required by nf-core modules
