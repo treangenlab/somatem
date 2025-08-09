@@ -140,7 +140,10 @@ _Clean up these old notes_
 - centrifuger: 
   - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
   - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
-- emu: link retrieved from ?
+- emu: link retrieved from OSF which can be found at this [link](https://osf.io/56uf7/files/osfstorage/63da8e512781fc02700096b8)
+- SingleM data download [url](https://wwood.github.io/singlem/tools/data) can be downloaded by running the `singlem data --output-directory /path/to/dbs/singlem`
+- checkm2 database can be downloaded by running `checkm2 database --download --path /custom/path/`
+- bakta database can be downloaded by running `bakta_db download --output <output-path> --type [light|full]` (this is the best method) but you can download from their zenodo archive.
 
 
 ## Updating databases, best practices
