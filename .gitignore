@@ -9,6 +9,8 @@ examples/data/mag_output
 examples/soma_test.sh
 examples/slurm-2136779.out
 
+# other files
+archive/
 
 # nextflow outputs and logs
 .nextflow.log*
