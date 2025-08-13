@@ -10,3 +10,7 @@ rm lemur.tar.gz
 echo "database name: rv221bacarc-rv222fungi.tar.gz" > lemur/db_info
 echo "RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes" >> lemur/db_info
 echo "db source: https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1" >> lemur/db_info
+
+# notes: need to automate better with variable names reused. 
+# - Add check for file presence
+# - convert into a process within the main.nf that can be called by a preliminary sub-workflow? 
