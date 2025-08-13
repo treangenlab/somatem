@@ -1,6 +1,8 @@
 
 
 process MAGNET {
+    label 'process_high'
+    
     conda "${moduleDir}/spec-file.txt" // peg version with bioconda::name=version
 
     // optional: More reproducible than conda
@@ -12,6 +14,7 @@ process MAGNET {
 
     output:
       path output_dir
+      path "versions.yml"                                         , emit: versions
 
     script:
       output_dir = "${reads.baseName}-magnet-output"
@@ -20,7 +23,14 @@ process MAGNET {
       -i ${reads} \
       -c ${classification} \
       -o ${output_dir}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        magnet: default
+    END_VERSIONS
     """
+
+    
 }
 
 
