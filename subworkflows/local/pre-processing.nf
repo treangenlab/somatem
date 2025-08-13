@@ -22,11 +22,11 @@ params.input_dir   = 'examples/data'
 // -------------------------
 
 workflow {
-    in_ch = convert_to_nfcore_tuple(params.input_dir)
+    reads_ch = convert_to_nfcore_tuple(params.input_dir)
     contam_ref = Channel.value([]) // empty channel for now
 
-    RawNanoPlot(in_ch) // initial QC
-    runHostile(in_ch, params.host_index) // host contamination removal
+    RawNanoPlot(reads_ch) // initial QC
+    runHostile(reads_ch, params.host_index) // host contamination removal
 
     CHOPPER(runHostile.out, contam_ref) // quality filtering; future contam removal)
     FinalNanoPlot(CHOPPER.out.fastq) // final QC

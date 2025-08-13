@@ -2,17 +2,18 @@
 _First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
-- **Lemur**: working with example from repo
+- **Lemur**: working with example from repo. Making nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). Need to expand to output files.
   - Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
 - **Magnet**: Almost works ; need to test with a proper example with WGS fastq data?
+  - Issue with the minimal test file from lemur having a single entry?: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
   - conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
 
 - **Sylph**: test module for profile with example data from repo works
 
-- **Emu**: Works with example from repo. 
+- **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
   
   1. Copied example from EMU repo
   2. fixed `meta` input with dummy value; solved conda issues with channel priority;
@@ -43,9 +44,9 @@ _First test each module independently with example data from each tool's own rep
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
 ## Pre-processing
-- Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
-  - pipeline works ; but trying to incorporate default parameters that Austin wrote in as `task.ext.args` ; 
-    - Switching to nf-core template for full compatibility to this one
+- Combining : stringing pre-processing modules into a subworkflow. Tested, works.
+  - pipeline works ; incorporated default parameters that Austin wrote in as `task.ext.args` ; 
+    - (_Switching to nf-core template for full compatibility to this one_) 
   - (_fixed: fixed the stalling workflow with `channel.value([])` input to chopper_) Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
   - (_fixed: using value process `Channel.value()` for reusing single value channels_) something wrong with the runHostile subworkflow? Is only running hostile on 1 input instead of 2 ; and is getting stuck 
   - ```log
