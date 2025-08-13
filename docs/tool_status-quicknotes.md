@@ -3,7 +3,15 @@ _First test each module independently with example data from each tool's own rep
 
 ## Taxonomic profiling
 - **Lemur**: working with example from repo. Making nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). Need to expand to output files.
-  - Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
+  - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
+    ```log
+    Completed at: 13-Aug-2025 17:30:31
+    Duration    : 45m 46s
+    CPU hours   : 9.1
+    Succeeded   : 1
+    ``` 
+    
+  - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
 - **Magnet**: Almost works ; need to test with a proper example with WGS fastq data?
   - Issue with the minimal test file from lemur having a single entry?: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
@@ -136,6 +144,7 @@ Need to record the source of each example dataset and database in the database f
   - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 
 ### Real databases
+- Lemur: Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
 
 _Clean up these old notes_
 - centrifuger: 

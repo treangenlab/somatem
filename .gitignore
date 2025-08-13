@@ -12,6 +12,9 @@ examples/slurm-2136779.out
 # other files
 archive/
 
+# intermediate outputs
+examples/lemur/46_1_sub10k.fastq-lemur-output/
+
 # nextflow outputs and logs
 .nextflow.log*
 work/
