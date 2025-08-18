@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
 include { TOOL } from "../modules/local/module_template.nf"
 // note: path of module is relative to the directory containing this file! (./testing/)
 
@@ -17,11 +18,11 @@ params.rank = 'species'
 // -------------------------
 workflow {
 
-    reads = Channel.fromPath(params.reads)
-    database = Channel.fromPath(params.database)
-    taxonomy = Channel.fromPath(params.taxonomy)
-    rank = Channel.of(params.rank)
+    reads_ch = convert_to_nfcore_tuple(params.reads)
+    database_ch = Channel.fromPath(params.database)
+    taxonomy_ch = Channel.fromPath(params.taxonomy)
+    rank_ch = Channel.of(params.rank)
 
-    TOOL(reads, database, taxonomy, rank)
+    TOOL(reads_ch, database_ch, taxonomy_ch, rank_ch)
 }
     
