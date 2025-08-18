@@ -2,7 +2,7 @@
 _First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
-- **Lemur**: working with example from repo. Making nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). Need to expand to output files.
+- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
   - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
     Completed at: 13-Aug-2025 17:30:31
@@ -10,11 +10,17 @@ _First test each module independently with example data from each tool's own rep
     CPU hours   : 9.1
     Succeeded   : 1
     ``` 
-    
+  - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). (_**todo:**_ Need to expand to output files to send to MAGnet easily)
   - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- **Magnet**: Almost works ; need to test with a proper example with WGS fastq data?
+- **Magnet**: Errors with ncbi datasets downloading? **_todo_**: need to lock version numbers and try?
   - Issue with the minimal test file from lemur having a single entry?: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
+    - Looks like ncbi datasets are not being downloaded hence the unzip command fails ; but when running alone, the unzip command gives message saying _no zip files have been found.._
+    - added the missing dependency : `ncbi-dataset-cli` to the yml file ; still same error.
+    - Testing on `46_1_sub10k.fastq.gz` file with the full lemur database classification also fails with same error. (_seeing if more classification data fixes the issue of downloading genomes.._)
+      ```sh
+      nextflow run test-modules/magnet_test.nf --reads "./examples/data/46_1_sub10k.fastq.gz" --classification "./examples/lemur/46_1_sub10k.fastq-lemur-output/relative_abundance.tsv"
+      ```
   - conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
@@ -82,6 +88,11 @@ Command error:
     - Tried remaking the whole env with this dependancy locked in the `environment.yml` file (_will take care of any dependancy conflicts_)  
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
+## Other tools
+- Rhea: works with example data from repo. 
+  - Couldn't handle metadata so omitted for now. _Could use the directory name as the `meta.id`?_
+  - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
+
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
   - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
@@ -133,6 +144,7 @@ Need to record the source of each example dataset and database in the database f
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
+- `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
 
 ## Database files (`databases/`)
 
