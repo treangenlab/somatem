@@ -4,3 +4,6 @@
 [submodule "docs/somatem-docs"]
 	path = docs/somatem-docs
 	url = git@github.com:ppreshant/somatem-docs.git
+[submodule "modules/local/rhea/rhea-repo"]
+	path = modules/local/rhea/rhea-repo
+	url = https://github.com/treangenlab/rhea
