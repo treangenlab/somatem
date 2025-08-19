@@ -153,23 +153,26 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
 _Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
 Todo:
+_bring almost on par_
+- [x] setup micromamba env ; 
+  - [x] _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
+  - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
+- [x] Install vscode plugins: nextflow (linter and everything)
+- [ ] 
+
+_enhance the setup_
 - [ ] Add a DB_dir variable to the config file and connect databases to it
 - [ ] Update databases to the shared directory location. Download the missing dbs there
   - [ ] lemur - update
   - [ ] emu - update
   - [ ] hostile - download
-- [] setup micromamba env ; 
-  - [x] _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
-  - [ ] create a `other_envs` dir in `micromamba/` for nextflow's stuff
-- [ ] Install vscode plugins: nextflow (linter and everything)
-- [ ] 
   
   
 
 
-# Database notes
+# data/databases to download
+Recording the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
-Need to record the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
 ## Example files (`examples/`)
 - `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
@@ -179,6 +182,33 @@ Need to record the source of each example dataset and database in the database f
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
+
+### Setup automatic download script
+Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
+ 
+_procedure suggested by perplexity_
+- Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
+  - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
+  - Thoughts:
+    - Use `curl` to download the file (or `wget`)
+    - Use `tar` to extract the file
+    - (optional) Use `mv` to move the file to the correct location
+- Use a script with a text file scraped for downloading multiple files with proper naming
+ - create a text/csv file in this format: `GoogleDrive,1AbcDXYZ12345,example_data1.zip`
+ - bash script:
+    ```bash
+    #!/bin/bash
+
+    while IFS=, read -r TYPE LINK DEST; do
+      if [[ $TYPE == "GoogleDrive" ]]; then
+        wget --no-check-certificate "https://drive.google.com/uc?export=download&id=${LINK}" -O "${DEST}"
+      elif [[ $TYPE == "Dropbox" ]]; then
+        wget --no-check-certificate "${LINK}" -O "${DEST}"
+      fi
+    done < files.txt
+    ```
+- **caveats**: Limits: For large Google Drive files (>100MB), you may need additional logic to handle Google’s virus scan/interruption page. For most small files, the above works.
+
 
 ## Database files (`databases/`)
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
