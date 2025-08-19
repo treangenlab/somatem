@@ -107,7 +107,8 @@ Command error:
 - Rhea: works with example data from repo. 
   - Couldn't handle metadata so omitted for now. _Could use the directory name as the `meta.id`?_
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
-  - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage)
+  - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
+  - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]`
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
