@@ -163,6 +163,13 @@ Need to record the source of each example dataset and database in the database f
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
 
 ## Database files (`databases/`)
+Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
+Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
+- Shared: benefit of space ; Store updated versions separately
+  - Can make a DB_dir=`/home/dbs/` and encourage users to make a similar shared dir for the dbs and update this variable in the config file
+  - Scripts: make a script to look for the required db in the DB_dir and download if not found (based on the tools being used..)
+- Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
+
 
 ### Testing/demo databases
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
@@ -172,13 +179,17 @@ Need to record the source of each example dataset and database in the database f
   - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 
 ### Real databases
-- Lemur: Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
+_looking for databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
+
+- Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
+- hostile: record where this is from. 
 
 _Clean up these old notes_
 - centrifuger: 
   - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
   - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 - emu: link retrieved from ?
+
 
 
 ## Updating databases, best practices
