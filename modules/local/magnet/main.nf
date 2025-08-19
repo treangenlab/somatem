@@ -3,7 +3,7 @@
 process MAGNET {
     label 'process_high'
     
-    conda "${moduleDir}/spec-file.txt" // peg version with bioconda::name=version
+    conda "${moduleDir}/dependencies.yml" // for locked env use: locked-spec-file.txt
 
     // optional: More reproducible than conda
     // container "oras://community.wave.seqera.io/library/name:version--build"  // generate with `wave containerize`
@@ -17,9 +17,13 @@ process MAGNET {
       path "versions.yml"                                         , emit: versions
 
     script:
-      output_dir = "${reads.baseName}-magnet-output"
+    def args = task.ext.args ?: ''
+    output_dir = "${reads.baseName}-magnet-output"
+    
     """
     python ${moduleDir}/magnet-repo/magnet.py \
+      ${args} \
+      --threads $task.cpus \
       -i ${reads} \
       -c ${classification} \
       -o ${output_dir}

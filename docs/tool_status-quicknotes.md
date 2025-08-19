@@ -14,13 +14,28 @@ _First test each module independently with example data from each tool's own rep
   - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
 - **Magnet**: Errors with ncbi datasets downloading? **_todo_**: need to lock version numbers and try?
-  - Issue with the minimal test file from lemur having a single entry?: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
+  - Issue: `AgglomerativeClustering` , problem with `affinity` parameter; could this be because of a single thing being clustered?.
+    - error details:
+    ```log
+    File "/home/pbk1/somatem/modules/local/magnet/magnet-repo/magnet.py", line 76, in find_representative_genome
+    model = AgglomerativeClustering(affinity='precomputed', n_clusters=None, compute_full_tree=True,
+    TypeError: __init__() got an unexpected keyword argument 'affinity' 
+    ``` 
+  - Issue: fastANI not found. (Add `fastANI` to the yml file)
+  - Issue with ete3's `NCBITaxa` class: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
     - Looks like ncbi datasets are not being downloaded hence the unzip command fails ; but when running alone, the unzip command gives message saying _no zip files have been found.._
     - added the missing dependency : `ncbi-dataset-cli` to the yml file ; still same error.
-    - Testing on `46_1_sub10k.fastq.gz` file with the full lemur database classification also fails with same error. (_seeing if more classification data fixes the issue of downloading genomes.._)
+    - tried to update the ncbi taxonomy database update in python (`ncbi_taxa_db.update_taxonomy_database()`, where `ncbi_taxa_db` is an instance of `NCBITaxa` class within `ete3` package) ; This should create a +600 MB database within `~/.etetoolkit/`. The first run is supposed to do this but something might have gone wrong since I had a 47 MB file here instead.
+    - taxid of `1639` which is ([listeria monocytogenes](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=1639&lvl=3&lin=f&keep=1&srchmode=5&unlock)) is still not found by `ncbi_taxa_db.get_lineage` function. 
+    - (_more testing_) Testing on `46_1_sub10k.fastq.gz` file with the full lemur database classification (_has ~20 entries instead of just 1_) also fails with same error. (_seeing if more classification data fixes the issue of downloading genomes.._)
       ```sh
       nextflow run test-modules/magnet_test.nf --reads "./examples/data/46_1_sub10k.fastq.gz" --classification "./examples/lemur/46_1_sub10k.fastq-lemur-output/relative_abundance.tsv"
       ```
+    - debug within dir `a1/980525cfbf580823faada78257dfd1` 
+      - new env with pegged ncbi-dataset-cli at `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-ccf2ab982aeeb00e802d37e58f1e0dad`
+      - all pagged packages: `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-7e8a569563b555ca18eb6d243ac1ea34`
+  
+  Updates:
   - conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
@@ -92,6 +107,7 @@ Command error:
 - Rhea: works with example data from repo. 
   - Couldn't handle metadata so omitted for now. _Could use the directory name as the `meta.id`?_
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
+  - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage)
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
