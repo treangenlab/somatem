@@ -18,11 +18,12 @@ channels:
     - bioconda
 dependencies:
     - python=3.9
-    # - ncbi-datasets # not found in bioconda/conda-forge
-    - minimap2
-    - samtools
+    - ncbi-datasets-cli=15.27.1
+    - minimap2=2.24  
+    - samtools=1.15.1
     - biopython
     - pandas
-    - ete3
-    - bwa
+    - ete3=3.1.2
+    - bwa=0.7.17
     - scikit-learn
+    - fastani # added by PK
