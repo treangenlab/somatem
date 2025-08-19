@@ -149,6 +149,23 @@ Can make the tuple using the map workflow from any pipeline_initialization subwo
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)
 
+# Porting from `t8` to `owlet3`
+_Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
+
+Todo:
+- [ ] Add a DB_dir variable to the config file and connect databases to it
+- [ ] Update databases to the shared directory location. Download the missing dbs there
+  - [ ] lemur - update
+  - [ ] emu - update
+  - [ ] hostile - download
+- [ ] setup micromamba env ; 
+  - _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
+  - [ ] create a `other_envs` dir in `micromamba/` for nextflow's stuff
+- [ ] 
+  
+  
+
+
 # Database notes
 
 Need to record the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
