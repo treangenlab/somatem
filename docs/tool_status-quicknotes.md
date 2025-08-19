@@ -158,9 +158,10 @@ Todo:
   - [ ] lemur - update
   - [ ] emu - update
   - [ ] hostile - download
-- [ ] setup micromamba env ; 
-  - _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
+- [] setup micromamba env ; 
+  - [x] _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
   - [ ] create a `other_envs` dir in `micromamba/` for nextflow's stuff
+- [ ] Install vscode plugins: nextflow (linter and everything)
 - [ ] 
   
   
