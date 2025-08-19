@@ -24,6 +24,7 @@ process LEMUR {
     """
     lemur -i ${reads} \
       ${args} \
+      --num-threads $task.cpus \
       -o ${output_dir}
 
     cat <<-END_VERSIONS > versions.yml
