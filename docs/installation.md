@@ -32,6 +32,11 @@ mkdir -p ~/micromamba/other-envs
 # Development notes
 _This is relevant if you are modifying the pipeline/repo. Using VSCode or other IDEs based on it_
 
-- Install the nextflow extension for vscode
+## VSCode
+- Install the nextflow extension for VSCode
   - Since we are using micromamba, we need to set the nextflow > java.home path in the plugin settings (`@ext:nextflow.nextflow`) to `/home/pbk1/micromamba/envs/nf_base_env/lib/jvm` (within the micromamba env)
 - Install other plugins that would be useful: Rainbow csv, ?
+
+## Cloning the repo
+- Use `git clone --recurse-submodules ...` to clone the repo including it's submodules
+  - If already cloned the repo the normal way, use `git submodule update --init` to update the submodules ; otherwise, the sub-module repos will be empty folders
