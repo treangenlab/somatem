@@ -154,6 +154,7 @@ _Use this opportunity to make sure that the setup is fully portable and include 
 
 Todo:
 _bring almost on par_
+- [x] git clone with `--recurse-submodules`
 - [x] setup micromamba env ; 
   - [x] _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
   - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
@@ -161,6 +162,7 @@ _bring almost on par_
 - [ ] 
 
 _enhance the setup_
+- [ ] Add a scripted way to download the example files
 - [ ] Add a DB_dir variable to the config file and connect databases to it
 - [ ] Update databases to the shared directory location. Download the missing dbs there
   - [ ] lemur - update
@@ -185,7 +187,7 @@ Recording the source of each example dataset and database in the database folder
 
 ### Setup automatic download script
 Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
- 
+- Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
 - Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
   - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
