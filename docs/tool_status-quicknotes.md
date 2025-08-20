@@ -13,8 +13,49 @@ _First test each module independently with example data from each tool's own rep
   - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). (_**todo:**_ Need to expand to output files to send to MAGnet easily)
   - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- **Magnet**: Errors with ncbi datasets downloading? **_todo_**: need to lock version numbers and try?
-  - Issue: `AgglomerativeClustering` , problem with `affinity` parameter; could this be because of a single thing being clustered?.
+- **Magnet**: Errors with ncbi datasets downloading? Debug with Eddy's Mimic project env.
+  - (_debug_) Using Eddy's Mimic project env, magnet runs fine ; and there's more time gap between each entry of the downloaded genomes. **_todo_**: Look for something that is pacing the number of reqests, some other ncbi tool in conda?
+    - Output log showing all 15 entries downloaded. _Stuck at the unzip step since no bash commands are found in this env_ ; Fix using `export PATH=$PATH:/usr/bin/`, this might be due to accessing an env not within the user's home directory.
+    ```log
+    min_abundance: 0
+    num_species: 15
+    751585           GCF_000210595.1         Coprococcus sp. ART55/1                 ART55/1         Chromosome
+    165186           Genome Not Found.
+    360807           GCF_001406855.1         Roseburia inulinivorans                 L1-83           Contig
+    40520            GCF_025147765.1         Blautia obeum ATCC 29174                ATCC 291..      Complete Genome
+    2981771          GCF_025567165.1         Laedolimicola ammoniilytica             Sanger_0..      Scaffold
+    2292206          GCF_003478505.1         Clostridium sp. AF27-2AA                AF27-2AA        Scaffold
+    1519439          GCF_000765235.1         Oscillibacter sp. ER4                   ER4             Contig
+    2763663          GCF_014385265.1         Enterocloster hominis (ex Li..          BX10            Contig
+    592978           GCF_051861395.1         Mediterraneibacter faecis               Bg7063          Complete Genome
+    29523            Genome Not Found.
+    820              GCF_044361425.1         Bacteroides uniformis                   JCM5828         Complete Genome
+    853              GCF_002586945.1         Faecalibacterium prausnitzii            Indica          Complete Genome
+    821              GCF_000012825.1         Phocaeicola vulgatus ATCC 84..          ATCC 848..      Complete Genome
+    259315           Genome Not Found.
+    745368           GCF_016900095.1         Gemmiger formicilis                     An812           Contig
+    ```
+      - Found a dependancy that might be relevant to the rate control of requests: `ncbi-dataset-cli` ; 
+        - [ncbi-vdb](https://github.com/ncbi/ncbi-vdb) : This corresponds to SRA; not sure if this has anything to do here. 
+  - Issue: `datasets download genomes ...` command not running? ; returning non-zero exit status. But it runs fine when run directly in conda env `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-8f384ba07576431396f94c81825f8f83` alone in bash. running through `.command.sh` fails after downloading a few genomes / not reproducible with each run..
+    - When running with `check=False`, it gives `Error: 429 Too Many Requests` between a few files. 
+    - error details:
+    ```log
+    File "/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-8f384ba07576431396f94c81825f8f83/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+    subprocess.CalledProcessError: Command '['datasets', 'download', 'genome', 'accession', 'GCF_001406855.1', '--include', 'genome', '--filename', '46_1_sub10k.fastq-magnet-output/ncbi_downloads/360807.zip', '--no-progressbar']' returned non-zero exit status 1.
+    ```
+    - Progress output:
+    ```log
+    min_abundance: 0
+    num_species: 15
+    751585           GCF_000210595.1         Coprococcus sp. ART55/1                 ART55/1         Chromosome
+    165186           Genome Not Found.
+    360807           GCF_001406855.1         Roseburia inulinivorans                 L1-83           Contig
+    40520            GCF_025147765.1         Blautia obeum ATCC 29174                ATCC 291..      Complete Genome
+    2981771          GCF_025567165.1         Laedolimicola ammoniilytica             Sanger_0..      Scaffold
+    ```
+  - (_doesn't show up in the complex example_) Issue: `AgglomerativeClustering` , problem with `affinity` parameter; could this be because of a single thing being clustered?.
     - error details:
     ```log
     File "/home/pbk1/somatem/modules/local/magnet/magnet-repo/magnet.py", line 76, in find_representative_genome
