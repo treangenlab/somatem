@@ -2,7 +2,28 @@
 # Specific in readme but no conda env was found in the MAGnet repo
 # Env made by PK: 30/Jun/25
 
-# packages mentioned (with version numbers; I omitted versions to use the latest ones)
+name: magnet
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - python=3.9
+    - ncbi-datasets-cli=17.1.0 # updated for request rate control (prevents timeout by going slower)
+    - minimap2=2.24
+    - samtools=1.15.1
+    - biopython
+    - pandas
+    - ete3=3.1.2
+    - bwa=0.7.17
+    - scikit-learn=0.23.2
+    - numpy=1.23.5
+    - fastani
+
+# notes on the list of packages:
+# PK: scikit-learn and fastani is not in the readme but is required by the code
+#   - scikit-learn: version: 0.23.2 works ; later versions need to replace `affinity` with `metric` in the parameters of `AgglomerativeClustering`
+
+# packages mentioned in magnet readme (with version numbers)
     # Python 3.9
     # NCBI Datasets v15.27.1
     # Minimap2 v2.24-r1122
@@ -11,19 +32,3 @@
     # Pandas
     # Ete3 v3.1.2
     # BWA v0.7.17
-
-name: magnet
-channels:
-    - conda-forge
-    - bioconda
-dependencies:
-    - python=3.9
-    - ncbi-datasets-cli=15.27.1
-    - minimap2=2.24  
-    - samtools=1.15.1
-    - biopython
-    - pandas
-    - ete3=3.1.2
-    - bwa=0.7.17
-    - scikit-learn
-    - fastani # added by PK
