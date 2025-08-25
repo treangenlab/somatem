@@ -129,10 +129,10 @@ _First test each module independently with example data from each tool's own rep
   - (_fixed: was doing single_read is 'false' instead of 'true'_) 
     - Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
     - How come it runs fine with testing then? _Might need to test the subworkflow runHostile separately?_
-```log
-Command error:
-19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
-``` 
+    ```log
+    Command error:
+    19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
+    ``` 
   - Not going into the `if` block (seems fixed now after adding .mmi extension)
 
 
@@ -161,33 +161,29 @@ Command error:
 - Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
   - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
 
+- `gms_16S`: pipeline is a good example of nf-core style that we can pull parts from.
+  - Input as samplesheet vs dir with reads? _ex: methylseq/older pipelines takes in --input reads dir ; gms_16S takes in --input samplesheet_
+
+- nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
 
 ---
-# Process to make a local nextflow module
+# Nextflow notes:
 
-1. Clone the tool's repo into a temp directory (outside this repo)
-2. (optional) Test the tool with example data from the tool's own repo
-3. Copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
-4. Check for the tool's conda repo to call in the module-process's conda definition
-5. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+## Process to make a local nextflow module
 
-Install an nf-core module using `nf-core modules install ..`
+1. Make a nf-core template module using `nf-core modules create`. Or for a barebones version, copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
+2. Check for the tool's conda repo to call in the module-process's conda definition. If the tool itself doesn't exist on conda, then get all it's dependancies in the conda env and
+3. Clone the tool's repo within the `modules/local/{tool_name}` directory as a submodule using `git submodule add <tool_repo_url> modules/local/{tool_name}`
+4. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+5. Test the module with a testing workflow that gives minimal example data. Copy the template from `test-modules/` directory
+6. If the module fails, try running it in the nextflow generated conda env manually with the `bash .command.sh` in the work/.. directory
+
+If module exists on nf-core,
+- Install the nf-core module using `nf-core modules install ..`
 
 
-# to nf-core or not?
-- modules of nf-core require a tuple input (`tuple val(meta), path(fasta)`). I was having problems with this for the emu module.
-
-Can make the tuple using the map workflow from any pipeline_initialization subworkflow. [demo module](https://github.com/nf-core/demo/blob/1.0.2/subworkflows/local/utils_nfcore_demo_pipeline/main.nf#L75)
-```groovy
-.map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
-        }
-        .set { ch_samplesheet }
-```
-
-# nextflow tips
-## Input files
+## Nextflow tips
+### Input files
 - Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
    - Need to use Channel.fromPath().simpleName to create meta.id from the file name
 - nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
