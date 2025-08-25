@@ -197,7 +197,7 @@ Todo:
 _bring almost on par_
 - [x] git clone with `--recurse-submodules`
 - [x] setup micromamba env ; 
-  - [x] _might need to reinstall micromamba to fix the base dir which is now `y/` to `micromamba/`_
+  - [x] _make the micromamba base dir to `micromamba/`_
   - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
 - [x] Install vscode plugins: nextflow (linter and everything)
 - [ ] 
@@ -210,7 +210,11 @@ _enhance the setup_
   - [ ] lemur - update
   - [ ] emu - update
   - [ ] hostile - download
-  
+
+_future tasks_ : Do this in another branch  
+- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
+  - [ ] move example files to `assets/examples/`
+  - [ ] move databases to `assets/databases/`
   
 
 
