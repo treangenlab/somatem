@@ -9,12 +9,13 @@ examples/data/mag_output
 examples/soma_test.sh
 examples/slurm-2136779.out
 
-# other files
+# other files (for testing/development; temporary)
 archive/
 
 # intermediate outputs
 examples/lemur/46_1_sub10k.fastq-lemur-output/
 examples/lemur/46_1_sub10k_relative_abundance.tsv
+
 # nextflow outputs and logs
 .nextflow.log*
 work/
