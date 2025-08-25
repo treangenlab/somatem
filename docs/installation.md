@@ -34,7 +34,7 @@ _This is relevant if you are modifying the pipeline/repo. Using VSCode or other 
 
 ## VSCode
 - Install the nextflow extension for VSCode
-  - Since we are using micromamba, we need to set the nextflow > java.home path in the plugin settings (`@ext:nextflow.nextflow`) to `/home/pbk1/micromamba/envs/nf_base_env/lib/jvm` (within the micromamba env)
+  - Since we are using micromamba, we need to set the nextflow > java.home path in the plugin settings (`@ext:nextflow.nextflow`) to `~/micromamba/envs/nf_base_env/lib/jvm` (within the micromamba env; **Use absolute path** by replacing `~` with your home directory)
 - Install other plugins that would be useful: Rainbow csv, ?
 
 ## Cloning the repo
