@@ -14,7 +14,7 @@ archive/
 
 # intermediate outputs
 examples/lemur/46_1_sub10k.fastq-lemur-output/
-
+examples/lemur/46_1_sub10k_relative_abundance.tsv
 # nextflow outputs and logs
 .nextflow.log*
 work/
@@ -31,3 +31,4 @@ testing/
 testing*
 *.pyc
 null/
+
