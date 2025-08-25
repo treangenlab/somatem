@@ -162,7 +162,8 @@ _bring almost on par_
 - [ ] 
 
 _enhance the setup_
-- [ ] Add a scripted way to download the example files
+- [x] Add a scripted way to download the example files (`assets/scripts/download_gdrive.sh`)
+  - [x] Test gdown with mock files and folder struture; Upload real files to google drive ; Update the script 
 - [ ] Add a DB_dir variable to the config file and connect databases to it
 - [ ] Update databases to the shared directory location. Download the missing dbs there
   - [ ] lemur - update
