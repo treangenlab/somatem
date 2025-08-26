@@ -14,7 +14,7 @@ process LEMUR {
       tuple val(meta), path(reads)
 
     output:
-      path output_dir
+      path output_dir                                             , emit: output_dir
       path "versions.yml"                                         , emit: versions
 
     script:
