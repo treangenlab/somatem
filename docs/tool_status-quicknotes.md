@@ -235,6 +235,8 @@ Recording the source of each example dataset and database in the database folder
 Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
 - Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
+  - I have a script: `assets/scripts/download_gdrive.sh` that downloads files from google drive and arranges them in the correct directory structure.
+  - Need to add `-c` flag to `gdown` to skip already downloaded files. thread: [#99](https://github.com/wkentaro/gdown/issues/99)
 - Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
   - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
   - Thoughts:
