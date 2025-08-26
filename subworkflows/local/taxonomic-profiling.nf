@@ -27,7 +27,7 @@ workflow {
     } else {
         LEMUR(reads_ch) // tax profiling
 
-        lemur_classification = LEMUR.out.output_dir.map { dir -> dir + '/relative_abundance.tsv' }
+        lemur_classification = LEMUR.out.output_dir.map { dir -> dir + '/relative_abundance.tsv' } // gather classification file
         MAGNET(reads_ch, lemur_classification) // Correct false positives
 
     }

@@ -2,6 +2,11 @@
 _First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
+
+- Combine into a **subworkflow**: Currently have Emu for 16S and Lemur + Magnet for metagenomics with `params.data_type` key.
+  - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
+  - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
+
 - **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
   - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
@@ -112,6 +117,8 @@ _First test each module independently with example data from each tool's own rep
     - (Mock run works) when run directly in conda env `/home/pbk1/micromamba/other-envs/env-0ae31dcc1c5dffe0dcb45b228367f9cc` with original files works `centrifuger -u examples/data/46_1_sub10k.fastq.gz -x databases/legionella_cfr_idx/cfr_ref_idx -t 4 > work/centrifugertest/test.tsv`
 
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
+
+
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Tested, works.
