@@ -7,16 +7,6 @@ include { runHostile } from './runHostile.nf'
 include { CHOPPER } from '../../modules/nf-core/chopper/main.nf'
 
 
-
-
-// -------------------------
-// Parameters
-// -------------------------
-
-params.input_dir   = 'examples/data'
-// params.output_dir  = 'results'
-// params.threads     = 64
-
 // -------------------------
 // Workflow Definition
 // -------------------------
@@ -26,9 +16,6 @@ workflow PREPROCESSING {
     take:
     reads_ch
     contam_ref
-
-    // reads_ch = convert_to_nfcore_tuple(params.input_dir)
-    // contam_ref = Channel.value([]) // empty channel for now
 
     main:
     RawNanoPlot(reads_ch) // initial QC
