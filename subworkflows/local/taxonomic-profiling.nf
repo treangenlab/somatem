@@ -6,19 +6,11 @@ include { EMU_ABUNDANCE } from '../../modules/local/emu/main.nf'
 include { LEMUR } from '../../modules/local/lemur/main.nf'
 include { MAGNET } from '../../modules/local/magnet/main.nf'
 
-
-
-
 // -------------------------
 // Parameters
 // -------------------------
-
 params.input_dir   = 'examples/data'
 
-// other params
-params.lemur_db = "${projectDir}/../examples/lemur/example-db/"
-params.lemur_taxonomy = "${projectDir}/../examples/lemur/example-db/taxonomy.tsv"
-params.rank = "species"
 
 // -------------------------
 // Workflow Definition
@@ -33,13 +25,9 @@ workflow {
 
     // metagenomic reads (default)
     } else {
-        database_dir = Channel.fromPath(params.lemur_db)
-        taxonomy = Channel.fromPath(params.lemur_taxonomy)
-        rank = Channel.of(params.rank)
+        LEMUR(reads_ch) // tax profiling
 
-        LEMUR(reads_ch, database_dir, taxonomy, rank) // tax profiling
-
-        lemur_classification = LEMUR.out.map { dir -> dir + '/relative_abundance.tsv' }
+        lemur_classification = LEMUR.out.output_dir.map { dir -> dir + '/relative_abundance.tsv' }
         MAGNET(reads_ch, lemur_classification) // Correct false positives
 
     }
