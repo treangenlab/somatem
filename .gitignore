@@ -14,6 +14,12 @@ modules/local/taxburstconvert/*
 #python custom scripts
 bin/taxburstprep.py
 
+# other files (for testing/development; temporary)
+archive/
+
+# intermediate outputs
+examples/lemur/46_1_sub10k.fastq-lemur-output/
+examples/lemur/46_1_sub10k_relative_abundance.tsv
 
 # nextflow outputs and logs
 .nextflow.log*
@@ -31,3 +37,4 @@ testing/
 testing*
 *.pyc
 null/
+
