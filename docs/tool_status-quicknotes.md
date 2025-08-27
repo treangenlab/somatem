@@ -2,17 +2,93 @@
 _First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
-- **Lemur**: working with example from repo
-  - Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- **Magnet**: Almost works ; need to test with a proper example with WGS fastq data?
+- Combine into a **subworkflow**: Currently have Emu for 16S and Lemur + Magnet for metagenomics with `params.data_type` key.
+  - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
+  - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
+
+- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
+  - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
+    ```log
+    Completed at: 13-Aug-2025 17:30:31
+    Duration    : 45m 46s
+    CPU hours   : 9.1
+    Succeeded   : 1
+    ``` 
+  - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). (_**todo:**_ Need to expand to output files to send to MAGnet easily)
+  - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
+
+- **Magnet**: Errors with ncbi datasets downloading? Debug with Eddy's Mimic project env.
+  - (_debug_) Using Eddy's Mimic project env, magnet runs fine ; and there's more time gap between each entry of the downloaded genomes. **_todo_**: Look for something that is pacing the number of reqests, some other ncbi tool in conda?
+    - Output log showing all 15 entries downloaded. _Stuck at the unzip step since no bash commands are found in this env_ ; Fix using `export PATH=$PATH:/usr/bin/`, this might be due to accessing an env not within the user's home directory.
+    ```log
+    min_abundance: 0
+    num_species: 15
+    751585           GCF_000210595.1         Coprococcus sp. ART55/1                 ART55/1         Chromosome
+    165186           Genome Not Found.
+    360807           GCF_001406855.1         Roseburia inulinivorans                 L1-83           Contig
+    40520            GCF_025147765.1         Blautia obeum ATCC 29174                ATCC 291..      Complete Genome
+    2981771          GCF_025567165.1         Laedolimicola ammoniilytica             Sanger_0..      Scaffold
+    2292206          GCF_003478505.1         Clostridium sp. AF27-2AA                AF27-2AA        Scaffold
+    1519439          GCF_000765235.1         Oscillibacter sp. ER4                   ER4             Contig
+    2763663          GCF_014385265.1         Enterocloster hominis (ex Li..          BX10            Contig
+    592978           GCF_051861395.1         Mediterraneibacter faecis               Bg7063          Complete Genome
+    29523            Genome Not Found.
+    820              GCF_044361425.1         Bacteroides uniformis                   JCM5828         Complete Genome
+    853              GCF_002586945.1         Faecalibacterium prausnitzii            Indica          Complete Genome
+    821              GCF_000012825.1         Phocaeicola vulgatus ATCC 84..          ATCC 848..      Complete Genome
+    259315           Genome Not Found.
+    745368           GCF_016900095.1         Gemmiger formicilis                     An812           Contig
+    ```
+      - Found a dependancy that might be relevant to the rate control of requests: `ncbi-dataset-cli` ; 
+        - [ncbi-vdb](https://github.com/ncbi/ncbi-vdb) : This corresponds to SRA; not sure if this has anything to do here. 
+  - Issue: `datasets download genomes ...` command not running? ; returning non-zero exit status. But it runs fine when run directly in conda env `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-8f384ba07576431396f94c81825f8f83` alone in bash. running through `.command.sh` fails after downloading a few genomes / not reproducible with each run..
+    - When running with `check=False`, it gives `Error: 429 Too Many Requests` between a few files. 
+    - error details:
+    ```log
+    File "/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-8f384ba07576431396f94c81825f8f83/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+    subprocess.CalledProcessError: Command '['datasets', 'download', 'genome', 'accession', 'GCF_001406855.1', '--include', 'genome', '--filename', '46_1_sub10k.fastq-magnet-output/ncbi_downloads/360807.zip', '--no-progressbar']' returned non-zero exit status 1.
+    ```
+    - Progress output:
+    ```log
+    min_abundance: 0
+    num_species: 15
+    751585           GCF_000210595.1         Coprococcus sp. ART55/1                 ART55/1         Chromosome
+    165186           Genome Not Found.
+    360807           GCF_001406855.1         Roseburia inulinivorans                 L1-83           Contig
+    40520            GCF_025147765.1         Blautia obeum ATCC 29174                ATCC 291..      Complete Genome
+    2981771          GCF_025567165.1         Laedolimicola ammoniilytica             Sanger_0..      Scaffold
+    ```
+  - (_doesn't show up in the complex example_) Issue: `AgglomerativeClustering` , problem with `affinity` parameter; could this be because of a single thing being clustered?.
+    - error details:
+    ```log
+    File "/home/pbk1/somatem/modules/local/magnet/magnet-repo/magnet.py", line 76, in find_representative_genome
+    model = AgglomerativeClustering(affinity='precomputed', n_clusters=None, compute_full_tree=True,
+    TypeError: __init__() got an unexpected keyword argument 'affinity' 
+    ``` 
+  - Issue: fastANI not found. (Add `fastANI` to the yml file)
+  - Issue with ete3's `NCBITaxa` class: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
+    - Looks like ncbi datasets are not being downloaded hence the unzip command fails ; but when running alone, the unzip command gives message saying _no zip files have been found.._
+    - added the missing dependency : `ncbi-dataset-cli` to the yml file ; still same error.
+    - tried to update the ncbi taxonomy database update in python (`ncbi_taxa_db.update_taxonomy_database()`, where `ncbi_taxa_db` is an instance of `NCBITaxa` class within `ete3` package) ; This should create a +600 MB database within `~/.etetoolkit/`. The first run is supposed to do this but something might have gone wrong since I had a 47 MB file here instead.
+    - taxid of `1639` which is ([listeria monocytogenes](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=1639&lvl=3&lin=f&keep=1&srchmode=5&unlock)) is still not found by `ncbi_taxa_db.get_lineage` function. 
+    - (_more testing_) Testing on `46_1_sub10k.fastq.gz` file with the full lemur database classification (_has ~20 entries instead of just 1_) also fails with same error. (_seeing if more classification data fixes the issue of downloading genomes.._)
+      ```sh
+      nextflow run test-modules/magnet_test.nf --reads "./examples/data/46_1_sub10k.fastq.gz" --classification "./examples/lemur/46_1_sub10k.fastq-lemur-output/relative_abundance.tsv"
+      ```
+    - debug within dir `a1/980525cfbf580823faada78257dfd1` 
+      - new env with pegged ncbi-dataset-cli at `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-ccf2ab982aeeb00e802d37e58f1e0dad`
+      - all pagged packages: `/home/pbk1/micromamba/other-envs/env-b5d51811293ef0bc-7e8a569563b555ca18eb6d243ac1ea34`
+  
+  Updates:
   - conda installed. Need to make a sub-module for the dependencies in `utils` folder and test .py and .nf
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
 
 - **Sylph**: test module for profile with example data from repo works
 
-- **Emu**: Works with example from repo. 
+- **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
   
   1. Copied example from EMU repo
   2. fixed `meta` input with dummy value; solved conda issues with channel priority;
@@ -42,10 +118,12 @@ _First test each module independently with example data from each tool's own rep
 
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
+
+
 ## Pre-processing
-- Combining : stringing pre-processing modules into a subworkflow. Testing in progress.
-  - pipeline works ; but trying to incorporate default parameters that Austin wrote in as `task.ext.args` ; 
-    - Switching to nf-core template for full compatibility to this one
+- Combining : stringing pre-processing modules into a subworkflow. Tested, works.
+  - pipeline works ; incorporated default parameters that Austin wrote in as `task.ext.args` ; 
+    - (_Switching to nf-core template for full compatibility to this one_) 
   - (_fixed: fixed the stalling workflow with `channel.value([])` input to chopper_) Getting hung up after running runHostile now. (so the previous issue of getting stuck still persists?)
   - (_fixed: using value process `Channel.value()` for reusing single value channels_) something wrong with the runHostile subworkflow? Is only running hostile on 1 input instead of 2 ; and is getting stuck 
   - ```log
@@ -58,10 +136,10 @@ _First test each module independently with example data from each tool's own rep
   - (_fixed: was doing single_read is 'false' instead of 'true'_) 
     - Something up with the hostile_clean running: It is in short read/bowtie2 mode (by default?) // need to add `--aligner minimap2` to the command line arguments using `task.ext.args`
     - How come it runs fine with testing then? _Might need to test the subworkflow runHostile separately?_
-```log
-Command error:
-19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
-``` 
+    ```log
+    Command error:
+    19:05:02 INFO: Hostile v2.0.1. Mode: paired short read (Bowtie2)
+    ``` 
   - Not going into the `if` block (seems fixed now after adding .mmi extension)
 
 
@@ -73,6 +151,16 @@ Command error:
     - Tried remaking the whole env with this dependancy locked in the `environment.yml` file (_will take care of any dependancy conflicts_)  
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
+## Other tools
+- Rhea: works with example data from repo. 
+  - Couldn't handle metadata so omitted for now. _Could use the directory name as the `meta.id`?_
+  - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
+  - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
+    - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]` ; _agb outputs a html ; I couldn't interpret the graph_
+    - bandageNG: has a cli option and is on bioconda: `BandageNG image metaflye/assembly_graph.gfa bandage2.png --color meta2col.csv` ; but the 2 column csv file for colouring is different from Bandage for proper separation between contigs from different samples
+    - bandage: Is on nf-core; --color options doesn't work thought in the `--help` documentation.
+    - I am wondering how the intended outpyt looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
+
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
   - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
@@ -80,42 +168,66 @@ Command error:
 - Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
   - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
 
+- `gms_16S`: pipeline is a good example of nf-core style that we can pull parts from.
+  - Input as samplesheet vs dir with reads? _ex: methylseq/older pipelines takes in --input reads dir ; gms_16S takes in --input samplesheet_
+
+- nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
 
 ---
-# Process to make a local nextflow module
+# Nextflow notes:
 
-1. Clone the tool's repo into a temp directory (outside this repo)
-2. (optional) Test the tool with example data from the tool's own repo
-3. Copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
-4. Check for the tool's conda repo to call in the module-process's conda definition
-5. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+## Process to make a local nextflow module
 
-Install an nf-core module using `nf-core modules install ..`
+1. Make a nf-core template module using `nf-core modules create`. Or for a barebones version, copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
+2. Check for the tool's conda repo to call in the module-process's conda definition. If the tool itself doesn't exist on conda, then get all it's dependancies in the conda env and
+3. Clone the tool's repo within the `modules/local/{tool_name}` directory as a submodule using `git submodule add <tool_repo_url> modules/local/{tool_name}`
+4. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+5. Test the module with a testing workflow that gives minimal example data. Copy the template from `test-modules/` directory
+6. If the module fails, try running it in the nextflow generated conda env manually with the `bash .command.sh` in the work/.. directory
+
+If module exists on nf-core,
+- Install the nf-core module using `nf-core modules install ..`
 
 
-# to nf-core or not?
-- modules of nf-core require a tuple input (`tuple val(meta), path(fasta)`). I was having problems with this for the emu module.
-
-Can make the tuple using the map workflow from any pipeline_initialization subworkflow. [demo module](https://github.com/nf-core/demo/blob/1.0.2/subworkflows/local/utils_nfcore_demo_pipeline/main.nf#L75)
-```groovy
-.map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
-        }
-        .set { ch_samplesheet }
-```
-
-# nextflow tips
-## Input files
+## Nextflow tips
+### Input files
 - Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
    - Need to use Channel.fromPath().simpleName to create meta.id from the file name
 - nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)
 
-# Database notes
+# Porting from `t8` to `owlet3`
+_Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
-Need to record the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
+Todo:
+_bring almost on par_
+- [x] git clone with `--recurse-submodules`
+- [x] setup micromamba env ; 
+  - [x] _make the micromamba base dir to `micromamba/`_
+  - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
+- [x] Install vscode plugins: nextflow (linter and everything)
+- [ ] 
+
+_enhance the setup_
+- [x] Add a scripted way to download the example files (`assets/scripts/download_gdrive.sh`)
+  - [x] Test gdown with mock files and folder struture; Upload real files to google drive ; Update the script 
+- [ ] Add a DB_dir variable to the config file and connect databases to it
+- [ ] Update databases to the shared directory location. Download the missing dbs there
+  - [ ] lemur - update
+  - [ ] emu - update
+  - [ ] hostile - download
+
+_future tasks_ : Do this in another branch  
+- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
+  - [ ] move example files to `assets/examples/`
+  - [ ] move databases to `assets/databases/`
+  
+
+
+# data/databases to download
+Recording the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
+
 
 ## Example files (`examples/`)
 - `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
@@ -124,8 +236,45 @@ Need to record the source of each example dataset and database in the database f
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
+- `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
+
+### Setup automatic download script
+Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
+- Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
+_procedure suggested by perplexity_
+  - I have a script: `assets/scripts/download_gdrive.sh` that downloads files from google drive and arranges them in the correct directory structure.
+  - Need to add `-c` flag to `gdown` to skip already downloaded files. thread: [#99](https://github.com/wkentaro/gdown/issues/99)
+- Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
+  - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
+  - Thoughts:
+    - Use `curl` to download the file (or `wget`)
+    - Use `tar` to extract the file
+    - (optional) Use `mv` to move the file to the correct location
+- Use a script with a text file scraped for downloading multiple files with proper naming
+ - create a text/csv file in this format: `GoogleDrive,1AbcDXYZ12345,example_data1.zip`
+ - bash script:
+    ```bash
+    #!/bin/bash
+
+    while IFS=, read -r TYPE LINK DEST; do
+      if [[ $TYPE == "GoogleDrive" ]]; then
+        wget --no-check-certificate "https://drive.google.com/uc?export=download&id=${LINK}" -O "${DEST}"
+      elif [[ $TYPE == "Dropbox" ]]; then
+        wget --no-check-certificate "${LINK}" -O "${DEST}"
+      fi
+    done < files.txt
+    ```
+- **caveats**: Limits: For large Google Drive files (>100MB), you may need additional logic to handle Google’s virus scan/interruption page. For most small files, the above works.
+
 
 ## Database files (`databases/`)
+Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
+Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
+- Shared: benefit of space ; Store updated versions separately
+  - Can make a DB_dir=`/home/dbs/` and encourage users to make a similar shared dir for the dbs and update this variable in the config file
+  - Scripts: make a script to look for the required db in the DB_dir and download if not found (based on the tools being used..)
+- Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
+
 
 ### Testing/demo databases
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
@@ -135,12 +284,17 @@ Need to record the source of each example dataset and database in the database f
   - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 
 ### Real databases
+_looking for databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
+
+- Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
+- hostile: record where this is from. 
 
 _Clean up these old notes_
 - centrifuger: 
   - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
   - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 - emu: link retrieved from ?
+
 
 
 ## Updating databases, best practices
