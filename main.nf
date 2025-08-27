@@ -38,7 +38,7 @@ params.fasta = getGenomeAttribute('fasta')
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow NFCORE_SOMATEM {
+workflow ORCHESTRATE_SOMATEM {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -73,10 +73,13 @@ workflow {
         params.input
     )
 
+    // debug
+    PIPELINE_INITIALISATION.out.samplesheet.view()
+
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_SOMATEM (
+    ORCHESTRATE_SOMATEM (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //

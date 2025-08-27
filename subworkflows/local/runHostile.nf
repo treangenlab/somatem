@@ -6,9 +6,9 @@ include { convert_to_nfcore_tuple } from "./utils/nf-core-compatibility.nf"
 // note: path of module is relative to the directory containing this file! (./testing/)
 
 // -------------------------
-// Parameters
+// Required Parameters
 // -------------------------
-params.database_dir = "${projectDir}/../../databases/hostile/reference"
+// params.hostile_database_dir = "${launchDir}/databases/hostile/reference"
 
 // -------------------------
 // Workflow
@@ -22,7 +22,7 @@ workflow runHostile {
     main:
     // if database is in the default directory, use it
     if ( database_name == 'human-t2t-hla-argos985-mycob140.mmi' ) {
-        database_input = Channel.value([database_name, params.database_dir])
+        database_input = Channel.value([database_name, params.hostile_database_dir])
 
     } else { 
         // If database is not in the default directory, fetch it (warning: Takes a while)
