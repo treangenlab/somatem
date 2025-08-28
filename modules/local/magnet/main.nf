@@ -9,7 +9,7 @@ process MAGNET {
     // container "oras://community.wave.seqera.io/library/name:version--build"  // generate with `wave containerize`
 
     input:
-      path reads
+      tuple val(meta), path(reads)
       path classification
 
     output:
