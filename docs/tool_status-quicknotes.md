@@ -274,7 +274,7 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
   - Can make a DB_dir=`/home/dbs/` and encourage users to make a similar shared dir for the dbs and update this variable in the config file
   - Scripts: make a script to look for the required db in the DB_dir and download if not found (based on the tools being used..)
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
-
+- Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
 ### Testing/demo databases
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
@@ -310,3 +310,20 @@ What makes certain databases automatic install from nextflow and not others?
   - Sylph
   - Salmon
 
+
+---
+
+# Add this content to databases.md
+### Emu
+Long-read taxonomic profiler based on 16S rRNA gene sequences. Uses expectation maximization to assign taxonomic profiles to reads.
+
+`emu_db/emu_db2023` : combination of rrnDB v5.6 and NCBI 16S RefSeq from 17 September, 2020.
+> (notes from [emu docs](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database)) ** Note Emu v3.0+ database requirements differ from previous versions. Check you are using the appropriate database for the version you are running. Both databases contain identical information: a combination of rrnDB v5.6 and NCBI 16S RefSeq from 17 September, 2020. Taxonomy is also from NCBI on the same date. The resulting database contains 49,301 sequences from 17,555 unique bacterial and archaeal species.
+  - Original source, likely emu.tar on [OSF](https://osf.io/56uf7/files/osfstorage)
+
+### Lemur
+Lemur is a tool for rapid and accurate taxonomic profiling on long-read metagenomic datasets. Database was build using Emu for each marker gene and concatenated into a single database.
+
+`lemur_221_db` : RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes. Sources: link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
+
+> (notes from pre-print [here](https://www.biorxiv.org/content/10.1101/2024.06.01.596961v2.full)) We then built the database using recent versions of NCBI RefSeq: version 221 for both bacteria (329,194 assemblies) and archaea (1,911) and version 222 for fungi (564)... We used the Emu database creation tool (Curry et al. 2022) for the final step in the database construction for individual marker genes with the command emu build-database --ncbi-taxonomy. Finally, individual marker gene databases were concatenated, and a single joint taxonomy mapping was generated for the combined database. The final database was 4.1 GB, containing 3,335,783 sequences.
