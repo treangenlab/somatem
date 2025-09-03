@@ -21,17 +21,9 @@ workflow runHostile {
     database_name // string: name of the database file *with extension* (e.g. 'human-t2t-hla-argos985-mycob140.mmi')
 
     main:
-    // List files in the database directory
-    db_files = Channel.fromPath("${params.hostile_database_dir}/*.mmi").map { file -> file.name }
-    
     // Check if database exists in the default directory
-    // db_files_list = db_files.toList()
-    db_exists = db_files.collect()?.contains(database_name) ?: false
-    
-    // debug
-    log.info "Database files: ${db_files.view()}"
-    log.info "Database files list: ${db_files.collect()}"
-    log.info "Database exists: ${db_exists}"
+    db_path = "${params.hostile_database_dir}/${database_name}"
+    db_exists = Channel.value(file(db_path).exists())
 
     
     if ( db_exists ) {
