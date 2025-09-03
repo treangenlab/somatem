@@ -161,6 +161,9 @@ _First test each module independently with example data from each tool's own rep
     - bandage: Is on nf-core; --color options doesn't work thought in the `--help` documentation.
     - I am wondering how the intended outpyt looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
+## Orchestrating the pipeline
+- Connected pre-processing, taxonomic profiling into the main workflow `somatemte.nf`
+
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
   - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
@@ -212,11 +215,11 @@ _bring almost on par_
 _enhance the setup_
 - [x] Add a scripted way to download the example files (`assets/scripts/download_gdrive.sh`)
   - [x] Test gdown with mock files and folder struture; Upload real files to google drive ; Update the script 
-- [ ] Add a DB_dir variable to the config file and connect databases to it
-- [ ] Update databases to the shared directory location. Download the missing dbs there
-  - [ ] lemur - update
-  - [ ] emu - update
-  - [ ] hostile - download
+- [x] Add a DB_dir variable to the config file and connect databases to it
+- [x] Update databases to the shared directory location. Download the missing dbs there
+  - [x] lemur - update
+  - [x] emu - update
+  - [x] hostile - download
 
 _future tasks_ : Do this in another branch  
 - [ ] Streamline directory structure (nf-core style, followed in gms_16S)
@@ -230,12 +233,15 @@ Recording the source of each example dataset and database in the database folder
 
 
 ## Example files (`examples/`)
-- `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples. Subsampled to 10k reads.
   - `data/46_1.fastq.gz`: From google drive/[example_data/agm..](https://drive.google.com/drive/u/1/folders/1MUR6sXAJSTaKXrqhVu6-rLFDw7lao5v5)
+- `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+
+Other tools' example files:
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
+- `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
 
 ### Zymo mock
