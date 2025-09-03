@@ -6,6 +6,7 @@
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
+include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,12 +36,17 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
-    hostile_contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, hostile_contam_ref)
+    contam_ref = Channel.value([]) // empty channel for now
+    clean_reads = PREPROCESSING(ch_samplesheet, contam_ref)
+
+    // -----------------------------------------------------------------
+    // Taxonomic profiling
+    // -----------------------------------------------------------------
+    TAXONOMIC_PROFILING(clean_reads)
 
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
-    clean_reads    = PREPROCESSING.out.clean_reads
+    clean_reads    = clean_reads
 }
 
 /*
