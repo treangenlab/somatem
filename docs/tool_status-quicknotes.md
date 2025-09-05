@@ -162,7 +162,10 @@ _First test each module independently with example data from each tool's own rep
     - I am wondering how the intended outpyt looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
 ## Orchestrating the pipeline
-- Connected pre-processing, taxonomic profiling into the main workflow `somatemte.nf`
+- Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
+- standardize modules: 
+  1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
+  2. Make all outputs a tuple of `meta, path`
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
