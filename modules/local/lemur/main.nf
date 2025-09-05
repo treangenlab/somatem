@@ -14,7 +14,8 @@ process LEMUR {
       tuple val(meta), path(reads)
 
     output:
-      path output_dir                                             , emit: output_dir
+      tuple val(meta), path(output_dir)                           , emit: dir
+      tuple val(meta), path("*relative_abundance.tsv")            , emit: report
       path "versions.yml"                                         , emit: versions
 
     script:
