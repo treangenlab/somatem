@@ -10,10 +10,11 @@ process MAGNET {
 
     input:
       tuple val(meta), path(reads)
-      path classification
+      tuple val(meta2), path(classification)
 
     output:
-      path output_dir
+      tuple val(meta), path(output_dir)                           , emit: dir
+      tuple val(meta), path("*cluster_representative.csv")        , emit: report
       path "versions.yml"                                         , emit: versions
 
     script:
