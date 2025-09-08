@@ -7,7 +7,7 @@ _First test each module independently with example data from each tool's own rep
   - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
   - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
 
-- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
+- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db (specifically for `46_1_sub10k.fastq.gz` file). (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
   - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
     Completed at: 13-Aug-2025 17:30:31
@@ -161,6 +161,17 @@ _First test each module independently with example data from each tool's own rep
     - bandage: Is on nf-core; --color options doesn't work thought in the `--help` documentation.
     - I am wondering how the intended outpyt looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
+## Orchestrating the pipeline
+- Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
+- standardize modules: 
+  1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
+  2. Make all outputs a tuple of `meta, path` except `versions.yml`
+
+### Implementation notes
+- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes
+  - `Lemur`, `magnet`: 
+  - `flye`: 
+
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
   - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
@@ -200,24 +211,6 @@ If module exists on nf-core,
 # Porting from `t8` to `owlet3`
 _Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
-Todo:
-_bring almost on par_
-- [x] git clone with `--recurse-submodules`
-- [x] setup micromamba env ; 
-  - [x] _make the micromamba base dir to `micromamba/`_
-  - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
-- [x] Install vscode plugins: nextflow (linter and everything)
-- [ ] 
-
-_enhance the setup_
-- [x] Add a scripted way to download the example files (`assets/scripts/download_gdrive.sh`)
-  - [x] Test gdown with mock files and folder struture; Upload real files to google drive ; Update the script 
-- [ ] Add a DB_dir variable to the config file and connect databases to it
-- [ ] Update databases to the shared directory location. Download the missing dbs there
-  - [ ] lemur - update
-  - [ ] emu - update
-  - [ ] hostile - download
-
 _future tasks_ : Do this in another branch  
 - [ ] Streamline directory structure (nf-core style, followed in gms_16S)
   - [ ] move example files to `assets/examples/`
@@ -230,13 +223,26 @@ Recording the source of each example dataset and database in the database folder
 
 
 ## Example files (`examples/`)
-- `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples. Subsampled to 10k reads.
   - `data/46_1.fastq.gz`: From google drive/[example_data/agm..](https://drive.google.com/drive/u/1/folders/1MUR6sXAJSTaKXrqhVu6-rLFDw7lao5v5)
+- `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+
+Other tools' example files:
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
 - `lemur`: from original repo/[examples](https://github.com/treangenlab/lemur/tree/main/examples)
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
+- `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
+
+### Zymo mock
+Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
+- Notes: ZymoBIOMICS® Microbial Community Standard contains three easy-to-lyse bacteria, five tough-
+to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymoresearch.com/datasheets/ds1706_zymobiomics_microbial_community_standards_data_sheet.pdf)
+  - Might be able to use reduced databases with only these 8-10 organisms (_but this will take a while to make ; so do it later_)
+- Eddy has some zymo mock data here `/home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq` (pacbio also exists)
+: This is a 54 GB file of Zymo-gut-mock-Kit9 sample ; check [details](https://trace.ncbi.nlm.nih.gov/Traces/index.html?view=run_browser&acc=SRR17913200&display=metadata) on SRA.  
+  - There are other samples in this [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) with `Library Name`s `M46 - 50` ; not sure what these mean.
+
 
 ### Setup automatic download script
 Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
@@ -274,7 +280,7 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
   - Can make a DB_dir=`/home/dbs/` and encourage users to make a similar shared dir for the dbs and update this variable in the config file
   - Scripts: make a script to look for the required db in the DB_dir and download if not found (based on the tools being used..)
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
-
+- Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
 ### Testing/demo databases
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)

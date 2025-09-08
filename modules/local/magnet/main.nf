@@ -9,16 +9,15 @@ process MAGNET {
     // container "oras://community.wave.seqera.io/library/name:version--build"  // generate with `wave containerize`
 
     input:
-      path reads
-      path classification
+      tuple val(meta), path(reads)
+      path(classification)
 
     output:
-      path output_dir
+      tuple val(meta), path("*cluster_representative.csv")        , emit: report
       path "versions.yml"                                         , emit: versions
 
     script:
     def args = task.ext.args ?: ''
-    output_dir = "${reads.baseName}-magnet-output"
     
     """
     python ${moduleDir}/magnet-repo/magnet.py \
@@ -26,7 +25,7 @@ process MAGNET {
       --threads $task.cpus \
       -i ${reads} \
       -c ${classification} \
-      -o ${output_dir}
+      -o ./
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
