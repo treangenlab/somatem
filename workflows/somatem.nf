@@ -35,7 +35,7 @@ workflow SOMATEM {
     
     if (params.analysis_type == "taxonomic-profiling") {
         TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
-        // ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+        ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
     }
 
     // -----------------------------------------------------------------
