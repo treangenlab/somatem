@@ -211,24 +211,6 @@ If module exists on nf-core,
 # Porting from `t8` to `owlet3`
 _Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
-Todo:
-_bring almost on par_
-- [x] git clone with `--recurse-submodules`
-- [x] setup micromamba env ; 
-  - [x] _make the micromamba base dir to `micromamba/`_
-  - [x] create a `other_envs` dir in `micromamba/` for nextflow's stuff
-- [x] Install vscode plugins: nextflow (linter and everything)
-- [ ] 
-
-_enhance the setup_
-- [x] Add a scripted way to download the example files (`assets/scripts/download_gdrive.sh`)
-  - [x] Test gdown with mock files and folder struture; Upload real files to google drive ; Update the script 
-- [x] Add a DB_dir variable to the config file and connect databases to it
-- [x] Update databases to the shared directory location. Download the missing dbs there
-  - [x] lemur - update
-  - [x] emu - update
-  - [x] hostile - download
-
 _future tasks_ : Do this in another branch  
 - [ ] Streamline directory structure (nf-core style, followed in gms_16S)
   - [ ] move example files to `assets/examples/`
