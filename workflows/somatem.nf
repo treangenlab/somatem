@@ -23,6 +23,30 @@ workflow SOMATEM {
     ch_versions = Channel.empty()
 
     // -----------------------------------------------------------------
+    // Pre-processing and quality control on raw reads
+    // -----------------------------------------------------------------
+    contam_ref = Channel.value([]) // empty channel for now
+    PREPROCESSING(ch_samplesheet, contam_ref)
+    ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
+
+    // -----------------------------------------------------------------
+    // Taxonomic profiling
+    // -----------------------------------------------------------------
+    
+    if (params.analysis_type == "taxonomic-profiling") {
+        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
+        // ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+    }
+
+    // -----------------------------------------------------------------
+    // assembly
+    // -----------------------------------------------------------------
+    // if (params.analysis_type == "assembly") {
+    //     ASSEMBLY(clean_reads)
+    // }
+
+
+    // -----------------------------------------------------------------
     // Collate and save software versions
     // -----------------------------------------------------------------
     softwareVersionsToYAML(ch_versions)
@@ -32,17 +56,6 @@ workflow SOMATEM {
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
-
-    // -----------------------------------------------------------------
-    // Pre-processing and quality control on raw reads
-    // -----------------------------------------------------------------
-    contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, contam_ref)
-
-    // -----------------------------------------------------------------
-    // Taxonomic profiling
-    // -----------------------------------------------------------------
-    TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
 
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
