@@ -165,7 +165,12 @@ _First test each module independently with example data from each tool's own rep
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
 - standardize modules: 
   1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
-  2. Make all outputs a tuple of `meta, path`
+  2. Make all outputs a tuple of `meta, path` except `versions.yml`
+
+### Implementation notes
+- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes
+  - `Lemur`, `magnet`: 
+  - `flye`: 
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings

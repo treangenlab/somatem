@@ -37,16 +37,17 @@ workflow SOMATEM {
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    clean_reads = PREPROCESSING(ch_samplesheet, contam_ref)
+    PREPROCESSING(ch_samplesheet, contam_ref)
 
     // -----------------------------------------------------------------
     // Taxonomic profiling
     // -----------------------------------------------------------------
-    TAXONOMIC_PROFILING(clean_reads)
+    TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
 
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
-    clean_reads    = clean_reads
+    clean_reads    = PREPROCESSING.out.clean_reads
+    taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
 }
 
 /*
