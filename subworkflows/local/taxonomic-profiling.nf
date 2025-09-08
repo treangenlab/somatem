@@ -19,20 +19,35 @@ workflow TAXONOMIC_PROFILING {
     take:
     clean_reads_ch
 
-   main:
+    main:
     // 16S amplicon reads
     if (params.data_type == "16S") {
-        EMU_ABUNDANCE(clean_reads_ch)  
+        // single marker gene (16S) based tax profiling
+        EMU_ABUNDANCE(clean_reads_ch)
+
+        taxonomy_report = EMU_ABUNDANCE.out.report
+        // ch_versions = ch_versions.mix(EMU_ABUNDANCE.out.versions.first())
 
     // metagenomic reads (default)
     } else {
-        LEMUR(clean_reads_ch) // tax profiling
+        // multi-marker gene (16S + 18S + ITS) based tax profiling
+        LEMUR(clean_reads_ch)
 
-        lemur_classification = LEMUR.out.output_dir.map { dir -> dir + '/relative_abundance.tsv' } // gather classification file
-        MAGNET(clean_reads_ch, lemur_classification) // Correct false positives
+        taxonomy_report = LEMUR.out.report
+        classification_report = taxonomy_report
+            .map { meta, classification -> classification } // drop meta
+        // ch_versions = ch_versions.mix(LEMUR.out.versions.first())
+
+        // Correct false positives for low abundance taxa / low coverage
+        MAGNET(clean_reads_ch, classification_report)
+        
+        taxonomy_report = taxonomy_report.mix(MAGNET.out.report)
+        // ch_versions = ch_versions.mix(MAGNET.out.versions.first())
+        // TODO: make magnet conditional on `validate_presence_absence` or `polished_profile` param
 
     }
 
-    // emit:
-    // abundance = MAGNET.out // TODO: use if/else to emit different channels?
+    emit:
+    taxonomy_report
+    // versions           = ch_versions                        // channel: [ path(versions.yml) ]
 }
