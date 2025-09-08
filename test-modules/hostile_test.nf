@@ -2,7 +2,7 @@
 
 include { HOSTILE_FETCH } from "../modules/nf-core/hostile/fetch/main.nf"
 include { HOSTILE_CLEAN } from "../modules/nf-core/hostile/clean/main.nf"
-include { convert_to_nfcore_tuple } from "../subworkflows/utils/nf-core-compatibility.nf"
+include { convert_to_nfcore_tuple } from "../subworkflows/local/utils/nf-core-compatibility.nf"
 // note: path of module is relative to the directory containing this file! (./testing/)
 
 // -------------------------
@@ -11,7 +11,7 @@ include { convert_to_nfcore_tuple } from "../subworkflows/utils/nf-core-compatib
 // note: paths are relative to the workflow directory (from where nextflow is run)
 params.reads = "${projectDir}/../examples/data/46_1_sub10k.fastq.gz"
 params.database_name = 'human-t2t-hla-argos985-mycob140.mmi'
-params.database_dir = "${projectDir}/../databases/hostile/reference"
+params.database_dir = "${params.db_base_dir}/hostile"
 
 // -------------------------
 // Workflow

@@ -6,6 +6,7 @@
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
+include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,6 +23,30 @@ workflow SOMATEM {
     ch_versions = Channel.empty()
 
     // -----------------------------------------------------------------
+    // Pre-processing and quality control on raw reads
+    // -----------------------------------------------------------------
+    contam_ref = Channel.value([]) // empty channel for now
+    PREPROCESSING(ch_samplesheet, contam_ref)
+    ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
+
+    // -----------------------------------------------------------------
+    // Taxonomic profiling
+    // -----------------------------------------------------------------
+    
+    if (params.analysis_type == "taxonomic-profiling") {
+        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
+        ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+    }
+
+    // -----------------------------------------------------------------
+    // assembly
+    // -----------------------------------------------------------------
+    // if (params.analysis_type == "assembly") {
+    //     ASSEMBLY(clean_reads)
+    // }
+
+
+    // -----------------------------------------------------------------
     // Collate and save software versions
     // -----------------------------------------------------------------
     softwareVersionsToYAML(ch_versions)
@@ -32,15 +57,10 @@ workflow SOMATEM {
             newLine: true
         ).set { ch_collated_versions }
 
-    // -----------------------------------------------------------------
-    // Pre-processing and quality control on raw reads
-    // -----------------------------------------------------------------
-    hostile_contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, hostile_contam_ref)
-
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
+    taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
 }
 
 /*

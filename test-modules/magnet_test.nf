@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
 include { MAGNET } from "../modules/local/magnet/main.nf"
 
 // -------------------------
@@ -13,8 +14,7 @@ params.classification = "${projectDir}/../examples/lemur/example-output-ref/rela
 // Workflow
 // -------------------------
 workflow {
-
-    reads = Channel.fromPath(params.reads)
+    reads = convert_to_nfcore_tuple(params.reads)
     classification = Channel.fromPath(params.classification)
 
     // reads.view()
