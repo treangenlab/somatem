@@ -45,9 +45,11 @@ workflow runHostile {
     // run Hostile clean
     HOSTILE_CLEAN(reads, database_input)
     
+    ch_versions = HOSTILE_CLEAN.out.versions.first() // collect version of hostile
+    
     emit:
-    HOSTILE_CLEAN.out.fastq // de-hosted fastq file
-    // note: this is first draft, Need to add versions etc for nf-core compatibility
+    dehosted_reads = HOSTILE_CLEAN.out.fastq // de-hosted fastq file
+    versions = ch_versions
 }
     
 
