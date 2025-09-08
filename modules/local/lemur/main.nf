@@ -14,19 +14,17 @@ process LEMUR {
       tuple val(meta), path(reads)
 
     output:
-      tuple val(meta), path(output_dir)                           , emit: dir
-      tuple val(meta), path("*relative_abundance.tsv")            , emit: report
+      tuple val(meta), path("results/relative_abundance.tsv")     , emit: report
       path "versions.yml"                                         , emit: versions
 
     script:
     def args = task.ext.args ?: ''
-    output_dir = "${reads.baseName}-lemur-output"
     
     """
     lemur -i ${reads} \
       ${args} \
       --num-threads $task.cpus \
-      -o ${output_dir}
+      -o results/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
