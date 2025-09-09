@@ -166,6 +166,14 @@ _First test each module independently with example data from each tool's own rep
 - standardize modules: 
   1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
   2. Make all outputs a tuple of `meta, path` except `versions.yml`
+- mags plan: 
+  - Test `somatem_mags.nf` from it's own entry workflow; find example data (`input4mags`?)
+  - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
+  - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
+  - Port the entry workflow logic into the main.nf script
+  - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
+    - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
+
 
 ### Implementation notes
 - Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes
