@@ -180,6 +180,14 @@ _First test each module independently with example data from each tool's own rep
   - `Lemur`, `magnet`: 
   - `flye`: 
 
+### Organization notes
+_Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
+
+_future tasks_ : Do this in another branch  
+- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
+  - [ ] move example files to `assets/examples/`
+  - [ ] move databases to `assets/databases/`
+
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
   - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
@@ -214,16 +222,7 @@ If module exists on nf-core,
    - Need to use Channel.fromPath().simpleName to create meta.id from the file name
 - nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
-- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)
-
-# Porting from `t8` to `owlet3`
-_Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
-
-_future tasks_ : Do this in another branch  
-- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
-  - [ ] move example files to `assets/examples/`
-  - [ ] move databases to `assets/databases/`
-  
+- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
 
 # data/databases to download
@@ -253,11 +252,10 @@ to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymo
 
 
 ### Setup automatic download script
-Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
+Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_ : COuld put this in `subworkflow/local/utils/example_data_download.nf`
 - Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
   - I have a script: `assets/scripts/download_gdrive.sh` that downloads files from google drive and arranges them in the correct directory structure.
-  - Need to add `-c` flag to `gdown` to skip already downloaded files. thread: [#99](https://github.com/wkentaro/gdown/issues/99)
 - Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
   - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
   - Thoughts:
