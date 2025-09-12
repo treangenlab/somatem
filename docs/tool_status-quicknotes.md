@@ -303,27 +303,33 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
 - Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
-### Testing/demo databases
+Automatic DB download ideas:
+- advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
+- can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow)
+
+
+
+### Real databases
+_locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
+
+- hostile: using default `human-t2t-hla-argos985-mycob140` using the `hostile/fetch` module, source: [hostile readme](https://github.com/bede/hostile?tab=readme-ov-file#indexes) 
+- Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
   - Note sure if there were from the original emu? : https://osf.io/56uf7/files/osfstorage#
   - GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
-- legionella_cfr_idx`: From centrifuger example files
-  - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
-
-### Real databases
-_looking for databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
-
-- Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
-- hostile: record where this is from. 
 - checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd
   - Use the `checkm2_download` script from `nf-core/checkm2` to download the database? _the file needs to be relocated, similar to hostile fetch_
   - Make a custom script : might have issues with writing within the conda env [#51](https://github.com/chklovski/CheckM2/issues/73)
 
-_Clean up these old notes_
-- centrifuger: 
-  - real database download: GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
-  - mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
-- emu: link retrieved from ?
+later: 
+- centrifuger (_not downloaded_): GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
+
+
+
+### Testing/demo databases
+- legionella_cfr_idx`: From centrifuger example files
+  - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
+- centrifuger: mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 
 
 
