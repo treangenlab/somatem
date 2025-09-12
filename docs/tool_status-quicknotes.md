@@ -186,6 +186,12 @@ _First test each module independently with example data from each tool's own rep
 - Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
   - `Lemur`, `magnet`: 
   - `flye`: 
+- Best Practices for Optimization (from Seqera-AI)
+  - Start Conservative: Set memory to ~1.2x the peak_rss observed
+  - Monitor Efficiency: Aim for 60-80% memory utilization
+  - Handle Failures: Use retry logic for memory-related failures (exit codes 137-140)
+  - Consider Input Size: Scale resources based on input file sizes when possible
+
 
 ### Organization notes
 _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
