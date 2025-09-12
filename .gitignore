@@ -1,15 +1,6 @@
 # databases (large files)
-databases/
-examples/data/archive/46_1.fastq.gz
-
-# for the mag testing
-examples/data/input4mags/s4_final.fastq.gz
-examples/work
-examples/data/mag_output
-examples/*.sh
-examples/*.out
-subworkflows/somatem_mags_wviz.nf #still in progress
-modules/local/taxburstconvert/*
+assets/databases/
+assets/examples/
 
 #python custom scripts
 bin/taxburstprep.py
@@ -18,8 +9,8 @@ bin/taxburstprep.py
 archive/
 
 # intermediate outputs
-examples/lemur/46_1_sub10k.fastq-lemur-output/
-examples/lemur/46_1_sub10k_relative_abundance.tsv
+assets/examples/lemur/46_1_sub10k.fastq-lemur-output/
+assets/examples/lemur/46_1_sub10k_relative_abundance.tsv
 
 # nextflow outputs and logs
 .nextflow.log*

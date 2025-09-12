@@ -7,7 +7,7 @@ include { RHEA } from "../modules/local/rhea/main.nf"
 // Parameters
 // -------------------------
 // note: paths are relative to the directory containing this file
-params.reads = "${projectDir}/../examples/data/rhea/*.fasta"
+params.reads = "${projectDir}/../assets/examples/other_tools_files/rhea/*.fasta"
 
 // -------------------------
 // Workflow

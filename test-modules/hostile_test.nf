@@ -9,7 +9,7 @@ include { convert_to_nfcore_tuple } from "../subworkflows/local/utils/nf-core-co
 // Parameters
 // -------------------------
 // note: paths are relative to the workflow directory (from where nextflow is run)
-params.reads = "${projectDir}/../examples/data/46_1_sub10k.fastq.gz"
+params.reads = "${projectDir}/../assets/examples/data/mock9_sub10k.fastq.gz"
 params.database_name = 'human-t2t-hla-argos985-mycob140.mmi'
 params.database_dir = "${params.db_base_dir}/hostile"
 

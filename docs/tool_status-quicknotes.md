@@ -166,11 +166,30 @@ _First test each module independently with example data from each tool's own rep
 - standardize modules: 
   1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
   2. Make all outputs a tuple of `meta, path` except `versions.yml`
+- mags plan: a) Test `somatem_mags.nf` from it's own entry workflow; 
+  - [x] find example data (`input4mags`?)
+  - Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
+    ```bash
+    --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
+    --bakta_db    /path/to/bakta/db \
+    --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
+    ```
+  - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
+  - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
+  - Port the entry workflow logic into the main.nf script
+  - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
+  - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
+    - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
+
 
 ### Implementation notes
-- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes
+- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
   - `Lemur`, `magnet`: 
   - `flye`: 
+
+### Organization notes
+_Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
+
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
@@ -206,16 +225,7 @@ If module exists on nf-core,
    - Need to use Channel.fromPath().simpleName to create meta.id from the file name
 - nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
-- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)
-
-# Porting from `t8` to `owlet3`
-_Use this opportunity to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
-
-_future tasks_ : Do this in another branch  
-- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
-  - [ ] move example files to `assets/examples/`
-  - [ ] move databases to `assets/databases/`
-  
+- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
 
 # data/databases to download
@@ -223,9 +233,10 @@ Recording the source of each example dataset and database in the database folder
 
 
 ## Example files (`examples/`)
-- `data/46_1_sub10k.fastq.gz` and `B01_1_sub10k.fastq.gz`: From Austin's own generated nanopore data of gut microbiome samples. Subsampled to 10k reads.
-  - `data/46_1.fastq.gz`: From google drive/[example_data/agm..](https://drive.google.com/drive/u/1/folders/1MUR6sXAJSTaKXrqhVu6-rLFDw7lao5v5)
-- `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh)
+- `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+- `data/mock20_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
+  - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed
 
 Other tools' example files:
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
@@ -245,11 +256,10 @@ to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymo
 
 
 ### Setup automatic download script
-Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_
+Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_ : COuld put this in `subworkflow/local/utils/example_data_download.nf`
 - Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
   - I have a script: `assets/scripts/download_gdrive.sh` that downloads files from google drive and arranges them in the correct directory structure.
-  - Need to add `-c` flag to `gdown` to skip already downloaded files. thread: [#99](https://github.com/wkentaro/gdown/issues/99)
 - Get Google drive's direct download link from the file's shareable link in this format `https://drive.google.com/uc?export=download&id=YOUR_FILE_ID`
   - YOUR_FILE_ID is found in the Google Drive URL (e.g., in https://drive.google.com/file/d/FILE_ID/view)
   - Thoughts:
@@ -294,6 +304,9 @@ _looking for databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundan
 
 - Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
 - hostile: record where this is from. 
+- checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd
+  - Use the `checkm2_download` script from `nf-core/checkm2` to download the database? _the file needs to be relocated, similar to hostile fetch_
+  - Make a custom script : might have issues with writing within the conda env [#51](https://github.com/chklovski/CheckM2/issues/73)
 
 _Clean up these old notes_
 - centrifuger: 
