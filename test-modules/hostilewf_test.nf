@@ -6,7 +6,7 @@ include { convert_to_nfcore_tuple } from "../subworkflows/local/utils/nf-core-co
 // -------------------------
 // Parameters
 // -------------------------
-params.reads = "${projectDir}/../examples/data/46_1_sub10k.fastq.gz"
+params.reads = "${projectDir}/../assets/examples/data/mock9_sub10k.fastq.gz"
 
 
 workflow {

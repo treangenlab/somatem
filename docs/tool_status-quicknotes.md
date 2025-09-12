@@ -190,10 +190,6 @@ _First test each module independently with example data from each tool's own rep
 ### Organization notes
 _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
-_future tasks_ : Do this in another branch  
-- [ ] Streamline directory structure (nf-core style, followed in gms_16S)
-  - [ ] move example files to `assets/examples/`
-  - [ ] move databases to `assets/databases/`
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
