@@ -23,6 +23,15 @@ conda activate somatem_prep
 # and you should be good to run!
 ```
 
+## Initial setup
+Download the example data using the `get_example_data` subworkflow by running this command in the root directory of the repo (after activating the `nf_base_env` conda environment):
+```bash
+micromamba activate nf_base_env
+nextflow run subworkflows/local/get_example_data.nf
+```
+_This will download the example data to the `examples/data` directory for testing the pipelines._
+
+
 ## Usage
 
 #### long read preprocessing pipeline
