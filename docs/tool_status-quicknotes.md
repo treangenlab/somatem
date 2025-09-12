@@ -166,17 +166,24 @@ _First test each module independently with example data from each tool's own rep
 - standardize modules: 
   1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
   2. Make all outputs a tuple of `meta, path` except `versions.yml`
-- mags plan: 
-  - Test `somatem_mags.nf` from it's own entry workflow; find example data (`input4mags`?)
+- mags plan: a) Test `somatem_mags.nf` from it's own entry workflow; 
+  - [x] find example data (`input4mags`?)
+  - Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
+    ```bash
+    --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
+    --bakta_db    /path/to/bakta/db \
+    --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
+    ```
   - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
   - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
   - Port the entry workflow logic into the main.nf script
+  - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
   - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
     - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
 
 
 ### Implementation notes
-- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes
+- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
   - `Lemur`, `magnet`: 
   - `flye`: 
 
@@ -300,6 +307,9 @@ _looking for databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundan
 
 - Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
 - hostile: record where this is from. 
+- checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd
+  - Use the `checkm2_download` script from `nf-core/checkm2` to download the database? _the file needs to be relocated, similar to hostile fetch_
+  - Make a custom script : might have issues with writing within the conda env [#51](https://github.com/chklovski/CheckM2/issues/73)
 
 _Clean up these old notes_
 - centrifuger: 
