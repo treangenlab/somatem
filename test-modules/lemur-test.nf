@@ -11,7 +11,7 @@ include { LEMUR } from "../modules/local/lemur/main.nf"
 // -------------------------
 // Note: Paths are relative to the base directory of the workflow (where nextflow is run from)
 
-params.reads = "${projectDir}/../examples/lemur/example-data/example.fastq"
+params.reads = "${projectDir}/../assets/examples/other_tool_files/lemur/example-data/example.fastq"
 
 // -------------------------
 // Workflow
