@@ -1,8 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - nextflow>=22.10
-  - hostile
-  - chopper
-  - nanoplot

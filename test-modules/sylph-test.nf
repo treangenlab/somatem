@@ -5,8 +5,8 @@ include { SYLPH } from "../modules/local/sylph/main.nf"
 // -------------------------
 // Parameters
 // -------------------------
-params.reads = './examples/sylph/o157_reads.fastq.gz'
-params.reference = './examples/sylph/*.fasta.gz' // tiny : 3 genomes only
+params.reads = './assets/examples/sylph/o157_reads.fastq.gz'
+params.reference = './assets/examples/sylph/*.fasta.gz' // tiny : 3 genomes only
 // params.reference = './databases/v0.3-c1000-gtdb-r214.syldb' // small database
 params.threads = 4
 
