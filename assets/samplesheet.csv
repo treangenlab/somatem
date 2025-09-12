@@ -1,3 +1,3 @@
 sample,fastq_1
-mock9,examples/data/mock9_sub10k.fastq.gz
-46,examples/data/46_1_sub10k.fastq.gz
+mock9,assets/examples/data/mock9_sub10k.fastq.gz
+mock20,assets/examples/data/mock20_sub10k.fastq.gz
