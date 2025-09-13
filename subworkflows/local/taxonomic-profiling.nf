@@ -3,6 +3,8 @@
 include { EMU_ABUNDANCE } from '../../modules/local/emu/main.nf'
 include { LEMUR } from '../../modules/local/lemur/main.nf'
 include { MAGNET } from '../../modules/local/magnet/main.nf'
+include { TAXBURST_CONVERT } from '../../modules/local/taxburst_convert/main.nf'
+include { TAXBURST } from '../../modules/local/taxburst/main.nf'
 
 // -------------------------
 // Parameters
@@ -40,6 +42,11 @@ workflow TAXONOMIC_PROFILING {
         classification_report = taxonomy_report
             .map { meta, classification -> classification } // drop meta
         ch_versions = ch_versions.mix(LEMUR.out.versions)
+
+        // visualise taxonomy with Taxburst
+        TAXBURST_CONVERT(taxonomy_report, 'lemur') // Convert LEMUR output to Taxburst input
+        TAXBURST(TAXBURST_CONVERT.out.converted, 'krona')
+        ch_versions = ch_versions.mix(TAXBURST.out.versions)
 
         // Correct false positives for low abundance taxa / low coverage
         MAGNET(clean_reads_ch, classification_report)

@@ -22,20 +22,20 @@ process TAXBURST {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def format_arg = input_format ? "-F ${input_format}" : ""
-    def save_json = args.contains('--save-json') ? "--save-json ${prefix}.json" : ""
+    def format_arg = input_format ? "--input-format ${input_format}" : ""
+    def save_json = args.contains('--save-json') ? "--save-json ${prefix}_taxburst.json" : ""
     
     """
     taxburst \\
         ${format_arg} \\
         ${args} \\
         ${save_json} \\
-        -o ${prefix}.html \\
+        -o ${prefix}_taxburst.html \\
         ${classification_file}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        taxburst: \$(python -c "import taxburst; print(taxburst.__version__)")
+        taxburst: \$(echo \$(taxburst --version 2>&1) | sed 's/^.*taxburst //; s/Using.*\$//')")
     END_VERSIONS
     """
 
@@ -43,8 +43,8 @@ process TAXBURST {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.html
-    touch ${prefix}.json
+    touch ${prefix}_taxburst.html
+    touch ${prefix}_taxburst.json
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
