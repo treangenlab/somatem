@@ -35,7 +35,7 @@ process TAXBURST {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        taxburst: \$(echo \$(taxburst --version 2>&1) | sed 's/^.*taxburst //; s/Using.*\$//')")
+        taxburst: \$(micromamba list taxburst | grep -E 'taxburst\s+' | awk '{print \$2}')
     END_VERSIONS
     """
 
@@ -48,7 +48,7 @@ process TAXBURST {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        taxburst: \$(python -c "import taxburst; print(taxburst.__version__)")
+        taxburst: \$(micromamba list taxburst | grep -E 'taxburst\s+' | awk '{print \$2}')
     END_VERSIONS
     """
 }
