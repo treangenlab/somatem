@@ -1,6 +1,7 @@
 
 
 process MAGNET {
+    tag "$meta.id"
     label 'process_high'
     
     conda "${moduleDir}/dependencies.yml" // for locked env use: locked-spec-file.txt

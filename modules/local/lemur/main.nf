@@ -3,7 +3,8 @@
 
 
 process LEMUR {
-    label 'process_high'
+    tag "$meta.id"
+    label 'process_medium'
     
     conda "bioconda::lemur" // peg version with bioconda::lemur=1.0.1
 
