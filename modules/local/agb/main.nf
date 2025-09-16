@@ -1,6 +1,7 @@
 
 
 process AGB {
+    tag "$meta.id"
     label 'process_low'
 
     conda "almiheenko::agb" // peg version with bioconda::name=version
@@ -10,11 +11,11 @@ process AGB {
     // container "oras://community.wave.seqera.io/library/agb:version--build"  // generate with `wave containerize`
 
     input:
-      path assembly_dir
+      tuple val(meta), path(assembly_dir)
  
 
     output:
-      path "agb-output"
+      tuple val(meta), path("agb-output")
 
     script:
       // output_dir = "agb-output"

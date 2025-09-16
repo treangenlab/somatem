@@ -9,7 +9,7 @@ process TAXBURST_CONVERT {
     tuple val(meta), path(classification_file)
     val tool_name
     // for centrifuger mode we need the taxonomy DB:
-    val tax_db_dir        // e.g. params.centrifuger_db
+    // val tax_db_dir        // e.g. params.centrifuger_db
 
     output:
     tuple val(meta), path("${meta.id}.krona.tsv"), emit: converted
@@ -25,13 +25,12 @@ process TAXBURST_CONVERT {
     """
     # invoke converter script
     taxburst_prep.py \\
-      --mode ${tool_name} \\
-      --input ${classification_file} \\
-      ${ tool_name == 'centrifuger' ? "--db ${tax_db_dir}" : "" } \\
-      --output ${prefix}.krona.tsv
+      --format krona \\
+      --output ${prefix}.krona.tsv \\
+      ${classification_file}
 
     # record tool versions
     echo "${task.process}:" > versions.yml
-    echo "  python: \$\(python --version | sed 's/Python //'\)" >> versions.yml
+    echo "  python: \$(python --version | sed 's/Python //'\)" >> versions.yml
     """
 }
