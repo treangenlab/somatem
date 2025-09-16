@@ -1,3 +1,4 @@
+// custom somatem module
 process SAMTOOLS_COVERAGE {
     tag "$meta.id"
     label 'process_single'

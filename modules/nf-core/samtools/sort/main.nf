@@ -1,3 +1,4 @@
+// custom somatem module
 process SAMTOOLS_SORT {
     tag "$meta.id"
     label 'process_medium'

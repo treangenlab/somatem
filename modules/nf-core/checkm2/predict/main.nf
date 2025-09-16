@@ -1,3 +1,4 @@
+// custom somatem module
 process CHECKM2_PREDICT {
     tag "${meta.id}"
     label 'process_medium'
