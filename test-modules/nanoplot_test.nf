@@ -8,8 +8,7 @@ include { convert_to_nfcore_tuple } from "../subworkflows/utils/nf-core-compatib
 // Parameters
 // -------------------------
 // note: paths are relative to the workflow directory (from where nextflow is run)
-params.reads = "${projectDir}/../examples/data/46_1_sub10k.fastq.gz"
-// other reads: 46_1_sub10k.fastq.gz
+params.reads = "${projectDir}/../assets/examples/data/mock9_sub10k.fastq.gz"
 
 // -------------------------
 // Workflow
