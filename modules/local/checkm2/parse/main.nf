@@ -1,3 +1,4 @@
+// custom somatem module
 process CHECKM2_PARSE {
     tag "$meta.id"
     label 'process_low'
