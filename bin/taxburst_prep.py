@@ -17,7 +17,7 @@ LEMUR_COLS = {
     "phylum": "phylum",
     # "clade" is present in LEMUR but not needed for Krona/Taxburst
     "superkingdom": "superkingdom",
-    "fraction": "F",
+    "fraction": r"^(F|abundance)$"  # Match either 'F' or 'abundance' for fraction
 }
 
 def detect_delimiter(path):
@@ -34,9 +34,17 @@ def read_lemur_rows(path):
         fieldmap = {k.strip(): k for k in r.fieldnames}
         def get(row, key):
             src = LEMUR_COLS.get(key, key)
+            # If the source is a regex pattern (starts and ends with /)
+            if key == "fraction" and src.startswith("^") and src.endswith("$"):
+                import re
+                pattern = re.compile(src)
+                for field in fieldmap.values():
+                    if pattern.match(field):
+                        return (row.get(field, "") or "").strip()
+                return ""
+            # Normal dictionary lookup
             src = fieldmap.get(src, src)
-            val = (row.get(src, "") or "").strip()
-            return val
+            return (row.get(src, "") or "").strip()
 
         for row in r:
             out = {}
