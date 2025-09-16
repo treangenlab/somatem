@@ -33,6 +33,11 @@ workflow TAXONOMIC_PROFILING {
         taxonomy_report = EMU_ABUNDANCE.out.report
         ch_versions = ch_versions.mix(EMU_ABUNDANCE.out.versions)
 
+        // visualise taxonomy with Taxburst
+        // TAXBURST_CONVERT(taxonomy_report, 'emu') // Convert EMU output to Taxburst input
+        // TAXBURST(TAXBURST_CONVERT.out.converted, 'krona')
+        // ch_versions = ch_versions.mix(TAXBURST.out.versions)
+
     // metagenomic reads (default)
     } else {
         // multi-marker gene (16S + 18S + ITS) based tax profiling
