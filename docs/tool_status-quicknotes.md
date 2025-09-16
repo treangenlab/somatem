@@ -89,7 +89,9 @@ _First test each module independently with example data from each tool's own rep
 - **Sylph**: test module for profile with example data from repo works
 
 - **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
-  
+  - feature integration: `taxburst`: Fails due to duplicate `Actinobacteria` for both class and phylum of Bifidobacteriales (confirmed in emu's db: `taxonomy.tsv`) ; _deleting this column makes taxburst work! : how to fix?_ ~ maybe update emu db with recent changes to phylum names?/ 
+    - Not a robust solution but could run with `errorStrategy: 'ignore'` in `taxburst`? [read more](https://www.nextflow.io/docs/latest/reference/process.html#process-error-strategy)
+
   1. Copied example from EMU repo
   2. fixed `meta` input with dummy value; solved conda issues with channel priority;
   3. Added `--db` copied from gms_16S repo
