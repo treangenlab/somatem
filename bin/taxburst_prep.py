@@ -47,6 +47,12 @@ def read_lemur_rows(path):
             return (row.get(src, "") or "").strip()
 
         for row in r:
+            # Get the tax_id value
+            tax_id = get(row, 'tax_id')
+            # Skip rows with 'unmapped' or 'unclassified' in tax_id
+            if tax_id and ('unmapped' in tax_id.lower() or 'unclassified' in tax_id.lower()):
+                continue
+                
             out = {}
             for k in RANKS_IN:
                 out[k] = get(row, k)
