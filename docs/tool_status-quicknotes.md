@@ -248,6 +248,7 @@ All example files are stored in google drive/[data/examples](https://drive.googl
 - `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
 - `data/mock20_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
   - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed
+- `data/zymoM95.fastq.gz`: From zymo mock? 16S, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/zymoM95.fastq.gz`
 
 Other tools' example files:
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
