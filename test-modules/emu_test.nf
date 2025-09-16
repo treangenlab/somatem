@@ -6,7 +6,7 @@ include { EMU_ABUNDANCE } from "../modules/local/emu/main.nf"
 // -------------------------
 // Parameters
 // -------------------------
-params.reads = "${projectDir}/../examples/data/emu_full_length.fa"
+params.reads = "${projectDir}/../assets/examples/other_tools_files/emu_full_length.fa"
 // params.emu_db = "${projectDir}/../databases/emu"
 
 // -------------------------
