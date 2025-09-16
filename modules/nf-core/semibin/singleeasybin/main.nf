@@ -1,3 +1,4 @@
+// custom somatem module
 process SEMIBIN_SINGLEEASYBIN {
     tag "$meta.id"
     label 'process_medium'

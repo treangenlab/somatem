@@ -1,3 +1,4 @@
+// custom somatem module
 process FLYE {
     tag "$meta.id"
     label 'process_high'
