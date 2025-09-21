@@ -2,6 +2,9 @@ process SINGLEM_PIPE {
     tag "$meta.id"
     label 'process_medium'
 
+    // Outputs
+    publishDir "${params.output_dir}/taxonomy/${meta.id}", mode: 'copy', pattern: "*.csv"
+
     conda "${moduleDir}/environment.yml"
 
     input:

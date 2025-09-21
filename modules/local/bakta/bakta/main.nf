@@ -5,6 +5,7 @@ process BAKTA_BAKTA {
 
     conda "bioconda::bakta=1.11.4"
     
+    // Outputs
     publishDir "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}", mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
 
     input:
