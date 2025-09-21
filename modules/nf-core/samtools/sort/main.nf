@@ -4,10 +4,10 @@ process SAMTOOLS_SORT {
     label 'process_medium'
     ext.prefix = { "${meta.id}_sorted" }
 
+    // Outputs
+    publishDir "${params.output_dir}/mapping/${meta.id}", mode: 'copy', pattern: "*.bam"
+
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/samtools:1.21--h50ea8bc_0' :
-        'biocontainers/samtools:1.21--h50ea8bc_0' }"
 
     input:
     tuple val(meta) , path(bam)
