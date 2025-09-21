@@ -3,6 +3,9 @@ process TAXBURST {
     tag "$meta.id"
     label 'process_single'
 
+    // Outputs
+    publishDir "${params.output_dir}/taxonomy/${meta.id}", mode: 'copy', pattern: "*.html"
+
     conda "${moduleDir}/environment.yml"
 
     input:
