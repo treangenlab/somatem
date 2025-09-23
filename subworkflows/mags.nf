@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// Metagenomics analysis subworkflow: taxonomic profiling first, then assembly, mapping, binning, quality assessment, and annotation
+// Metagenomics analysis subworkflow: taxonomic profiling, de novo assembly, mapping, binning, quality assessment, and annotation
 
 // Include nf-core modules
 include { FLYE }                    from '../modules/nf-core/flye/main'
@@ -11,7 +11,7 @@ include { SAMTOOLS_SORT }           from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_COVERAGE }       from '../modules/nf-core/samtools/coverage/main'
 include { SEMIBIN_SINGLEEASYBIN }   from '../modules/nf-core/semibin/singleeasybin/main'
 include { CHECKM2_PREDICT }         from '../modules/nf-core/checkm2/predict/main'
-include { CHECKM2_PARSE }           from '../modules/local/checkm2/parse/main'  // Use local fixed version
+include { CHECKM2_PARSE }           from '../modules/local/checkm2/parse/main'
 include { BAKTA_BAKTA }             from '../modules/local/bakta/bakta/main'
 include { SINGLEM_PIPE }            from '../modules/local/singlem/pipe/main'
 include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../modules/local/singlem/pipe/main'
@@ -22,17 +22,17 @@ include { TAXBURST }                from '../modules/local/taxburst/main'
 params.input_dir = ''
 params.checkm2_db = ''
 params.bakta_db = ''
-params.singlem_metapackage = '' // Path to SingleM metapackage
+params.singlem_metapackage = ''
 params.output_dir = './results'
 params.flye_mode = '--nano-hq'
 params.semibin_environment = 'human_gut'
-params.completeness_threshold = 80.0  // Threshold for generating Bakta plots
+params.completeness_threshold = 80.0
 
 workflow SOMATEM_MAGS {
 
     take:
     reads               // channel: [ val(meta), path(reads) ]
-    checkm2_db          // channel: [ val(dbmeta), path(db) ]
+    checkm2_db          // channel: path(db)
     bakta_db            // channel: path(db)
     singlem_metapackage // channel: path(metapackage)
     flye_mode           // val: sequencing data type for Flye
@@ -41,7 +41,10 @@ workflow SOMATEM_MAGS {
     main:
     ch_versions = Channel.empty()
 
-    // STEP 1: Taxonomic profiling with SingleM on raw reads (metagenome) - RUN FIRST
+    // Check input channel
+    reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
+
+    // Taxonomic profiling with SingleM on raw reads
     ch_metagenome_reads = reads.map { meta, reads_file ->
         def new_meta = meta.clone()
         new_meta.single_end = true
@@ -52,11 +55,11 @@ workflow SOMATEM_MAGS {
     SINGLEM_PIPE(ch_metagenome_reads, singlem_metapackage)
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
-    // STEP 2: Create interactive taxonomic visualization with TaxBurst - RUN SECOND
+    // Interactive taxonomic visualization with TaxBurst
     TAXBURST(SINGLEM_PIPE.out.taxonomic_profile, 'SingleM')
     ch_versions = ch_versions.mix(TAXBURST.out.versions)
 
-    // STEP 3: Assembly with Flye - RUN AFTER TAXONOMIC PROFILING
+    // Assembly with Flye
     FLYE(reads, flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
 
@@ -81,7 +84,7 @@ workflow SOMATEM_MAGS {
 
     // Calculate coverage
     ch_bam_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, bam ->
-        [meta, bam, []] // Add empty index slot
+        [meta, bam, []]
     }
     
     ch_fasta_for_coverage = FLYE.out.fasta
@@ -110,7 +113,7 @@ workflow SOMATEM_MAGS {
     SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
 
-    // Quality assessment with CheckM2
+    // Quality assessment with CheckM2 - checkm2_db is now a value channel
     CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
@@ -171,25 +174,32 @@ workflow SOMATEM_MAGS {
     SINGLEM_APPRAISE(ch_appraise_input, singlem_metapackage)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
 
-    // Enhanced Bakta annotation with completeness-based plot generation
+    // Completeness-based Bakta annotation
     ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
         .transpose()
         .map { meta, bin ->
             def new_meta = meta.clone()
-            new_meta.id = "${meta.id}_${bin.baseName}"
             
-            // Extract the SemiBin part from the filename for completeness lookup
-            // e.g., s4_final_SemiBin_11.fa.gz -> SemiBin_11 or SemiBin_11.fa.gz -> SemiBin_11
-            def bin_name = bin.name  // Get full filename with extension
-            def semibin_name = bin_name.replaceAll(/.*?(SemiBin_\d+)\.fa(\.gz)?$/, '$1')
+            // Get the actual bin filename and clean it
+            def bin_filename = bin.name
+            def clean_bin_name = bin_filename.replaceAll(/\.(fa|fasta|fna)(\.gz)?$/, '')
+            
+            // Set the meta.id to the clean bin name and preserve sample_id for folder organization
+            new_meta.id = clean_bin_name
+            new_meta.sample_id = meta.id  // Keep original sample ID for folder structure
+            
+            // Extract the SemiBin part for completeness lookup
+            def semibin_match = bin_filename =~ /.*?(SemiBin_\d+)\.fa/
+            def semibin_name = semibin_match ? semibin_match[0][1] : clean_bin_name
             new_meta.bin_name = semibin_name
+            
             [new_meta, bin]
         }
 
-    // Add completeness information to bin metadata
-    ch_completeness_map = CHECKM2_PARSE.out.completeness_map
+    // Add completeness information to bin metadata - preserve sample-specific metadata
+    ch_completeness_with_meta = CHECKM2_PARSE.out.completeness_map
         .map { meta, csv_file ->
-            // Parse the CSV file to create a map
+            // Parse the CSV file to create a map but keep the metadata
             def completeness_map = [:]
             csv_file.text.split('\n').drop(1).each { line ->
                 if (line.trim()) {
@@ -199,13 +209,23 @@ workflow SOMATEM_MAGS {
                     }
                 }
             }
-            return completeness_map
+            return [meta, completeness_map]
         }
 
-    // Combine bins with completeness information and filter for high-quality bins only
+    // Use sample_id instead of full meta for joining
     ch_bins_with_completeness = ch_bins_for_annotation
-        .combine(ch_completeness_map)
-        .map { meta, bin, completeness_map ->
+        .map { meta, bin -> 
+            // Create a key based on the original sample ID for joining
+            def join_key = meta.sample_id
+            [join_key, meta, bin]
+        }
+        .combine(
+            ch_completeness_with_meta.map { meta, completeness_map -> 
+                [meta.id, completeness_map] 
+            }, 
+            by: 0
+        )
+        .map { join_key, meta, bin, completeness_map ->
             def new_meta = meta.clone()
             def bin_name = meta.bin_name
             
@@ -213,10 +233,8 @@ workflow SOMATEM_MAGS {
             def completeness = completeness_map[bin_name]
             if (completeness != null) {
                 new_meta.completeness = completeness
-                println "Bin ${bin_name}: ${completeness}% complete - ${completeness >= params.completeness_threshold ? 'WILL' : 'WILL NOT'} run Bakta annotation"
             } else {
                 new_meta.completeness = null
-                println "Bin ${bin_name}: completeness unknown - will not run Bakta annotation"
             }
             
             [new_meta, bin]
@@ -229,8 +247,6 @@ workflow SOMATEM_MAGS {
     // Only run Bakta on high-quality bins (≥completeness_threshold)
     BAKTA_BAKTA(ch_bins_with_completeness, bakta_db, [], [])
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
-
-    // Note: File publishing is handled in the main workflow block to avoid subscribe issues
 
     emit:
     // Original outputs
@@ -300,16 +316,18 @@ workflow {
 
     // Prepare input channels
     ch_reads = Channel.fromPath("${params.input_dir}/*.fastq.gz")
+        .ifEmpty { error "No .fastq.gz files found in ${params.input_dir}" }
         .map { file -> 
             def meta = [id: file.baseName.replaceAll(/\.fastq(\.gz)?$/, '')]
+            println "Processing input file: ${file} -> sample ID: ${meta.id}"
             [meta, file]
         }
     
-    ch_checkm2_db = Channel.fromPath(params.checkm2_db)
-        .map { file -> 
-            def meta = [id: file.name]
-            [meta, file]
-        }
+    // Count and display all input files
+    ch_reads.count().view { count -> "Found ${count} input files to process" }
+    
+    // Use Channel.value() for checkm2_db
+    ch_checkm2_db = Channel.value(params.checkm2_db)
     
     ch_bakta_db = Channel.value(params.bakta_db)
     ch_singlem_metapackage = Channel.value(params.singlem_metapackage)
@@ -332,11 +350,10 @@ workflow {
     SOMATEM_MAGS.out.bins.view { meta, bins -> "✓ Binning completed for ${meta.id}: ${bins.size()} bins" }
     SOMATEM_MAGS.out.checkm2_report.view { meta, report -> "✓ Quality assessment completed for ${meta.id}" }
     
-    // Show which bins will get plots
+    // Show which bins got annotation
     SOMATEM_MAGS.out.bakta_embl.view { meta, embl -> 
         def completeness = meta.completeness ?: "unknown"
-        def plot_status = (meta.completeness != null && meta.completeness >= params.completeness_threshold) ? "with plots" : "without plots"
-        "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete) ${plot_status}"
+        "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
     }
     
     SOMATEM_MAGS.out.appraise_summary.view { meta, summary -> "✓ SingleM appraise analysis completed for ${meta.id}" }
@@ -346,9 +363,9 @@ workflow {
         .map { meta, embl -> meta.completeness }
         .filter { it != null && it >= params.completeness_threshold }
         .count()
-        .view { count -> "✓ Generated plots for ${count} high-quality bins (≥${params.completeness_threshold}% complete)" }
+        .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.completeness_threshold}% complete)" }
 
-    // Publish results to organized directories with safe copying
+    // Publish non-Bakta results (Bakta uses publishDir automatically)
     SOMATEM_MAGS.out.assembly.subscribe { meta, fasta ->
         def dest = file("${params.output_dir}/assembly/${meta.id}_assembly.fasta")
         dest.parent.mkdirs()
@@ -377,20 +394,6 @@ workflow {
         }
     }
 
-    SOMATEM_MAGS.out.assembly_log.subscribe { meta, log ->
-        def dest = file("${params.output_dir}/assembly/${meta.id}_flye.log")
-        dest.parent.mkdirs()
-        try {
-            if (log instanceof Collection && log.size() > 0) {
-                log[0].copyTo(dest)
-            } else {
-                log.copyTo(dest)
-            }
-        } catch (Exception e) {
-            println "Warning: Could not copy assembly log for ${meta.id}: ${e.message}"
-        }
-    }
-
     SOMATEM_MAGS.out.bam_sorted.subscribe { meta, bam ->
         def dest = file("${params.output_dir}/mapping/${meta.id}_sorted.bam")
         dest.parent.mkdirs()
@@ -416,34 +419,6 @@ workflow {
             }
         } catch (Exception e) {
             println "Warning: Could not copy coverage for ${meta.id}: ${e.message}"
-        }
-    }
-
-    SOMATEM_MAGS.out.bins_csv.subscribe { meta, csv ->
-        def dest = file("${params.output_dir}/binning/${meta.id}_semibin_results.csv")
-        dest.parent.mkdirs()
-        try {
-            if (csv instanceof Collection && csv.size() > 0) {
-                csv[0].copyTo(dest)
-            } else {
-                csv.copyTo(dest)
-            }
-        } catch (Exception e) {
-            println "Warning: Could not copy bins CSV for ${meta.id}: ${e.message}"
-        }
-    }
-
-    SOMATEM_MAGS.out.bins_tsv.subscribe { meta, tsv ->
-        def dest = file("${params.output_dir}/binning/${meta.id}_semibin_results.tsv")
-        dest.parent.mkdirs()
-        try {
-            if (tsv instanceof Collection && tsv.size() > 0) {
-                tsv[0].copyTo(dest)
-            } else {
-                tsv.copyTo(dest)
-            }
-        } catch (Exception e) {
-            println "Warning: Could not copy bins TSV for ${meta.id}: ${e.message}"
         }
     }
 
@@ -486,22 +461,6 @@ workflow {
             }
         } catch (Exception e) {
             println "Warning: Could not copy SingleM profile for ${meta.id}: ${e.message}"
-            println "Profile object type: ${profile.getClass()}"
-        }
-    }
-
-    SOMATEM_MAGS.out.singlem_otu.subscribe { meta, otu ->
-        def dest = file("${params.output_dir}/taxonomy/${meta.id}_metagenome_otu_table.csv")
-        dest.parent.mkdirs()
-        try {
-            if (otu instanceof Collection && otu.size() > 0) {
-                otu[0].copyTo(dest)
-            } else {
-                otu.copyTo(dest)
-            }
-        } catch (Exception e) {
-            println "Warning: Could not copy SingleM OTU table for ${meta.id}: ${e.message}"
-            println "OTU object type: ${otu.getClass()}"
         }
     }
 
@@ -516,7 +475,6 @@ workflow {
             }
         } catch (Exception e) {
             println "Warning: Could not copy TaxBurst HTML for ${meta.id}: ${e.message}"
-            println "HTML object type: ${html.getClass()}"
         }
     }
 
@@ -538,88 +496,7 @@ workflow {
             }
         } catch (Exception e) {
             println "Warning: Could not copy bins for ${meta.id}: ${e.message}"
-            println "Bins object type: ${bins.getClass()}"
-            println "Bins content: ${bins}"
         }
-    }
-
-    // Publish all Bakta annotation outputs organized by bin
-    // Helper function to safely copy files
-    def copyBaktaFile = { meta, file_obj, extension ->
-        if (file_obj && file_obj.exists()) {
-            def bin_dir = file("${params.output_dir}/annotation/${meta.id}")
-            bin_dir.mkdirs()
-            def dest = file("${bin_dir}/${meta.id}.${extension}")
-            try {
-                if (file_obj instanceof Collection && file_obj.size() > 0) {
-                    file_obj[0].copyTo(dest)
-                } else {
-                    file_obj.copyTo(dest)
-                }
-                return dest
-            } catch (Exception e) {
-                println "Warning: Could not copy Bakta ${extension.toUpperCase()} for ${meta.id}: ${e.message}"
-                return null
-            }
-        }
-        return null
-    }
-
-    // Publish all Bakta outputs
-    SOMATEM_MAGS.out.bakta_embl.subscribe { meta, embl ->
-        copyBaktaFile(meta, embl, 'embl')
-    }
-
-    SOMATEM_MAGS.out.bakta_faa.subscribe { meta, faa ->
-        copyBaktaFile(meta, faa, 'faa')
-    }
-
-    SOMATEM_MAGS.out.bakta_ffn.subscribe { meta, ffn ->
-        copyBaktaFile(meta, ffn, 'ffn')
-    }
-
-    SOMATEM_MAGS.out.bakta_fna.subscribe { meta, fna ->
-        copyBaktaFile(meta, fna, 'fna')
-    }
-
-    SOMATEM_MAGS.out.bakta_gbff.subscribe { meta, gbff ->
-        copyBaktaFile(meta, gbff, 'gbff')
-    }
-
-    SOMATEM_MAGS.out.bakta_gff.subscribe { meta, gff ->
-        copyBaktaFile(meta, gff, 'gff')
-    }
-
-    SOMATEM_MAGS.out.bakta_hypotheticals_tsv.subscribe { meta, hyp_tsv ->
-        copyBaktaFile(meta, hyp_tsv, 'hypotheticals.tsv')
-    }
-
-    SOMATEM_MAGS.out.bakta_hypotheticals_faa.subscribe { meta, hyp_faa ->
-        copyBaktaFile(meta, hyp_faa, 'hypotheticals.faa')
-    }
-
-    SOMATEM_MAGS.out.bakta_tsv.subscribe { meta, tsv ->
-        copyBaktaFile(meta, tsv, 'tsv')
-    }
-
-    SOMATEM_MAGS.out.bakta_txt.subscribe { meta, txt ->
-        copyBaktaFile(meta, txt, 'txt')
-    }
-
-    SOMATEM_MAGS.out.bakta_inference_tsv.subscribe { meta, inf_tsv ->
-        copyBaktaFile(meta, inf_tsv, 'inference.tsv')
-    }
-
-    SOMATEM_MAGS.out.bakta_png.subscribe { meta, png ->
-        copyBaktaFile(meta, png, 'png')
-    }
-
-    SOMATEM_MAGS.out.bakta_svg.subscribe { meta, svg ->
-        copyBaktaFile(meta, svg, 'svg')
-    }
-
-    SOMATEM_MAGS.out.bakta_json.subscribe { meta, json ->
-        copyBaktaFile(meta, json, 'json')
     }
 
     // Publish SingleM appraise outputs
@@ -647,7 +524,6 @@ workflow {
                 } else {
                     plot.copyTo(dest)
                 }
-                println "✓ Saved SingleM appraise plot: ${dest}"
             } catch (Exception e) {
                 println "Warning: Could not copy SingleM appraise plot for ${meta.id}: ${e.message}"
             }

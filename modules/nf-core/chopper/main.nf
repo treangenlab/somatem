@@ -1,3 +1,4 @@
+// custom somatem module
 process CHOPPER {
     tag "$meta.id"
     label 'process_medium'
