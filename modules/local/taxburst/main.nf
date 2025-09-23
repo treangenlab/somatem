@@ -1,11 +1,12 @@
+// custom somatem module
 process TAXBURST {
     tag "$meta.id"
     label 'process_single'
 
+    // Outputs
+    publishDir "${params.output_dir}/taxonomy/${meta.id}", mode: 'copy', pattern: "*.html"
+
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/taxburst:0.3.0--pyhdfd78af_0':
-        'biocontainers/taxburst:0.3.0--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(classification_file)

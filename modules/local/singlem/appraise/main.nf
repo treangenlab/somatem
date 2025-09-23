@@ -2,10 +2,11 @@ process SINGLEM_APPRAISE {
     tag "$meta.id"
     label 'process_medium'
 
+    // Outputs
+    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.svg"
+
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/singlem:0.19.0--pyhdfd78af_0':
-        'biocontainers/singlem:0.19.0--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(metagenome_otu_tables), path(genome_otu_tables), path(assembly_otu_tables)

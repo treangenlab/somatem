@@ -1,3 +1,4 @@
+// custom somatem module
 process NANOPLOT {
     tag "$meta.id"
     label 'process_low'

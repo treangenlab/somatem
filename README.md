@@ -3,22 +3,27 @@ LLM accessible long-read metagenomics pipeline with best practices
 ## Outline
 [Plannning tools](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
 
-## Installation
+### Long Read Pipelines
+We are currently developing nextflow scripts for commons long-read sequencing tasks. 
 
-To run the workflows you will need to clone the github and make conda environments for each of the workflows.
+SOMATeM contains a few subworkflows designed to perform different tasks:
 
-For the `somatem_prep.nf` workflow, the install is as follows:
+* Data pre-processing
+Used within the beginning of most pipelines, this will run [NanoPlot](https://github.com/wdecoster/NanoPlot) on the raw files, 
+then remove host contamination using [hostile](https://github.com/bede/hostile), 
+followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), 
+then one last __NanoPlot__ analysis to show the statistics of your final reads
+
+* Taxonomic classification
+
+
+* Metagenome-assembled genome
+
 ```
 # have a working conda install (module load conda or download sh file)
 
 # clone this branch of the repo and move to dir 
-git clone https://github.com/treangenlab/SOMAteM -b agm && cd SOMAteM
-
-# create the conda env with all the tools
-conda env create -n somatem_prep -f envs/somatem_prep.yml
-
-# activate the conda env
-conda activate somatem_prep
+git clone https://github.com/treangenlab/SOMAteM
 
 # and you should be good to run!
 ```
@@ -34,20 +39,6 @@ _This will download the example data to the `examples/data` directory for testin
 
 ## Usage
 
-#### long read preprocessing pipeline
-We are currently developing nextflow scripts for commons long-read sequencing tasks. The first of which is called `somatem_prep.nf` which will take in fastq files (found in examples/data) and run [NanoPlot](https://github.com/wdecoster/NanoPlot) on the raw files, then remove host contamination using [hostile](https://github.com/bede/hostile), followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), then one last __NanoPlot__ analysis to show the statistics of your final reads, ready for use in taxonomic classification and assembly pipelines _under active development_.
-
-`somatem_prep.nf`
-```
-# activate conda env
-conda activate somatem_prep
-
-# test on our example data
-gzip -d examples/data/*.fastq.gz
-
-# for simplicity one can use a premade config file
-nextflow run /path/to/SOMAteM/workflows/somatem_prep.nf -c /path/to/SOMAteM/confs/somatem_prep.config
-```
 #### long read metagenome assembled genome pipeline
 A custom nextflow pipeline of the current best practice tools for long read MAG assembly and binning. This pipeline is much more compute intensive. 
 
@@ -55,11 +46,19 @@ A custom nextflow pipeline of the current best practice tools for long read MAG 
 ```
 # assuming you already have nextflow and conda installed along with git repo cloned
 
-# go to SOMAteM repo
-cd SOMAteM 
+conda activate somatemtest
 
-# lil test run
-nextflow run workflows/somatem_mags.nf --input_dir /path/to/SOMAteM/examples/data --output_dir /path/to/SOMAteM/examples/soma_mags_test --threads 8 --gtdb_db /path/to/gtdb214 -c /path/to/SOMAteM/confs/somatem_mags.config
+nextflow run /path/to/subworkflows/somatem_mags.nf \
+  --input_dir   /path/to/SOMAteM/examples/data/input4mags \
+  --output_dir  /path/to/SOMAteM/examples/data/mag_test \
+  --threads     96 \
+  --flye_mode nano-hq \
+  --semibin_environment mouse_gut \
+  --completeness_threshold 50 \
+  --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
+  --bakta_db    /path/to/bakta/db \
+  --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
+  -c /path/to/SOMAteM/conf/simple_somatem_mags.config
 ```
 
 For the `somatem_mags.nf` workflow there are also some databases you must download before use including the [checkm2](https://github.com/chklovski/CheckM2) and [gtdbtk](https://gtdb.ecogenomic.org/) databases, as well as the [singlem metapackage](https://zenodo.org/records/15232972).

@@ -1,5 +1,6 @@
 name: taxburst_convert
 channels:
   - conda-forge
+  - bioconda
 dependencies:
-  - python>=3.8
+  - taxburst
