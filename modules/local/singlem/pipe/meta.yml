@@ -69,4 +69,4 @@ output:
 
 authors:
   - "@wwood" # Original author
-  - "@microbemarsh" # for nextflow
+  - "@microbemarsh" # for somatem integration

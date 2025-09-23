@@ -1,11 +1,12 @@
+// custom somatem module
 process CHECKM2_PARSE {
     tag "$meta.id"
     label 'process_low'
 
+    // Outputs
+    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.csv"
+
     conda "conda-forge::python=3.9 conda-forge::pandas=2.0.3"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.9--1' :
-        'biocontainers/python:3.9--1' }"
 
     input:
     tuple val(meta), path(checkm2_tsv)

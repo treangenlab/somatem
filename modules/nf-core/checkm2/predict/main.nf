@@ -1,15 +1,16 @@
+// custom somatem module
 process CHECKM2_PREDICT {
     tag "${meta.id}"
     label 'process_medium'
 
+    // Outputs
+    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.tsv"
+
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0a/0af812c983aeffc99c0fca9ed2c910816b2ddb9a9d0dcad7b87dab0c9c08a16f/data':
-        'community.wave.seqera.io/library/checkm2:1.1.0--60f287bc25d7a10d' }"
 
     input:
     tuple val(meta), path(fasta, stageAs: "input_bins/*")
-    tuple val(dbmeta), path(db)
+    path(db)
 
     output:
     tuple val(meta), path("${prefix}")                   , emit: checkm2_output

@@ -159,11 +159,7 @@ output:
         ontologies:
           - edam: http://edamontology.org/format_3750 # YAML
 authors:
-  - "@rpetit3"
   - "@oschwengers"
-  - "@jfy133"
   - "@microbemarsh" # implemented for SOMAteM
 maintainers:
-  - "@rpetit3"
   - "@oschwengers"
-  - "@jfy133"
