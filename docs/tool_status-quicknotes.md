@@ -7,19 +7,19 @@ _First test each module independently with example data from each tool's own rep
   - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
   - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
 
-- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db (specifically for `46_1_sub10k.fastq.gz` file). (_**todo:**_ check memory requirement and give `high_memory` label? ; currently has `process_high`)
-  - Tried to run `46_1_sub10k.fastq.gz` file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
+- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. 
+  - Tried to run old file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
     Completed at: 13-Aug-2025 17:30:31
     Duration    : 45m 46s
     CPU hours   : 9.1
     Succeeded   : 1
     ``` 
-  - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`). (_**todo:**_ Need to expand to output files to send to MAGnet easily)
+  - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`).
   - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
 - **Magnet**: Errors with ncbi datasets downloading? Debug with Eddy's Mimic project env.
-  - (_debug_) Using Eddy's Mimic project env, magnet runs fine ; and there's more time gap between each entry of the downloaded genomes. **_todo_**: Look for something that is pacing the number of reqests, some other ncbi tool in conda?
+  - (_update: using a later version of ncbi-dataset-cli solved the timeout issue_) Using Eddy's Mimic project env, magnet runs fine ; and there's more time gap between each entry of the downloaded genomes. Look for something that is pacing the number of reqests, some other ncbi tool in conda? / 
     - Output log showing all 15 entries downloaded. _Stuck at the unzip step since no bash commands are found in this env_ ; Fix using `export PATH=$PATH:/usr/bin/`, this might be due to accessing an env not within the user's home directory.
     ```log
     min_abundance: 0
@@ -155,7 +155,7 @@ _First test each module independently with example data from each tool's own rep
 
 ## Other tools
 - Rhea: works with example data from repo. 
-  - Couldn't handle metadata so omitted for now. _Could use the directory name as the `meta.id`?_
+  - Couldn't handle metadata input that's nf-core compatible so omitted for now. (since it is taking multiple files as input) _Could use the directory name as the `meta.id`?_
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
   - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
     - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]` ; _agb outputs a html ; I couldn't interpret the graph_
