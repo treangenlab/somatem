@@ -324,10 +324,6 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
   - Use the `checkm2_download` script from `nf-core/checkm2` to download the database? _the file needs to be relocated, similar to hostile fetch_
   - Make a custom script : might have issues with writing within the conda env [#51](https://github.com/chklovski/CheckM2/issues/73)
 
-later: 
-- centrifuger (_not downloaded_): GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
-
-
 
 ### Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files
@@ -335,6 +331,13 @@ later:
 - centrifuger: mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 
 
+### archive: future DBs?
+- centrifuger (_not downloaded_): GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
+
+_notes from Austin: Aug 9th 2025_
+- SingleM data download [url](https://wwood.github.io/singlem/tools/data) can be downloaded by running the `singlem data --output-directory /path/to/dbs/singlem`
+- checkm2 database can be downloaded by running `checkm2 database --download --path /custom/path/`
+- bakta database can be downloaded by running `bakta_db download --output <output-path> --type [light|full]` (this is the best method) but you can download from their zenodo archive.
 
 ## Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
