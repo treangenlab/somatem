@@ -26,7 +26,7 @@ def detect_delimiter(path):
         head = fh.read(4096)
     return "\t" if "\t" in head and head.count("\t") >= head.count(",") else ","
 
-def read_lemur_rows(path):
+def read_lemur_rows(path, from_tool):
     delim = detect_delimiter(path)
     with open(path, "r", newline="") as fh:
         r = csv.DictReader(fh, delimiter=delim)
@@ -49,13 +49,21 @@ def read_lemur_rows(path):
         for row in r:
             # Get the tax_id value
             tax_id = get(row, 'tax_id')
-            # Skip rows with 'unmapped' or 'unclassified' in tax_id
-            if tax_id and ('unmapped' in tax_id.lower() or 'unclassified' in tax_id.lower()):
-                continue
-                
+
+            # Skip rows with 'unmapped' or 'unclassified' in tax_id (for EMU)
+            if from_tool == "emu":
+                if tax_id and ('unmapped' in tax_id.lower() or 'unclassified' in tax_id.lower()):
+                    continue
+            
             out = {}
             for k in RANKS_IN:
                 out[k] = get(row, k)
+
+            # replace class of `Actinobacteria` to `Actinomycetes` in the row (for EMU) : prevent duplicate with phylyum
+            if from_tool == "emu":
+                if out["class"] == "Actinobacteria":
+                    out["class"] = "Actinomycetes"
+
             # parse fraction (abundance) from LEMUR 'F'
             f_str = get(row, "fraction")
             try:
@@ -130,6 +138,7 @@ def main():
         description="Convert LEMUR taxonomy TSV to Taxburst input (Krona TSV or JSON)."
     )
     ap.add_argument("input", help="LEMUR TSV/CSV with columns: species ... superkingdom, F")
+    ap.add_argument("--from_tool", choices=["lemur", "emu"], default="lemur", help="The tool generating the taxonomy input")
     ap.add_argument("-o", "--output", required=True, help="Output file path")
     ap.add_argument("-F", "--format", choices=["krona", "json"], default="krona",
                     help="Taxburst input format to write")
@@ -137,7 +146,7 @@ def main():
                     help="Counts = fraction × multiplier for JSON output (default 1000)")
     args = ap.parse_args()
 
-    rows = list(read_lemur_rows(args.input))
+    rows = list(read_lemur_rows(args.input, args.from_tool))
 
     if args.format == "krona":
         write_krona(rows, args.output)
