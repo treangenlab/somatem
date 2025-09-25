@@ -25,6 +25,7 @@ process TAXBURST_CONVERT {
     """
     # invoke converter script
     taxburst_prep.py \\
+      --from_tool ${tool_name} \\
       --format krona \\
       --output ${prefix}.krona.tsv \\
       ${classification_file}
