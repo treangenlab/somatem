@@ -69,7 +69,7 @@ workflow SOMATEM {
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
-    taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
+    // taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
 }
 
 /*
