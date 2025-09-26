@@ -1,7 +1,7 @@
 
 
 process checkm2_DOWNLOAD_DB {
-    tag '$bam'
+    tag 'checkm2_download_db'
     label 'process_single'
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
@@ -24,6 +24,10 @@ process checkm2_DOWNLOAD_DB {
     def args = task.ext.args ?: ''
     
     """
+    if [[ ! -d $checkm2_db ]]; then
+        mkdir -p $checkm2_db
+    fi
+
     checkm2 database \\
         --download \\
         $args \\
@@ -47,9 +51,11 @@ process checkm2_DOWNLOAD_DB {
     //               - The use of the variable in the script `echo $args ` below.
     """
     echo $args
-    
-    touch ${prefix}.bam
 
+    if [[ ! -d $checkm2_db ]]; then
+        mkdir -p $checkm2_db
+    fi
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         tst: \$(tst --version)
