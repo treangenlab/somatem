@@ -308,7 +308,7 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 
 Automatic DB download ideas:
 - advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
-- can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow)
+- can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
 
 
@@ -342,7 +342,8 @@ _notes from Austin: Aug 9th 2025_
 ## Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
 - [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
-> The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the usage documentation for more details.
+> The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the [db management](https://github.com/ikmb/TOFU-MAaPO?tab=readme-ov-file#database-management) section for more details.
+  - example: MetaPhlAn: uses a `--updatemetaphlan` flag to update the database or download it first time using [module](https://github.com/ikmb/TOFU-MAaPO/blob/master/modules/metaphlan.nf) with `wget` after `cd ${params.metaphlan_db}` directly in the desired directory. 
 
 - [aviary](https://github.com/rhysnewell/aviary) has a nice way to determine database location (through `config`) and download them with the `--download` flag. _Check if this can use latest database or links to static versions?_
 
