@@ -7,6 +7,7 @@ include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pi
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
+include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,6 +45,14 @@ workflow SOMATEM {
     // if (params.analysis_type == "assembly") {
     //     ASSEMBLY(clean_reads)
     // }
+
+    // -----------------------------------------------------------------
+    // genome dynamics : Longitudinal analysis
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "genome-dynamics") {
+        GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
+        ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
+    }
 
 
     // -----------------------------------------------------------------
