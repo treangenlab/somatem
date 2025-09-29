@@ -73,9 +73,6 @@ workflow {
         params.input
     )
 
-    // debug
-    PIPELINE_INITIALISATION.out.samplesheet.view()
-
     //
     // WORKFLOW: Run main workflow
     //
