@@ -22,6 +22,7 @@ workflow SOMATEM {
     main:
 
     ch_versions = Channel.empty()
+    ch_key_outputs = Channel.empty()
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
@@ -37,6 +38,8 @@ workflow SOMATEM {
     if (params.analysis_type == "taxonomic-profiling") {
         TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+        
+        ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
     }
 
     // -----------------------------------------------------------------
@@ -52,6 +55,7 @@ workflow SOMATEM {
     if (params.analysis_type == "genome-dynamics") {
         GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
         ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
     }
 
 
@@ -69,7 +73,7 @@ workflow SOMATEM {
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
-    // taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
+    key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
 }
 
 /*

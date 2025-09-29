@@ -36,6 +36,10 @@ workflow GENOME_DYNAMICS {
     BANDAGE_IMAGE(RHEA.out.assembly_graph)
     ch_versions = ch_versions.mix(BANDAGE_IMAGE.out.versions)
 
+    // collect outputs
+    assembly_graph_outputs = RHEA.out.assembly_graph.mix(BANDAGE_IMAGE.out.png)
+
     emit:
+    assembly_graph     = assembly_graph_outputs             // channel: [ path(assembly_graph.gfa), path(bandage_image.png) ]
     versions           = ch_versions                        // channel: [ path(versions.yml) ]
 }
