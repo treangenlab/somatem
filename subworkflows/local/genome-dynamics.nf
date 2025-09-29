@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { RHEA } from '../../modules/local/rhea/main.nf'
+include { BANDAGE_IMAGE } from '../../modules/nf-core/bandage/image/main.nf'
 
 // -------------------------
 // Workflow Definition
@@ -14,14 +15,26 @@ workflow GENOME_DYNAMICS {
 
     ch_versions = Channel.empty() // collect versions from all modules
 
-    // run Rhea
-    RHEA(clean_reads_ch)
+    // collect reads and discard meta from clean_reads_ch
+    collected_reads_ch = clean_reads_ch.map { meta, reads -> reads }
+        .collect() // collect all reads into a single channel
+        .map { reads -> 
+            def flattened_reads = reads.flatten()
+            return [[id:"multiple", single_end:true], flattened_reads] // add a mock meta
+        }
 
-    // rhea_out = RHEA.out.some_channel
+    // debug
+    collected_reads_ch.view()   
+
+    // run Rhea
+    RHEA(collected_reads_ch)
+
+    // collect versions
     ch_versions = ch_versions.mix(RHEA.out.versions)
 
     // visualise assembly graph
-        
+    BANDAGE_IMAGE(RHEA.out.assembly_graph)
+    ch_versions = ch_versions.mix(BANDAGE_IMAGE.out.versions)
 
     emit:
     versions           = ch_versions                        // channel: [ path(versions.yml) ]
