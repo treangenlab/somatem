@@ -154,7 +154,7 @@ _First test each module independently with example data from each tool's own rep
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
 ## Other tools
-- Rhea: works with example data from repo (but is fasta ; testing the subworkflow with mock9 and 20 fastqs). 
+- Rhea: works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
   - made metadata input compatible with nf-core: Using mock metadata with "multiple" as `meta.id`
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
   - visualization: (went with nf-core `bandage` for now) Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
