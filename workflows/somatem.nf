@@ -7,6 +7,7 @@ include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pi
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
+include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,6 +22,7 @@ workflow SOMATEM {
     main:
 
     ch_versions = Channel.empty()
+    ch_key_outputs = Channel.empty()
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
@@ -36,6 +38,8 @@ workflow SOMATEM {
     if (params.analysis_type == "taxonomic-profiling") {
         TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+        
+        ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
     }
 
     // -----------------------------------------------------------------
@@ -44,6 +48,15 @@ workflow SOMATEM {
     // if (params.analysis_type == "assembly") {
     //     ASSEMBLY(clean_reads)
     // }
+
+    // -----------------------------------------------------------------
+    // genome dynamics : Longitudinal analysis
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "genome-dynamics") {
+        GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
+        ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
+    }
 
 
     // -----------------------------------------------------------------
@@ -60,7 +73,7 @@ workflow SOMATEM {
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
-    taxonomy_report = TAXONOMIC_PROFILING.out.taxonomy_report
+    key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
 }
 
 /*
