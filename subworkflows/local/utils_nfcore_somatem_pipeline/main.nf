@@ -73,7 +73,7 @@ workflow PIPELINE_INITIALISATION {
                     return [ meta.id, meta + [ single_end:false ], [ file(fastq_1), file(fastq_2) ] ]
                 }
         }
-        .groupTuple()
+        .groupTuple()  // Groups files by meta.id
         .map { samplesheet ->
             validateInputSamplesheet(samplesheet)
         }

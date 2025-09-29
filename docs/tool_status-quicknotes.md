@@ -154,14 +154,14 @@ _First test each module independently with example data from each tool's own rep
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
 ## Other tools
-- Rhea: works with example data from repo. 
-  - Couldn't handle metadata input that's nf-core compatible so omitted for now. (since it is taking multiple files as input) _Could use the directory name as the `meta.id`?_
+- Rhea: works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
+  - made metadata input compatible with nf-core: Using mock metadata with "multiple" as `meta.id`
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
-  - visualization: Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
+  - visualization: (went with nf-core `bandage` for now) Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
     - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]` ; _agb outputs a html ; I couldn't interpret the graph_
     - bandageNG: has a cli option and is on bioconda: `BandageNG image metaflye/assembly_graph.gfa bandage2.png --color meta2col.csv` ; but the 2 column csv file for colouring is different from Bandage for proper separation between contigs from different samples
-    - bandage: Is on nf-core; --color options doesn't work thought in the `--help` documentation.
-    - I am wondering how the intended outpyt looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
+    - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
+    - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
 ## Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
@@ -308,7 +308,7 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 
 Automatic DB download ideas:
 - advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
-- can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow)
+- can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
 
 
@@ -342,7 +342,8 @@ _notes from Austin: Aug 9th 2025_
 ## Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
 - [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
-> The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the usage documentation for more details.
+> The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the [db management](https://github.com/ikmb/TOFU-MAaPO?tab=readme-ov-file#database-management) section for more details.
+  - example: MetaPhlAn: uses a `--updatemetaphlan` flag to update the database or download it first time using [module](https://github.com/ikmb/TOFU-MAaPO/blob/master/modules/metaphlan.nf) with `wget` after `cd ${params.metaphlan_db}` directly in the desired directory. 
 
 - [aviary](https://github.com/rhysnewell/aviary) has a nice way to determine database location (through `config`) and download them with the `--download` flag. _Check if this can use latest database or links to static versions?_
 
