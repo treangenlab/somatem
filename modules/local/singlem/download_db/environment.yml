@@ -1,1 +1,6 @@
-../../../nf-core/checkm2/predict/environment.yml
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - singlem=0.19.0

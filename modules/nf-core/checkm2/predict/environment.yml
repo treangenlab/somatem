@@ -3,4 +3,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - singlem=0.19.0
+  - checkm2=1.1.0
