@@ -1,8 +1,9 @@
 
 
-process checkm2_DOWNLOAD_DB {
-    tag 'checkm2_download_db'
+process SINGLEM_DOWNLOAD_DB {
+    tag 'singlem_download_db'
     label 'process_single'
+    storeDir params.singlem_db
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda "${moduleDir}/environment.yml"
@@ -10,32 +11,30 @@ process checkm2_DOWNLOAD_DB {
         'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
         'biocontainers/YOUR-TOOL-HERE' }"
 
-    input:
-    path checkm2_db
-
     output:
-    path checkm2_db, emit: checkm2_db
-    path "versions.yml"           , emit: versions
+    path "*.smpkg.zb"    , emit: singlem_db
+    path "versions.yml"  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    
-    """
-    if [[ ! -d $checkm2_db ]]; then
-        mkdir -p $checkm2_db
-    fi
+    singlem_db_local = "singlem_db/"
 
-    checkm2 database \\
-        --download \\
+    """
+    
+    mkdir -p $singlem_db_local
+
+    singlem data \\
         $args \\
-        --path $checkm2_db
+        --output-directory $singlem_db_local
+
+    tar -xzf $singlem_db_local/*.tar.gz --directory=$singlem_db_local
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        checkm2: \$(checkm2 --version)
+        singlem: \$(singlem --version)
     END_VERSIONS
     """
 
@@ -52,13 +51,11 @@ process checkm2_DOWNLOAD_DB {
     """
     echo $args
 
-    if [[ ! -d $checkm2_db ]]; then
-        mkdir -p $checkm2_db
-    fi
+    mkdir -p $singlem_db_local
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tst: \$(tst --version)
+        singlem: \$(singlem --version)
     END_VERSIONS
     """
 }
