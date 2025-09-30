@@ -3,7 +3,6 @@
 process SINGLEM_DOWNLOAD_DB {
     tag 'singlem_download_db'
     label 'process_single'
-    storeDir params.singlem_db
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda "${moduleDir}/environment.yml"

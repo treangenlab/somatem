@@ -1,5 +1,3 @@
-// updated from nf-core module: add storeDir for permanent cache of db
-
 def downloadZenodoApiEntry(zenodo_id) {
     // Download metadata from Zenodo API, setting "Accept: application/json" header
     def api_url  = "https://zenodo.org/api/records/${zenodo_id}"
@@ -15,7 +13,6 @@ def downloadZenodoApiEntry(zenodo_id) {
 
 process CHECKM2_DATABASEDOWNLOAD {
     label 'process_single'
-    storeDir params.checkm2_db
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
