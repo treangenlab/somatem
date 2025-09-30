@@ -1,12 +1,12 @@
-// updated from nf-core module: update bakta to version 1.11.4 ; add storeDir for permanent cache of db
+// updated from nf-core module: update bakta to version 1.11.4
 process BAKTA_BAKTADBDOWNLOAD {
     label 'process_single'
-    storeDir params.bakta_db
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bakta:1.10.4--pyhdfd78af_0' :
-        'biocontainers/bakta:1.10.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/bakta:1.11.4--pyhdfd78af_0' :
+        'biocontainers/bakta:1.11.4--pyhdfd78af_0' }"
+        // container for bakta v1.11.4 not tested! 
 
     output:
     path "db*"              , emit: db
