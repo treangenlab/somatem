@@ -13,6 +13,7 @@ def downloadZenodoApiEntry(zenodo_id) {
 
 process CHECKM2_DATABASEDOWNLOAD {
     label 'process_single'
+    storeDir params.checkm2_db
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
