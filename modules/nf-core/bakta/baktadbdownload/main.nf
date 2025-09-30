@@ -1,5 +1,7 @@
+// updated from nf-core module: update bakta to version 1.11.4 ; add storeDir for permanent cache of db
 process BAKTA_BAKTADBDOWNLOAD {
     label 'process_single'
+    storeDir params.bakta_db
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
