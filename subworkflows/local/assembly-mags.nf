@@ -22,22 +22,24 @@ include { TAXBURST }                from '../../modules/local/taxburst/main'
 params.checkm2_db = ''
 params.bakta_db = ''
 params.singlem_metapackage = ''
-params.flye_mode = '--nano-hq'
-params.semibin_environment = 'human_gut'
-params.completeness_threshold = 80.0
 
 workflow SOMATEM_MAGS {
 
     take:
     reads               // channel: [ val(meta), path(reads) ]
+    
     checkm2_db          // channel: path(db)
     bakta_db            // channel: path(db)
     singlem_metapackage // channel: path(metapackage)
-    flye_mode           // val: sequencing data type for Flye
-    semibin_environment // val: sample environment for SemiBin2
 
     main:
     ch_versions = Channel.empty()
+
+    // Create value channels for databases
+    ch_checkm2_db = Channel.value(params.checkm2_db)
+    ch_bakta_db = Channel.value(params.bakta_db)
+    ch_singlem_metapackage = Channel.value(params.singlem_metapackage)
+    
 
     // Check input channel
     reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
@@ -58,7 +60,7 @@ workflow SOMATEM_MAGS {
     ch_versions = ch_versions.mix(TAXBURST.out.versions)
 
     // Assembly with Flye
-    FLYE(reads, flye_mode)
+    FLYE(reads, params.flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
 
     // Create minimap2 index
@@ -104,7 +106,7 @@ workflow SOMATEM_MAGS {
     // Set SemiBin2 environment parameter
     ch_asm_bam_with_env = ch_asm_bam.map { meta, fasta, bam ->
         def new_meta = meta.clone()
-        new_meta.semibin_env = semibin_environment
+        new_meta.semibin_env = params.sample_environment
         [new_meta, fasta, bam]
     }
     
@@ -230,10 +232,10 @@ workflow SOMATEM_MAGS {
         }
         .filter { meta, bin ->
             // Only process bins that meet the completeness threshold
-            return meta.completeness != null && meta.completeness >= params.completeness_threshold
+            return meta.completeness != null && meta.completeness >= params.checkm2_completeness_threshold
         }
 
-    // Only run Bakta on high-quality bins (≥completeness_threshold)
+    // Only run Bakta on high-quality bins (≥checkm2_completeness_threshold)
     BAKTA_BAKTA(ch_bins_with_completeness, bakta_db, [], [])
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
 
@@ -306,6 +308,6 @@ workflow SOMATEM_MAGS {
     // // Count high-quality bins
     // SOMATEM_MAGS.out.bakta_embl
     //     .map { meta, embl -> meta.completeness }
-    //     .filter { it != null && it >= params.completeness_threshold }
+    //     .filter { it != null && it >= params.checkm2_completeness_threshold }
     //     .count()
-    //     .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.completeness_threshold}% complete)" }
+    //     .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
