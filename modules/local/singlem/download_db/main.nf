@@ -29,8 +29,6 @@ process SINGLEM_DOWNLOAD_DB {
         $args \\
         --output-directory $singlem_db_local
 
-    tar -xzf $singlem_db_local/*.tar.gz --directory=$singlem_db_local
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         singlem: \$(singlem --version)
