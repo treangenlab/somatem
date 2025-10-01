@@ -320,10 +320,9 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
   - Note sure if there were from the original emu? : https://osf.io/56uf7/files/osfstorage
   - GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
-- checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd
-  - Use the `checkm2_download` script from `nf-core/checkm2` to download the database? _the file needs to be relocated, similar to hostile fetch_
-  - Make a custom script : might have issues with writing within the conda env [#51](https://github.com/chklovski/CheckM2/issues/73)
-
+- checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd. Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14897628)
+- bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
+- singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
 
 ### Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files
