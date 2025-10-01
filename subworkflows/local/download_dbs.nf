@@ -5,8 +5,12 @@ include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databas
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
 include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/main.nf'
 
-workflow {
+workflow DOWNLOAD_DBS {
 
+    take:
+    None
+
+    main:
     // download checkm2 database 
     CHECKM2_DATABASEDOWNLOAD(params.checkm2_db_zenodo_id)
     
@@ -17,4 +21,8 @@ workflow {
     // download singlem db
     SINGLEM_DOWNLOAD_DB()
 
+    emit:
+    checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
+    bakta_db = BAKTA_BAKTADBDOWNLOAD.out.db
+    singlem_db = SINGLEM_DOWNLOAD_DB.out.singlem_db
 }
