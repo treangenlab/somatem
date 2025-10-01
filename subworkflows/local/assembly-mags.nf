@@ -2,23 +2,9 @@
 
 // Assembly_MAGS subworkflow: de novo assembly, mapping, binning, quality assessment, and annotation
 
-// Include nf-core modules
 // Main workflow for direct execution
 workflow {
-    // Validate required parameters
-    if (!params.input_dir) {
-        error "Please provide --input_dir parameter"
-    }
-    if (!params.checkm2_db) {
-        error "Please provide --checkm2_db parameter"
-    }
-    if (!params.bakta_db) {
-        error "Please provide --bakta_db parameter"
-    }
-    if (!params.singlem_metapackage) {
-        error "Please provide --singlem_metapackage parameter"
-    }
-
+    
     // Prepare input channels
     ch_reads = Channel.fromPath("${params.input_dir}/*.fastq.gz")
         .ifEmpty { error "No .fastq.gz files found in ${params.input_dir}" }
@@ -27,9 +13,6 @@ workflow {
             println "Processing input file: ${file} -> sample ID: ${meta.id}"
             [meta, file]
         }
-    
-    // Count and display all input files
-    ch_reads.count().view { count -> "Found ${count} input files to process" }
     
     // Create value channels for databases
     ch_checkm2_db = Channel.value(params.checkm2_db)
