@@ -9,15 +9,12 @@ workflow {
 
     // download checkm2 database 
     CHECKM2_DATABASEDOWNLOAD(params.checkm2_db_zenodo_id)
-    log.info "Downloading CheckM2 database, 3GB size: Takes ~3 minutes"
-
     
     // download bakta db
     BAKTA_BAKTADBDOWNLOAD()
-    log.info "Downloading Bakta database, ~36GB size: Takes >30 minutes"
+    log.warn "If downloading Bakta database which is ~55GB size: it takes ~50 minutes"
 
     // download singlem db
     SINGLEM_DOWNLOAD_DB()
-    log.info "Downloading SingleM database, <2 GB size: Takes ~3 minutes"
 
 }
