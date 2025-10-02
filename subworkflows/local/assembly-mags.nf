@@ -48,17 +48,17 @@ workflow ASSEMBLY_MAGS {
     // Interactive taxonomic visualization with TaxBurst
     TAXBURST(SINGLEM_PIPE.out.taxonomic_profile, 'SingleM')
     ch_versions = ch_versions.mix(TAXBURST.out.versions)
-    TAXBURST.out.html.view { meta, html -> "✓ Taxonomic profiling and interactive visualization completed for ${meta.id}" } // log
+    TAXBURST.out.html.view { meta, _html -> "✓ Taxonomic profiling and interactive visualization completed for ${meta.id}" } // log
 
     // Assembly with Flye
     FLYE(reads, params.flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
-    FLYE.out.fasta.view { meta, fasta -> "✓ Assembly completed for ${meta.id}" } // log
+    FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
     // Create minimap2 index
     MINIMAP2_INDEX(FLYE.out.fasta)
     ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
-    MINIMAP2_INDEX.out.index.view { meta, index -> "✓ Minimap2 index created for ${meta.id}" } // log  
+    MINIMAP2_INDEX.out.index.view { meta, _index -> "✓ Minimap2 index created for ${meta.id}" } // log  
 
     // Map reads back to assembly
     MINIMAP2_ALIGN(
@@ -82,7 +82,7 @@ workflow ASSEMBLY_MAGS {
     
     ch_fasta_for_coverage = FLYE.out.fasta
     
-    ch_fqi_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, bam ->
+    ch_fqi_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, _bam ->
         [meta, file('OPTIONAL_FILE')]
     }
     
@@ -92,7 +92,7 @@ workflow ASSEMBLY_MAGS {
         ch_fqi_for_coverage
     )
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
-    SAMTOOLS_COVERAGE.out.coverage.view { meta, coverage -> "✓ Coverage calculated for ${meta.id}" } // log
+    SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
     // Binning with SemiBin2
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0])
@@ -106,12 +106,12 @@ workflow ASSEMBLY_MAGS {
     
     SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
-    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, csv -> "✓ Binning completed for ${meta.id}" } // log
+    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
 
     // Quality assessment with CheckM2
     CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
-    CHECKM2_PREDICT.out.checkm2_tsv.view { meta, tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
+    CHECKM2_PREDICT.out.checkm2_tsv.view { meta, _tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
     
     // Parse CheckM2 results to get completeness information
     CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, SEMIBIN_SINGLEEASYBIN.out.output_fasta)
@@ -161,7 +161,7 @@ workflow ASSEMBLY_MAGS {
 
     SINGLEM_APPRAISE(ch_appraise_input, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
-    SINGLEM_APPRAISE.out.summary.view { meta, summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
+    SINGLEM_APPRAISE.out.summary.view { meta, _summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
 
     // Completeness-based Bakta annotation
     ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
@@ -213,7 +213,7 @@ workflow ASSEMBLY_MAGS {
             }, 
             by: 0
         )
-        .map { join_key, meta, bin, completeness_map ->
+        .map { _join_key, meta, bin, completeness_map ->
             def new_meta = meta.clone()
             def bin_name = meta.bin_name
             
@@ -227,7 +227,7 @@ workflow ASSEMBLY_MAGS {
             
             [new_meta, bin]
         }
-        .filter { meta, bin ->
+        .filter { meta, _bin ->
             // Only process bins that meet the completeness threshold
             return meta.completeness != null && meta.completeness >= params.checkm2_completeness_threshold
         }
@@ -237,14 +237,14 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
 
     // Show which bins got annotation (log)
-    BAKTA_BAKTA.out.embl.view { meta, embl -> 
+    BAKTA_BAKTA.out.embl.view { meta, _embl -> 
         def completeness = meta.completeness ?: "unknown"
         "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
     }
 
     // Show which bins got annotation (log)
     BAKTA_BAKTA.out.embl
-        .map { meta, embl -> meta.completeness }
+        .map { meta, _embl -> meta.completeness }
         .filter { it != null && it >= params.checkm2_completeness_threshold }
         .count()
         .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
