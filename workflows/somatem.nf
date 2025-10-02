@@ -56,9 +56,9 @@ workflow SOMATEM {
     if (params.analysis_type == "assembly") {
 
         // unpack the downloaded databases
-        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.first()
-        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db.first()
-        ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db.first()
+        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.map { _meta, db -> db } // strip meta, only take db
+        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
+        ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
 
         ASSEMBLY_MAGS(PREPROCESSING.out.clean_reads, 
                 ch_checkm2_db,
