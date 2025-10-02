@@ -11,21 +11,26 @@ workflow DOWNLOAD_DBS {
     None
 
     main:
-    ch_dbs = Channel.empty()
+    // Initialize empty channels for each database type
+    ch_checkm2_db = Channel.empty()
+    ch_bakta_db = Channel.empty()
+    ch_singlem_db = Channel.empty()
 
     // download checkm2 database 
     CHECKM2_DATABASEDOWNLOAD(params.checkm2_db_zenodo_id)
-    ch_dbs = ch_dbs.mix(CHECKM2_DATABASEDOWNLOAD.out.database)
+    ch_checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
     
     // download bakta db
     BAKTA_BAKTADBDOWNLOAD()
     log.warn "If downloading Bakta database which is ~55GB size: it takes ~50 minutes"
-    ch_dbs = ch_dbs.mix(BAKTA_BAKTADBDOWNLOAD.out.db)
+    ch_bakta_db = BAKTA_BAKTADBDOWNLOAD.out.db
 
     // download singlem db
     SINGLEM_DOWNLOAD_DB()
-    ch_dbs = ch_dbs.mix(SINGLEM_DOWNLOAD_DB.out.singlem_db)
+    ch_singlem_db = SINGLEM_DOWNLOAD_DB.out.singlem_db
 
-    emit:
-    dbs = ch_dbs
+    emit: // emit empty channels if not downloaded
+    ch_checkm2_db
+    ch_bakta_db
+    ch_singlem_db
 }
