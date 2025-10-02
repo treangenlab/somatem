@@ -1,3 +1,3 @@
 sample,fastq_1
-abx_depl,assets/examples/data/for_asm/abx_depl.fastq.gz
-veh_depl,assets/examples/data/for_asm/veh_depl.fastq.gz
+S4,assets/examples/data/for_asm/nasa_lsk_s4.fastq.gz
+S2,assets/examples/data/for_asm/nasa_lsk_s2.fastq.gz

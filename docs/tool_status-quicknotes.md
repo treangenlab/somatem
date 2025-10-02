@@ -265,7 +265,7 @@ Other tools' example files:
 
 Note:
 - Need smaller example files for assembly workflow. Check this [tutorial](https://conmeehan.github.io/PathogenDataCourse/Worksheets/GenomeAssembly_Flye.html) for a 100 MB file from Zenodo [here](https://zenodo.org/record/4534098/files/DRR187567.fastq.bz2)
-
+- Small isolate genome data for ONT available at SRA:[DRX178043](https://www.ncbi.nlm.nih.gov/sra/DRX178043) from paper [asm, 2019](https://journals.asm.org/doi/10.1128/mra.01212-19)
 
 ### Zymo mock
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
