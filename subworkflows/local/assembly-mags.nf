@@ -18,28 +18,18 @@ include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
 
-// Define default parameters
-params.checkm2_db = ''
-params.bakta_db = ''
-params.singlem_metapackage = ''
 
-workflow SOMATEM_MAGS {
+workflow ASSEMBLY_MAGS {
 
     take:
     reads               // channel: [ val(meta), path(reads) ]
     
-    checkm2_db          // channel: path(db)
-    bakta_db            // channel: path(db)
-    singlem_metapackage // channel: path(metapackage)
+    ch_checkm2_db       // channel: path(db)
+    ch_bakta_db         // channel: path(db)
+    ch_singlem_db // channel: path(metapackage)
 
     main:
     ch_versions = Channel.empty()
-
-    // Create value channels for databases
-    ch_checkm2_db = Channel.value(params.checkm2_db)
-    ch_bakta_db = Channel.value(params.bakta_db)
-    ch_singlem_metapackage = Channel.value(params.singlem_metapackage)
-    
 
     // Check input channel
     reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
@@ -52,7 +42,7 @@ workflow SOMATEM_MAGS {
         [new_meta, reads_file]
     }
     
-    SINGLEM_PIPE(ch_metagenome_reads, singlem_metapackage)
+    SINGLEM_PIPE(ch_metagenome_reads, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
     // Interactive taxonomic visualization with TaxBurst
@@ -114,7 +104,7 @@ workflow SOMATEM_MAGS {
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
 
     // Quality assessment with CheckM2
-    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, checkm2_db)
+    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
     
     // Parse CheckM2 results to get completeness information
@@ -129,7 +119,7 @@ workflow SOMATEM_MAGS {
         [new_meta, bins]
     }
     
-    SINGLEM_PIPE_BINS(ch_bins_for_singlem, singlem_metapackage)
+    SINGLEM_PIPE_BINS(ch_bins_for_singlem, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     // SingleM appraise - simplified input preparation
@@ -163,7 +153,7 @@ workflow SOMATEM_MAGS {
             [new_meta, actualMetOtu, actualBinOtu, []]
         }
 
-    SINGLEM_APPRAISE(ch_appraise_input, singlem_metapackage)
+    SINGLEM_APPRAISE(ch_appraise_input, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
 
     // Completeness-based Bakta annotation
@@ -236,7 +226,7 @@ workflow SOMATEM_MAGS {
         }
 
     // Only run Bakta on high-quality bins (≥checkm2_completeness_threshold)
-    BAKTA_BAKTA(ch_bins_with_completeness, bakta_db, [], [])
+    BAKTA_BAKTA(ch_bins_with_completeness, ch_bakta_db, [], [])
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
 
     emit:
