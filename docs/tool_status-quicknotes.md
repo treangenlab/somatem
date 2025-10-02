@@ -263,6 +263,10 @@ Other tools' example files:
 - `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
 
+Note:
+- Need smaller example files for assembly workflow. Check this [tutorial](https://conmeehan.github.io/PathogenDataCourse/Worksheets/GenomeAssembly_Flye.html) for a 100 MB file from Zenodo [here](https://zenodo.org/record/4534098/files/DRR187567.fastq.bz2)
+
+
 ### Zymo mock
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
 - Notes: ZymoBIOMICS® Microbial Community Standard contains three easy-to-lyse bacteria, five tough-
