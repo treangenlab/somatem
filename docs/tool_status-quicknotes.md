@@ -168,9 +168,10 @@ _First test each module independently with example data from each tool's own rep
 - standardize modules: 
   1. remove separate directory from `lemur`, `magnet` module outputs ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
   2. Make all outputs a tuple of `meta, path` except `versions.yml`
-- mags plan: a) Test `somatem_mags.nf` from it's own entry workflow; 
+- mags plan: 
+  - a) (_skipping this_) Test `somatem_mags.nf` from it's own entry workflow; 
   - [x] find example data (`input4mags`?)
-  - Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
+  - [x] Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
     ```bash
     --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
     --bakta_db    /path/to/bakta/db \
@@ -178,7 +179,10 @@ _First test each module independently with example data from each tool's own rep
     ```
   - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
   - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
-  - Port the entry workflow logic into the main.nf script
+  - [ ] Port the ~~entry~~ full mag workflow logic into the ~~main~~ `somatem_mags.nf` script
+  
+  - notes: how to handle the databases? Switched from an entry workflow separate run of `download_dbs` to a subworkflow in the main workflow. This enables the usage of the output channels from download_dbs in the main workflow (better than providing the static path of the databases ; for proper dependancy tracking _says seqera AI_). Will make empty channels that will be filled if a download db module is run (for switching between branches) / alternative is to mix all channels but unmixing becomes ugly. (_not using this for now_) 
+
   - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
   - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
     - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
