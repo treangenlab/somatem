@@ -8,7 +8,7 @@ include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/ma
 workflow DOWNLOAD_DBS {
 
     take:
-    None
+    _None
 
     main:
     // Initialize empty channels for each database type
