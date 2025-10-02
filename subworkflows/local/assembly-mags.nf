@@ -48,14 +48,17 @@ workflow ASSEMBLY_MAGS {
     // Interactive taxonomic visualization with TaxBurst
     TAXBURST(SINGLEM_PIPE.out.taxonomic_profile, 'SingleM')
     ch_versions = ch_versions.mix(TAXBURST.out.versions)
+    TAXBURST.out.html.view { meta, html -> "✓ Taxonomic profiling and interactive visualization completed for ${meta.id}" } // log
 
     // Assembly with Flye
     FLYE(reads, params.flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
+    FLYE.out.fasta.view { meta, fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
     // Create minimap2 index
     MINIMAP2_INDEX(FLYE.out.fasta)
     ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
+    MINIMAP2_INDEX.out.index.view { meta, index -> "✓ Minimap2 index created for ${meta.id}" } // log  
 
     // Map reads back to assembly
     MINIMAP2_ALIGN(
@@ -89,6 +92,7 @@ workflow ASSEMBLY_MAGS {
         ch_fqi_for_coverage
     )
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
+    SAMTOOLS_COVERAGE.out.coverage.view { meta, coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
     // Binning with SemiBin2
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0])
@@ -102,10 +106,12 @@ workflow ASSEMBLY_MAGS {
     
     SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
+    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, csv -> "✓ Binning completed for ${meta.id}" } // log
 
     // Quality assessment with CheckM2
     CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
+    CHECKM2_PREDICT.out.checkm2_tsv.view { meta, tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
     
     // Parse CheckM2 results to get completeness information
     CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, SEMIBIN_SINGLEEASYBIN.out.output_fasta)
@@ -155,6 +161,7 @@ workflow ASSEMBLY_MAGS {
 
     SINGLEM_APPRAISE(ch_appraise_input, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
+    SINGLEM_APPRAISE.out.summary.view { meta, summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
 
     // Completeness-based Bakta annotation
     ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
@@ -229,6 +236,20 @@ workflow ASSEMBLY_MAGS {
     BAKTA_BAKTA(ch_bins_with_completeness, ch_bakta_db, [], [])
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
 
+    // Show which bins got annotation (log)
+    BAKTA_BAKTA.out.embl.view { meta, embl -> 
+        def completeness = meta.completeness ?: "unknown"
+        "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
+    }
+
+    // Show which bins got annotation (log)
+    BAKTA_BAKTA.out.embl
+        .map { meta, embl -> meta.completeness }
+        .filter { it != null && it >= params.checkm2_completeness_threshold }
+        .count()
+        .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
+
+
     emit:
     // Original outputs
     assembly        = FLYE.out.fasta
@@ -275,29 +296,3 @@ workflow ASSEMBLY_MAGS {
     
     versions        = ch_versions
 }
-
-
-    // --------------------------------------------------------------------------------------------------------------------------
-    
-    // // Display progress information
-    // SOMATEM_MAGS.out.singlem_profile.view { meta, profile -> "✓ Taxonomic profiling completed for ${meta.id}" }
-    // SOMATEM_MAGS.out.taxburst_html.view { meta, html -> "✓ Interactive taxonomy visualization created for ${meta.id}" }
-    // SOMATEM_MAGS.out.assembly.view { meta, fasta -> "✓ Assembly completed for ${meta.id}" }
-    // SOMATEM_MAGS.out.coverage.view { meta, coverage -> "✓ Coverage calculated for ${meta.id}" }
-    // SOMATEM_MAGS.out.bins.view { meta, bins -> "✓ Binning completed for ${meta.id}: ${bins.size()} bins" }
-    // SOMATEM_MAGS.out.checkm2_report.view { meta, report -> "✓ Quality assessment completed for ${meta.id}" }
-    
-    // // Show which bins got annotation
-    // SOMATEM_MAGS.out.bakta_embl.view { meta, embl -> 
-    //     def completeness = meta.completeness ?: "unknown"
-    //     "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
-    // }
-    
-    // SOMATEM_MAGS.out.appraise_summary.view { meta, summary -> "✓ SingleM appraise analysis completed for ${meta.id}" }
-
-    // // Count high-quality bins
-    // SOMATEM_MAGS.out.bakta_embl
-    //     .map { meta, embl -> meta.completeness }
-    //     .filter { it != null && it >= params.checkm2_completeness_threshold }
-    //     .count()
-    //     .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
