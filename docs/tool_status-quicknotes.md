@@ -166,11 +166,12 @@ _First test each module independently with example data from each tool's own rep
 ## Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
 - standardize modules: 
-  1. remove separate directory from `lemur`, `magnet` modules ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
+  1. remove separate directory from `lemur`, `magnet` module outputs ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
   2. Make all outputs a tuple of `meta, path` except `versions.yml`
-- mags plan: a) Test `somatem_mags.nf` from it's own entry workflow; 
+- mags plan: 
+  - a) (_skipping this_) Test `somatem_mags.nf` from it's own entry workflow; 
   - [x] find example data (`input4mags`?)
-  - Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
+  - [x] Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
     ```bash
     --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
     --bakta_db    /path/to/bakta/db \
@@ -178,7 +179,10 @@ _First test each module independently with example data from each tool's own rep
     ```
   - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
   - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
-  - Port the entry workflow logic into the main.nf script
+  - [ ] Port the ~~entry~~ full mag workflow logic into the ~~main~~ `somatem_mags.nf` script
+  
+  - notes: how to handle the databases? Switched from an entry workflow separate run of `download_dbs` to a subworkflow in the main workflow. This enables the usage of the output channels from download_dbs in the main workflow (better than providing the static path of the databases ; for proper dependancy tracking _says seqera AI_). Will make empty channels that will be filled if a download db module is run (for switching between branches) / alternative is to mix all channels but unmixing becomes ugly. (_not using this for now_) 
+
   - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
   - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
     - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
@@ -249,7 +253,7 @@ Recording the source of each example dataset and database in the database folder
 All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh)
 - `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
 - `data/mock20_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
-  - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed
+  - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed. Understand what the samples mean: read paper about these samples [here](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01415-8) : _Liu, Lei, et al. "Nanopore long-read-only metagenomics enables complete and high-quality genome reconstruction from mock and complex metagenomes." Microbiome 10.1 (2022): 209._
 - `data/zymoM95.fastq.gz`: From zymo mock? 16S, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/zymoM95.fastq.gz`
 
 Other tools' example files:
@@ -258,6 +262,10 @@ Other tools' example files:
 - `Sylph`: from original repo/[testfiles](https://github.com/bluenote-1577/sylph/tree/main/test_files)
 - `centrifuger`: Downloaded from original repo [here](https://github.com/mourisl/centrifuger/tree/master/example)
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
+
+Note:
+- Need smaller example files for assembly workflow. Check this [tutorial](https://conmeehan.github.io/PathogenDataCourse/Worksheets/GenomeAssembly_Flye.html) for a 100 MB file from Zenodo [here](https://zenodo.org/record/4534098/files/DRR187567.fastq.bz2)
+- Small isolate genome data for ONT available at SRA:[DRX178043](https://www.ncbi.nlm.nih.gov/sra/DRX178043) from paper [asm, 2019](https://journals.asm.org/doi/10.1128/mra.01212-19)
 
 ### Zymo mock
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
