@@ -4,9 +4,8 @@
 // Date: 2025-09-30
 process BAKTA_BAKTA {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_medium'
 
-    conda "bioconda::bakta=1.11.4"
     
     // Outputs
     publishDir "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}", mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
