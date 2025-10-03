@@ -5,9 +5,11 @@
 */
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
+include { DOWNLOAD_DBS } from '../subworkflows/local/download_dbs.nf'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
+include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,6 +25,12 @@ workflow SOMATEM {
 
     ch_versions = Channel.empty()
     ch_key_outputs = Channel.empty()
+
+    // -----------------------------------------------------------------
+    // Download databases
+    // -----------------------------------------------------------------
+    DOWNLOAD_DBS(0)
+
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
@@ -45,9 +53,19 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // assembly
     // -----------------------------------------------------------------
-    // if (params.analysis_type == "assembly") {
-    //     ASSEMBLY(clean_reads)
-    // }
+    if (params.analysis_type == "assembly") {
+
+        // unpack the downloaded databases
+        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.map { _meta, db -> db } // strip meta, only take db
+        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
+        ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
+
+        ASSEMBLY_MAGS(PREPROCESSING.out.clean_reads, 
+                ch_checkm2_db,
+                ch_bakta_db,
+                ch_singlem_db
+        )
+    }
 
     // -----------------------------------------------------------------
     // genome dynamics : Longitudinal analysis

@@ -1,0 +1,54 @@
+# describe your ultimate goal from the bioinformatics analysis
+# e.g. "I want to identify the microbial communities in my samples"
+question: "" 
+
+# To help the LLM chose the correct workflow please fill out as many of the following as possible
+
+# other options --------------------------------
+
+input: "assets/mag_samplesheet.csv"
+sample_environment: "built_environment"
+
+
+# standard options ------------------------------
+
+
+# describe the type of data you have from the options below
+# 1. 16S = 16S amplicon sequence data from a microbial community
+# 2. isolate = genomic DNA sequence data from a single microbial isolate
+# 3. metagenomic = metagenomic sequence data from a microbial community
+data_type: "metagenomic"
+
+# describe the type of analysis you want to perform from the options below
+# 1. taxonomic-profiling = Profiling the taxonomic composition (species match and relative abundance)
+# 2. assembly = assemble the reads into genomes to yield annotated genome/contigs (.fasta) and circos plot
+# 3. pathogen-detection = detect pathogens in the reads using functional profiling (based on genes/functional sequences of known pathogens)
+# 4. genome-dynamics = genomic variation across multiple samples (time-series or cross-section). Provides a variant abundance over time plot. 
+analysis_type: "assembly"
+
+# describe the status of single or multiple samples
+# 1. cross-section = One or more samples of microbial communities that are not time-series (default)
+# 2. longitudinal = (time series) A series of multiple samples from the same microbial community
+sample_status: "cross-section"
+
+# sequencing technology used to generate the reads
+# 1. nanopore = Oxford Nanopore (ONT): Higher error rates (default)
+# 2. pacbio = Pacific Biosciences (PacBio): Lower error rates
+sequencing_technology: "nanopore"
+
+# sequencing technology qualifiers
+# for nanopore: R10, R9, older
+# for pacbio: CLR, HiFi
+sequencing_technology_qualifiers: "R10"
+# workflow will currently not use this information
+
+# running mode: determines what analysis tools can be run
+# 1. laptop = runs on a laptop. Only does taxonomic profiling (default)
+# 2. cluster = runs on a cluster or workstation. Can perform all analysis_types (including assembly)
+running_mode: "cluster"
+
+
+# confidence level of profiling analyses: 
+# 1. high = uses both assembled contigs and reads to yield a more accurate profile (default)
+# 2. regular = uses only reads to yield a profile, and is faster (default)
+confidence_level: "regular"
