@@ -17,6 +17,11 @@ assets/examples/lemur/46_1_sub10k_relative_abundance.tsv
 work/
 .nextflow/
 
+# seqscreen files
+bin/seqscreen/html_report_generation/*
+bin/seqscreen/outlier_detection/*
+examples/conda_cache/*
+
 # vscode files
 SOMAteM.code-workspace
 

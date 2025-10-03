@@ -1,0 +1,7 @@
+name: seqscreen
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - seqscreen

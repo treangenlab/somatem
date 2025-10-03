@@ -1,0 +1,33 @@
+[33mNextflow 25.04.7 is available - Please consider updating your version to it(B[m
+
+ N E X T F L O W   ~  version 25.04.6
+
+Launching `/scratch/am503/SOMAteM/subworkflows/seqscreen_v2.nf` [festering_yalow] DSL2 - revision: ee07ad7fae
+
+=== MAIN WORKFLOW DATABASE DEBUG ===
+Database parameter received: /scratch/am503/SeqScreenDB_23.4
+Database path type: class java.lang.String
+[-        ] SEQSCREEN:RUN_INITIALIZE -
+
+[c8/df3d7c] SEQ…ITIALIZE (abx_depl_sub10k) | 2 of 2, cached: 2 ✔
+[-        ] SEQSCREEN:RUN_SEQMAPPER        -
+[-        ] SEQSCREEN:RUN_NANOPORE         -
+[-        ] SEQ…ONOMIC_IDENTIFICATION_FAST -
+[-        ] SEQ…:RUN_FUNCTIONAL_ANNOTATION -
+[-        ] SEQ…REEN:RUN_REPORT_GENERATION -
+
+executor >  local (1)
+[c8/df3d7c] SEQ…ITIALIZE (abx_depl_sub10k) | 2 of 2, cached: 2 ✔
+[50/73d062] SEQ…EQMAPPER (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[21/80cc7d] SEQ…NANOPORE (veh_depl_sub10k) | 1 of 2, cached: 1
+[ba/371817] SEQ…ION_FAST (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[7d/027e8d] SEQ…NOTATION (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[-        ] SEQ…REEN:RUN_REPORT_GENERATION | 0 of 1
+
+executor >  local (1)
+[c8/df3d7c] SEQ…ITIALIZE (abx_depl_sub10k) | 2 of 2, cached: 2 ✔
+[50/73d062] SEQ…EQMAPPER (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[21/80cc7d] SEQ…NANOPORE (veh_depl_sub10k) | 1 of 2, cached: 1
+[ba/371817] SEQ…ION_FAST (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[7d/027e8d] SEQ…NOTATION (veh_depl_sub10k) | 2 of 2, cached: 2 ✔
+[-        ] SEQ…REEN:RUN_REPORT_GENERATION | 0 of 1
