@@ -1,67 +1,76 @@
 # Somatem
 LLM accessible long-read metagenomics pipeline with best practices
 ## Outline
-[Plannning tools](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
+[Plannning tools: for development](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
 
-### Long Read Pipelines
-We are currently developing nextflow scripts for commons long-read sequencing tasks. 
+Somatem is a collection of nextflow scripts for long-read sequencing metagenomics from 4th generation sequencing technologies (Oxford Nanopore Technologies and PacBio). The scripts are designed to be modular and easy to use, with a focus on best practices for long-read sequencing data analysis.
 
-SOMATeM contains a few subworkflows designed to perform different tasks:
-
-* Data pre-processing
-Used within the beginning of most pipelines, this will run [NanoPlot](https://github.com/wdecoster/NanoPlot) on the raw files, 
-then remove host contamination using [hostile](https://github.com/bede/hostile), 
-followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), 
-then one last __NanoPlot__ analysis to show the statistics of your final reads
-
-* Taxonomic classification
+The pipeline includes key subworkflows for 
+- data pre-processing: Visualize quality with [NanoPlot](https://github.com/wdecoster/NanoPlot), then remove host contamination using [hostile](https://github.com/bede/hostile), followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), then one last __NanoPlot__ analysis to show the statistics of your final reads
+- taxonomic classification: 
+- genome assembly / metagenome-assembled genome (MAG) analysis: 
+- pathogen detection: using seqscreen to screen the reads for pathogens: 
 
 
-* Metagenome-assembled genome
-
-```
-# have a working conda install (module load conda or download sh file)
-
-# clone this branch of the repo and move to dir 
-git clone https://github.com/treangenlab/SOMAteM
-
-# and you should be good to run!
-```
 
 ## Initial setup
-Download the example data using the `get_example_data` subworkflow by running this command in the root directory of the repo (after activating the `nf_base_env` conda environment):
+
+1. Clone this repo from GitHub
+```
+git clone https://github.com/treangenlab/Somatem
+```
+
+2. Install the latest version of micromamba from [here](https://github.com/mamba-org/mamba/releases) using `"${SHELL}" <(curl -L https://micro.mamba.pm/install.sh)` for linux/MacOS (This pipeline cannot run on Windows). `micromamba` is a faster version of `conda` that is used to create and manage conda environments. _We will use conda/micromamba terms interchangably_
+
+3. Navigate to the cloned repo directory `Somatem/` and create a conda environment for nextflow. 
+```
+micromamba create -n nf_base_env nextflow
+```
+
+4. Activate the conda environment and install nextflow
+```
+micromamba activate nf_base_env
+micromamba install nextflow
+```
+Now you are ready to run nextflow. If you want to test the pipelines with example datasets, proceed to step 5.
+
+5. Download the example data using the `get_example_data` subworkflow by running this command in the root directory of the repo (after activating the `nf_base_env` conda environment):
 ```bash
 micromamba activate nf_base_env
 nextflow run subworkflows/local/get_example_data.nf
 ```
 _This will download the example data to the `examples/data` directory for testing the pipelines._
 
+## Database configuration
+1. Decide if you want a dedicated directory for the databases within the `Somatem` directory or use a common shared directory for other members of your organization (highly recommended if you are using a cluster). 
+
+2. Some of the databases (e.g. bakta, checkm2, singlem) run upto 100GB of space, so make sure you have enough space available
+
+3. Update the `nextflow.config` file to point to the database directory by modifying this variable
+```
+db_base_dir                = "/home/dbs"
+```
+Change this to `./assets/databases` if not using a shared directory
 
 ## Usage
+Since the pipeline has multiple subworkflows, you have to pick which one(s) are most relevant to your use case. 
 
-#### long read metagenome assembled genome pipeline
-A custom nextflow pipeline of the current best practice tools for long read MAG assembly and binning. This pipeline is much more compute intensive. 
-
-`somatem_mags.nf`
-```
-# assuming you already have nextflow and conda installed along with git repo cloned
-
-conda activate somatemtest
-
-nextflow run /path/to/subworkflows/somatem_mags.nf \
-  --input_dir   /path/to/SOMAteM/examples/data/input4mags \
-  --output_dir  /path/to/SOMAteM/examples/data/mag_test \
-  --threads     96 \
-  --flye_mode nano-hq \
-  --semibin_environment mouse_gut \
-  --completeness_threshold 50 \
-  --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
-  --bakta_db    /path/to/bakta/db \
-  --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
-  -c /path/to/SOMAteM/conf/simple_somatem_mags.config
+- Input your configuration by copying the `metadata_template.yaml` file and filling it out. _The file has helpful comments to guide you through the process_
+```sh
+cp docs/somatem_docs/metadata_template.yaml assets/custom_metadata.yaml
 ```
 
-For the `somatem_mags.nf` workflow there are also some databases you must download before use including the [checkm2](https://github.com/chklovski/CheckM2) and [gtdbtk](https://gtdb.ecogenomic.org/) databases, as well as the [singlem metapackage](https://zenodo.org/records/15232972).
+- Run the pipeline from the base directory (`Somatem/`) using the following command in the terminal:
+```bash
+nextflow run . -param-file assets/custom_metadata.yaml
+```
+
+Note that the `assembly_mags` section could take a few hours to run and it depends on the complexity of your data and your computational resources. It took 6 hours to run the 2 example files `assets/mag_big_samplesheet.csv` on a cluster with 128 GB memory, 128 cpus and 6 TB of free space.
+
+- This command automatically downloads required databases ranging from 2-60 GB size: 
+For the `assembly_mags` workflow there are a few large sized databases including the [checkm2](https://github.com/chklovski/CheckM2) and [gtdbtk](https://gtdb.ecogenomic.org/) databases, as well as the [singlem metapackage](https://zenodo.org/records/15232972).
+
+**Cleanup the README below this**
 
 GTDB-Tk v2.4.1 requires ~140G of external data which needs to be downloaded and extracted. This can be done automatically, or manually.
 ```
@@ -81,7 +90,6 @@ rm gtdbtk_r226_data.tar.gz
 conda env config vars set GTDBTK DATA PATH="/path/to/target/db"
 ```
 
-### the somatem_mags.nf workflow still has some bugs but are being worked out in the very near future!!!
 
 ---
 # Plannning and other documentation

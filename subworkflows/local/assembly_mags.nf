@@ -1,42 +1,32 @@
 #!/usr/bin/env nextflow
-nextflow.enable.dsl=2
 
 // Metagenomics analysis subworkflow: taxonomic profiling, de novo assembly, mapping, binning, quality assessment, and annotation
 
+  
 // Include nf-core modules
-include { FLYE }                    from '../modules/nf-core/flye/main'
-include { MINIMAP2_INDEX }          from '../modules/nf-core/minimap2/index/main'
-include { MINIMAP2_ALIGN }          from '../modules/nf-core/minimap2/align/main'
-include { SAMTOOLS_SORT }           from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_COVERAGE }       from '../modules/nf-core/samtools/coverage/main'
-include { SEMIBIN_SINGLEEASYBIN }   from '../modules/nf-core/semibin/singleeasybin/main'
-include { CHECKM2_PREDICT }         from '../modules/nf-core/checkm2/predict/main'
-include { CHECKM2_PARSE }           from '../modules/local/checkm2/parse/main'
-include { BAKTA_BAKTA }             from '../modules/local/bakta/bakta/main'
-include { SINGLEM_PIPE }            from '../modules/local/singlem/pipe/main'
-include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../modules/local/singlem/pipe/main'
-include { SINGLEM_APPRAISE }        from '../modules/local/singlem/appraise/main'
-include { TAXBURST }                from '../modules/local/taxburst/main'
+include { FLYE }                    from '../../modules/nf-core/flye/main'
+include { MINIMAP2_INDEX }          from '../../modules/nf-core/minimap2/index/main'
+include { MINIMAP2_ALIGN }          from '../../modules/nf-core/minimap2/align/main'
+include { SAMTOOLS_SORT }           from '../../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_COVERAGE }       from '../../modules/nf-core/samtools/coverage/main'
+include { SEMIBIN_SINGLEEASYBIN }   from '../../modules/nf-core/semibin/singleeasybin/main'
+include { CHECKM2_PREDICT }         from '../../modules/nf-core/checkm2/predict/main'
+include { CHECKM2_PARSE }           from '../../modules/local/checkm2/parse/main'
+include { BAKTA_BAKTA }             from '../../modules/local/bakta/bakta/main'
+include { SINGLEM_PIPE }            from '../../modules/local/singlem/pipe/main'
+include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/pipe/main'
+include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
+include { TAXBURST }                from '../../modules/local/taxburst/main'
 
-// Define default parameters
-params.input_dir = ''
-params.checkm2_db = ''
-params.bakta_db = ''
-params.singlem_metapackage = ''
-params.output_dir = './results'
-params.flye_mode = '--nano-hq'
-params.semibin_environment = 'human_gut'
-params.completeness_threshold = 80.0
 
-workflow SOMATEM_MAGS {
+workflow ASSEMBLY_MAGS {
 
     take:
     reads               // channel: [ val(meta), path(reads) ]
-    checkm2_db          // channel: path(db)
-    bakta_db            // channel: path(db)
-    singlem_metapackage // channel: path(metapackage)
-    flye_mode           // val: sequencing data type for Flye
-    semibin_environment // val: sample environment for SemiBin2
+    
+    ch_checkm2_db       // channel: path(db)
+    ch_bakta_db         // channel: path(db)
+    ch_singlem_db // channel: path(metapackage)
 
     main:
     ch_versions = Channel.empty()
@@ -52,20 +42,23 @@ workflow SOMATEM_MAGS {
         [new_meta, reads_file]
     }
     
-    SINGLEM_PIPE(ch_metagenome_reads, singlem_metapackage)
+    SINGLEM_PIPE(ch_metagenome_reads, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
     // Interactive taxonomic visualization with TaxBurst
     TAXBURST(SINGLEM_PIPE.out.taxonomic_profile, 'SingleM')
     ch_versions = ch_versions.mix(TAXBURST.out.versions)
+    TAXBURST.out.html.view { meta, _html -> "✓ Taxonomic profiling and interactive visualization completed for ${meta.id}" } // log
 
     // Assembly with Flye
-    FLYE(reads, flye_mode)
+    FLYE(reads, params.flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
+    FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
     // Create minimap2 index
     MINIMAP2_INDEX(FLYE.out.fasta)
     ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
+    MINIMAP2_INDEX.out.index.view { meta, _index -> "✓ Minimap2 index created for ${meta.id}" } // log  
 
     // Map reads back to assembly
     MINIMAP2_ALIGN(
@@ -89,7 +82,7 @@ workflow SOMATEM_MAGS {
     
     ch_fasta_for_coverage = FLYE.out.fasta
     
-    ch_fqi_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, bam ->
+    ch_fqi_for_coverage = SAMTOOLS_SORT.out.bam.map { meta, _bam ->
         [meta, file('OPTIONAL_FILE')]
     }
     
@@ -99,6 +92,7 @@ workflow SOMATEM_MAGS {
         ch_fqi_for_coverage
     )
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
+    SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
     // Binning with SemiBin2
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0])
@@ -106,16 +100,18 @@ workflow SOMATEM_MAGS {
     // Set SemiBin2 environment parameter
     ch_asm_bam_with_env = ch_asm_bam.map { meta, fasta, bam ->
         def new_meta = meta.clone()
-        new_meta.semibin_env = semibin_environment
+        new_meta.semibin_env = params.sample_environment
         [new_meta, fasta, bam]
     }
     
     SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
+    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
 
     // Quality assessment with CheckM2
-    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, checkm2_db)
+    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
+    CHECKM2_PREDICT.out.checkm2_tsv.view { meta, _tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
     
     // Parse CheckM2 results to get completeness information
     CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, SEMIBIN_SINGLEEASYBIN.out.output_fasta)
@@ -129,7 +125,7 @@ workflow SOMATEM_MAGS {
         [new_meta, bins]
     }
     
-    SINGLEM_PIPE_BINS(ch_bins_for_singlem, singlem_metapackage)
+    SINGLEM_PIPE_BINS(ch_bins_for_singlem, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     // SingleM appraise - simplified input preparation
@@ -163,8 +159,9 @@ workflow SOMATEM_MAGS {
             [new_meta, actualMetOtu, actualBinOtu, []]
         }
 
-    SINGLEM_APPRAISE(ch_appraise_input, singlem_metapackage)
+    SINGLEM_APPRAISE(ch_appraise_input, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_APPRAISE.out.versions)
+    SINGLEM_APPRAISE.out.summary.view { meta, _summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
 
     // Completeness-based Bakta annotation
     ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
@@ -216,7 +213,7 @@ workflow SOMATEM_MAGS {
             }, 
             by: 0
         )
-        .map { join_key, meta, bin, completeness_map ->
+        .map { _join_key, meta, bin, completeness_map ->
             def new_meta = meta.clone()
             def bin_name = meta.bin_name
             
@@ -230,14 +227,28 @@ workflow SOMATEM_MAGS {
             
             [new_meta, bin]
         }
-        .filter { meta, bin ->
+        .filter { meta, _bin ->
             // Only process bins that meet the completeness threshold
-            return meta.completeness != null && meta.completeness >= params.completeness_threshold
+            return meta.completeness != null && meta.completeness >= params.checkm2_completeness_threshold
         }
 
-    // Only run Bakta on high-quality bins (≥completeness_threshold)
-    BAKTA_BAKTA(ch_bins_with_completeness, bakta_db, [], [])
+    // Only run Bakta on high-quality bins (≥checkm2_completeness_threshold)
+    BAKTA_BAKTA(ch_bins_with_completeness, ch_bakta_db, [], [])
     ch_versions = ch_versions.mix(BAKTA_BAKTA.out.versions)
+
+    // Show which bins got annotation (log)
+    BAKTA_BAKTA.out.embl.view { meta, _embl -> 
+        def completeness = meta.completeness ?: "unknown"
+        "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
+    }
+
+    // Show which bins got annotation (log)
+    BAKTA_BAKTA.out.embl
+        .map { meta, _embl -> meta.completeness }
+        .filter { it != null && it >= params.checkm2_completeness_threshold }
+        .count()
+        .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
+
 
     emit:
     // Original outputs
@@ -284,71 +295,4 @@ workflow SOMATEM_MAGS {
     appraise_plot = SINGLEM_APPRAISE.out.plot
     
     versions        = ch_versions
-}
-
-// Main workflow for direct execution
-workflow {
-    // Validate required parameters
-    if (!params.input_dir) {
-        error "Please provide --input_dir parameter"
-    }
-    if (!params.checkm2_db) {
-        error "Please provide --checkm2_db parameter"
-    }
-    if (!params.bakta_db) {
-        error "Please provide --bakta_db parameter"
-    }
-    if (!params.singlem_metapackage) {
-        error "Please provide --singlem_metapackage parameter"
-    }
-
-    // Prepare input channels
-    ch_reads = Channel.fromPath("${params.input_dir}/*.fastq.gz")
-        .ifEmpty { error "No .fastq.gz files found in ${params.input_dir}" }
-        .map { file -> 
-            def meta = [id: file.baseName.replaceAll(/\.fastq(\.gz)?$/, '')]
-            println "Processing input file: ${file} -> sample ID: ${meta.id}"
-            [meta, file]
-        }
-    
-    // Count and display all input files
-    ch_reads.count().view { count -> "Found ${count} input files to process" }
-    
-    // Create value channels for databases
-    ch_checkm2_db = Channel.value(params.checkm2_db)
-    ch_bakta_db = Channel.value(params.bakta_db)
-    ch_singlem_metapackage = Channel.value(params.singlem_metapackage)
-
-    // Run the subworkflow
-    SOMATEM_MAGS(
-        ch_reads, 
-        ch_checkm2_db, 
-        ch_bakta_db, 
-        ch_singlem_metapackage,
-        params.flye_mode, 
-        params.semibin_environment
-    )
-
-    // Display progress information
-    SOMATEM_MAGS.out.singlem_profile.view { meta, profile -> "✓ Taxonomic profiling completed for ${meta.id}" }
-    SOMATEM_MAGS.out.taxburst_html.view { meta, html -> "✓ Interactive taxonomy visualization created for ${meta.id}" }
-    SOMATEM_MAGS.out.assembly.view { meta, fasta -> "✓ Assembly completed for ${meta.id}" }
-    SOMATEM_MAGS.out.coverage.view { meta, coverage -> "✓ Coverage calculated for ${meta.id}" }
-    SOMATEM_MAGS.out.bins.view { meta, bins -> "✓ Binning completed for ${meta.id}: ${bins.size()} bins" }
-    SOMATEM_MAGS.out.checkm2_report.view { meta, report -> "✓ Quality assessment completed for ${meta.id}" }
-    
-    // Show which bins got annotation
-    SOMATEM_MAGS.out.bakta_embl.view { meta, embl -> 
-        def completeness = meta.completeness ?: "unknown"
-        "✓ Bakta annotation completed for ${meta.id} (${completeness}% complete)"
-    }
-    
-    SOMATEM_MAGS.out.appraise_summary.view { meta, summary -> "✓ SingleM appraise analysis completed for ${meta.id}" }
-
-    // Count high-quality bins
-    SOMATEM_MAGS.out.bakta_embl
-        .map { meta, embl -> meta.completeness }
-        .filter { it != null && it >= params.completeness_threshold }
-        .count()
-        .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.completeness_threshold}% complete)" }
 }

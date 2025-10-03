@@ -83,6 +83,9 @@ workflow PIPELINE_INITIALISATION {
         }
         .set { ch_samplesheet }
 
+    // Count and display all input files
+    ch_samplesheet.count().view { count -> "Found ${count} samples to process" }
+
     emit:
     samplesheet = ch_samplesheet
     versions    = ch_versions
