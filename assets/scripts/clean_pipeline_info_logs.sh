@@ -108,7 +108,7 @@ for file in results/pipeline_info/*; do
             # Convert file timestamp format for comparison
             file_timestamp_std=$(echo "$file_timestamp" | sed 's/_/ /g' | sed 's/-\([0-9][0-9]\)$/:\1/g')
             
-            # Check if this timestamp matches any in our valid list within 2 minutes
+            # Check if this timestamp matches any in our valid list within 5 seconds
             matched=0
             for valid_ts in "${timestamp_array[@]}"; do
                 if timestamps_match "$valid_ts" "$file_timestamp_std"; then
