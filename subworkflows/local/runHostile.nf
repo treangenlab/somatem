@@ -22,12 +22,12 @@ workflow runHostile {
 
     main:
     // Check if database exists in the default directory
-    db_path = "${params.hostile_database_dir}/${database_name}"
+    db_path = "${params.hostile_db}/${database_name}"
     db_exists = Channel.value(file(db_path).exists())
 
     
     if ( db_exists ) {
-        database_input = Channel.value([database_name, params.hostile_database_dir])
+        database_input = Channel.value([database_name, params.hostile_db])
     } else { 
         // If database is not in the default directory, fetch it (warning: Takes a while)
         db_name_without_extension = database_name.replaceAll('\\.mmi$', '')
