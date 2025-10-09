@@ -187,6 +187,8 @@ _First test each module independently with example data from each tool's own rep
   - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
     - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
 
+- DB notes:
+  - `hostile`: switching to `download_dbs` subworkflow for this. How to handle the output channel that has path only to a `referece/` directory? (_not the downloaded file explicityly_) ; Hostile clean and fetch modules might need to be recoded to be compatible with a `storeDir` based workflow?
 
 ### Implementation notes
 - Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
