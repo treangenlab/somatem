@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-// include { checkm2_DOWNLOAD_DB } from '../../modules/local/checkm2/download_db/main.nf'
+include { HOSTILE_FETCH } from '../../modules/nf-core/hostile/fetch/main.nf'
 include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databasedownload/main'   
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
 include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/main.nf'
@@ -8,20 +8,38 @@ include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/ma
 workflow DOWNLOAD_DBS {
 
     take:
-    _None
+    analysis_type // string: type of analysis (e.g. 'assembly', 'taxonomic-profiling', 'genome-dynamics')
+
+    hostile_index // string: name of the hostile database file *with extension* (e.g. 'human-t2t-hla-argos985-mycob140.mmi')
+    checkm2_db_zenodo_id // string: Zenodo ID of the checkm2 database
+
 
     main:
     // Initialize empty channels for each database type
+    ch_hostile_db = Channel.empty()
     ch_checkm2_db = Channel.empty()
     ch_bakta_db = Channel.empty()
     ch_singlem_db = Channel.empty()
 
     // log message: downloading databases for which analysis type
-    log.info "Downloading databases for analysis type: ${params.analysis_type}"
+    log.info "Downloading databases for analysis type: ${analysis_type}"
 
-    if (params.analysis_type == "assembly") {
+
+    // ------------------------------------------------
+    // pre-processing databases 
+    // ------------------------------------------------
+    // TODO: need to add conditional for running hostile based on params.environment?
+    db_name_without_extension = hostile_index.replaceAll('\\.mmi$', '')
+    log.info "Fetching hostile index/database: ${db_name_without_extension} for minimap2. Will take > 5 min"
+    HOSTILE_FETCH(db_name_without_extension)
+    ch_hostile_db = HOSTILE_FETCH.out.reference
+
+    // ------------------------------------------------
+    // assembly databases 
+    // ------------------------------------------------
+    if (analysis_type == "assembly") {
         // download checkm2 database 
-        CHECKM2_DATABASEDOWNLOAD(params.checkm2_db_zenodo_id)
+        CHECKM2_DATABASEDOWNLOAD(checkm2_db_zenodo_id)
         ch_checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
     
         // download bakta db
@@ -35,6 +53,7 @@ workflow DOWNLOAD_DBS {
     }
 
     emit: // emit empty channels if not downloaded
+    ch_hostile_db = ch_hostile_db
     ch_checkm2_db = ch_checkm2_db
     ch_bakta_db = ch_bakta_db
     ch_singlem_db = ch_singlem_db
