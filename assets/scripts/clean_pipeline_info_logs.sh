@@ -43,7 +43,7 @@ to_epoch() {
     # Convert both formats: "2025-10-03 00:15:20" and "2025-10-03_00-15-20"
     timestamp=$(echo "$timestamp" | sed 's/_/ /g')
     # Replace '_' with ' ', and the last three '-' in the time portion with ':'
-    local formatted=$(echo "$timestamp" | sed 's/_/ /' | sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2})-([0-9]{2})-([0-9]{2})/\1 \2:\3:\4/')
+    local formatted=$(echo "$timestamp" | sed 's/_/ /' | sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2})-([0-9]{2})-([0-9]{2})/\1 \2-\3-\4/')
     date -d "$formatted" +%s
 }
 
@@ -53,6 +53,7 @@ to_epoch() {
 # for date in "${test_dates[@]}"; do
 
 # Function to convert nextflow log timestamp to pipeline_info format
+# TODO : remove this function and keep the original format which converts to epoch seconds
 convert_timestamp() {
     # Convert from format like "2025-10-03 00:15:20" to "2025-10-03_00-15-20"
     echo "$1" | sed 's/ /_/g' | sed 's/:/-/g'
@@ -106,9 +107,14 @@ for file in results/pipeline_info/*; do
 
         if [ ! -z "$file_timestamp" ]; then
             # Convert file timestamp format for comparison
-            file_timestamp_std=$(echo "$file_timestamp" | sed 's/_/ /g' | sed 's/-\([0-9][0-9]\)$/:\1/g')
+            # Examples:
+            #   '2025-10-03_00-15-20' becomes '2025-10-03 00:15:20'
+            # TODO: make this into the convert_timestamp function
+            file_date=$(echo "$file_timestamp" | cut -d '_' -f 1)
+            file_time=$(echo "$file_timestamp" | cut -d '_' -f 2 | sed -E 's/-([0-9]{2})/:\1/g')
+            file_timestamp_std="${file_date} ${file_time}"
             
-            # Check if this timestamp matches any in our valid list within 5 seconds
+            # Check if this timestamp matches any in our valid list within a set time (e.g. 2 minutes)
             matched=0
             for valid_ts in "${timestamp_array[@]}"; do
                 if timestamps_match "$valid_ts" "$file_timestamp_std"; then
