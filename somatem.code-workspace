@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../toolsource/seqscreen2"
+		},
+		{
+			"path": "../omi-command-base"
 		}
 	]
 }
