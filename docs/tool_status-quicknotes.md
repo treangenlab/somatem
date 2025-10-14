@@ -327,9 +327,9 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 
 - hostile: using default `human-t2t-hla-argos985-mycob140` using the `hostile/fetch` module, source: [hostile readme](https://github.com/bede/hostile?tab=readme-ov-file#indexes) 
 - Lemur: (dir: `/home/dbs/lemur_221_db/`) Database (RefSeq v221 bacterial and archaeal genes, and RefSeq v222 fungal genes) link mentioned in the [repo](https://github.com/treangenlab/lemur?tab=readme-ov-file#obtaining-the-database). [zenodo link](https://zenodo.org/records/10802546/files/rv221bacarc-rv222fungi.tar.gz?download=1) 
-- `Emu`: Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
-  - Note sure if there were from the original emu? : https://osf.io/56uf7/files/osfstorage
-  - GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
+- `Emu`: using `/home/dbs/emu/emu_db2023` dir from Eddy (49,243 sequences in species_taxid.fasta); _this is smaller than the original emu db (`emu_db_copy_from_kdc10`) mentioned in the paper from 2021 (49,301 sequences) stored in: https://osf.io/56uf7/overview (osfstorage/emu-prebuilt/emu.tar)_
+  - (old) Database obtained from gms_16S repo [here](https://github.com/genomic-medicine-sweden/gms_16S/tree/master/assets/databases/emu_database)
+  - note: GMS-16S utilizes a combination of the ribosomal RNA Operon copy number (rrnDB) and the NCBI 16S RefSeq databases (from gms_16S [paper](https://link.springer.com/article/10.1007/s10096-025-05158-w))
 - checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd. Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14897628)
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
