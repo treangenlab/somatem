@@ -1,3 +1,4 @@
+// updated from nf-core: added index_name to output path for storeDir compatibility
 process HOSTILE_FETCH {
     label 'process_single'
 
@@ -10,7 +11,7 @@ process HOSTILE_FETCH {
     val index_name
 
     output:
-    tuple val(index_name), path('reference/'), emit: reference
+    tuple val(index_name), path("reference/${index_name}*"), emit: reference
     path 'versions.yml', emit: versions
 
     when:
