@@ -1,3 +1,4 @@
+// updated from nf-core: disable HOSTILE_CACHE_DIR to take in full path from hostile_fetch
 process HOSTILE_CLEAN {
     tag "${meta.id}"
     label 'process_low'
@@ -24,7 +25,7 @@ process HOSTILE_CLEAN {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reads_cmd = meta.single_end ? "--fastq1 ${[reads].flatten()[0]}" : "--fastq1 ${reads.sort()[0]} --fastq2 ${reads.sort()[1]}"
     """
-    export HOSTILE_CACHE_DIR=${reference_dir}
+    # export HOSTILE_CACHE_DIR=${reference_dir}
 
     ## Reorder the reads for reproducibility
     ## Set offline as we never want this process to auto-download reference files as required input channel
@@ -33,7 +34,7 @@ process HOSTILE_CLEAN {
         ${args} \\
         --threads ${task.cpus} \\
         ${reads_cmd} \\
-        --index ${reference_name} \\
+        --index ${reference_dir} \\
         --output . \\
         --reorder \\
         --airplane \\
@@ -51,7 +52,7 @@ process HOSTILE_CLEAN {
     def reads_cmd = meta.single_end ? "--fastq1 ${reads}" : "--fastq1 ${reads.sort()[0]} --fastq2 ${reads.sort()[1]}"
     def fake_read2 = !meta.single_end ? "echo '' | gzip -c > ${prefix}.clean_2.fastq.gz" : ""
     """
-    export HOSTILE_CACHE_DIR=${reference_dir}
+    # export HOSTILE_CACHE_DIR=${reference_dir}
     
     echo "hostile \\
         clean \\
@@ -64,7 +65,6 @@ process HOSTILE_CLEAN {
         --airplane \\
         | tee > ${prefix}.json"
 
-    export HOSTILE_CACHE_DIR=${reference_dir}
     echo "" | gzip -c > ${prefix}.clean_1.fastq.gz
     ${fake_read2}
 
