@@ -13,6 +13,7 @@ workflow DOWNLOAD_DBS {
     analysis_type // string: type of analysis (e.g. 'assembly', 'taxonomic-profiling', 'genome-dynamics')
 
     hostile_index // string: name of the hostile database file *with extension* (e.g. 'human-t2t-hla-argos985-mycob140.mmi')
+    lemur_db_zenodo_id // string: Zenodo ID of the lemur database
     checkm2_db_zenodo_id // string: Zenodo ID of the checkm2 database
 
 
@@ -51,7 +52,7 @@ workflow DOWNLOAD_DBS {
 
         } else {
             // download lemur db
-            LEMUR_DATABASEDOWNLOAD(params.lemur_db_zenodo_id)
+            LEMUR_DATABASEDOWNLOAD(lemur_db_zenodo_id)
             LEMUR_STAGE_DB(LEMUR_DATABASEDOWNLOAD.out.db_files, LEMUR_DATABASEDOWNLOAD.out.refseq_version_bacteria)
             ch_lemur_db = LEMUR_STAGE_DB.out.lemur_db
         }
