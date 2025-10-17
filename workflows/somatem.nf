@@ -29,7 +29,8 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // Download databases
     // -----------------------------------------------------------------
-    DOWNLOAD_DBS(params.analysis_type, params.hostile_index, params.checkm2_db_zenodo_id)
+    DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
+            params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
 
 
     // -----------------------------------------------------------------
