@@ -4,6 +4,8 @@ include { HOSTILE_FETCH } from '../../modules/nf-core/hostile/fetch/main.nf'
 include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databasedownload/main'   
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
 include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/main.nf'
+include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../../modules/local/emu/downloaddb/main.nf"
+include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../../modules/local/lemur/databasedownload/main.nf"
 
 workflow DOWNLOAD_DBS {
 
@@ -17,6 +19,8 @@ workflow DOWNLOAD_DBS {
     main:
     // Initialize empty channels for each database type
     ch_hostile_db = Channel.empty()
+    ch_emu_db = Channel.empty()
+    ch_lemur_db = Channel.empty()
     ch_checkm2_db = Channel.empty()
     ch_bakta_db = Channel.empty()
     ch_singlem_db = Channel.empty()
@@ -33,6 +37,25 @@ workflow DOWNLOAD_DBS {
     log.info "Fetching hostile index/database: ${db_name_without_extension} for minimap2. Will take > 5 min"
     HOSTILE_FETCH(db_name_without_extension)
     ch_hostile_db = HOSTILE_FETCH.out.reference
+
+    // ------------------------------------------------
+    // taxonomic profiling databases 
+    // ------------------------------------------------
+    if (analysis_type == "taxonomic-profiling") {
+        
+        if (params.data_type == "16S") {
+            // download emu db
+            EMU_DOWNLOAD_DB()
+            EMU_STAGE_DB(EMU_DOWNLOAD_DB.out.db_files)
+            ch_emu_db = EMU_STAGE_DB.out.emu_db
+
+        } else {
+            // download lemur db
+            LEMUR_DATABASEDOWNLOAD(params.lemur_db_zenodo_id)
+            LEMUR_STAGE_DB(LEMUR_DATABASEDOWNLOAD.out.db_files, LEMUR_DATABASEDOWNLOAD.out.refseq_version_bacteria)
+            ch_lemur_db = LEMUR_STAGE_DB.out.lemur_db
+        }
+    }
 
     // ------------------------------------------------
     // assembly databases 
@@ -54,6 +77,12 @@ workflow DOWNLOAD_DBS {
 
     emit: // emit empty channels if not downloaded
     ch_hostile_db = ch_hostile_db
+
+    // taxonomic profiling databases
+    ch_emu_db = ch_emu_db
+    ch_lemur_db = ch_lemur_db
+    
+    // assembly databases
     ch_checkm2_db = ch_checkm2_db
     ch_bakta_db = ch_bakta_db
     ch_singlem_db = ch_singlem_db
