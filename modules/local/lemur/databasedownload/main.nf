@@ -24,13 +24,13 @@ process LEMUR_DATABASEDOWNLOAD {
     val(db_zenodo_id)
 
     output:
-    tuple val(meta), path("lemur_*_db"), emit: database
-    tuple 
-      path("lemur_*_db/gene2len.tsv"), 
-      path("lemur_*_db/reference2genome.tsv"), 
-      path("lemur_*_db/species_taxid.fasta"), 
-      path("lemur_*_db/taxonomy.tsv"), emit: files
-    path("versions.yml")                                 , emit: versions
+    val(meta), emit: db_version
+    tuple path("gene2len.tsv"), 
+      path("reference2genome.tsv"), 
+      path("species_taxid.fasta"), 
+      path("taxonomy.tsv"), emit: db_files
+    val(refseq_version_bacteria) , emit: refseq_version_bacteria
+    // path("versions.yml")                                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -42,26 +42,16 @@ process LEMUR_DATABASEDOWNLOAD {
     db_version = api_data.metadata.version
     checksum   = api_data.files[0].checksum.replaceFirst(/^md5:/, "md5=")
     meta       = [id: 'lemur_db', version: db_version]
-    db_file_name = api_data.files[0].filename ?: "rv221bacarc-rv222fungi.tar.gz" // generalize the filename for future versions
+    db_file_name = api_data.files[0].filename ?: "rv221bacarc-rv222fungi.tar.gz" // generalize the filename for future versions and multiple files
+    refseq_version_bacteria = db_file_name.find(/\d{3}/)
     """
     # download database from zenodo using aria2c (fast downloader)
     aria2c \
         ${args} \
         --checksum ${checksum} \
         https://zenodo.org/records/${zenodo_id}/files/${db_file_name}
-
-    refseq_version_bacteria=\$(echo ${db_file_name} | grep -oP '(^rv\K\d{3})')  
-
-    mkdir lemur_${refseq_version_bacteria}_db
-    mv ${db_file_name} lemur_${refseq_version_bacteria}_db/
-
-    cd lemur_${refseq_version_bacteria}_db
-    
+ 
     tar -xzf ${db_file_name}
-    db_path=\$(find -name *.dmnd)
-    mv \$db_path lemur_db_v${db_version}.dmnd
-
-    cd ..
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -73,15 +63,43 @@ process LEMUR_DATABASEDOWNLOAD {
     db_version = 0
     meta       = [id: 'lemur_db', version: db_version]
     """
-    mkdir lemur_221_db
-    touch lemur_221_db/gene2len.tsv
-    touch lemur_221_db/reference2genome.tsv
-    touch lemur_221_db/species_taxid.fasta
-    touch lemur_221_db/taxonomy.tsv
+    touch gene2len.tsv
+    touch reference2genome.tsv
+    touch species_taxid.fasta
+    touch taxonomy.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         aria2: \$(echo \$(aria2c --version 2>&1) | grep 'aria2 version' | cut -f3 -d ' ')
     END_VERSIONS
+    """
+}
+
+process LEMUR_STAGE_DB {
+    label 'process_single'
+    
+    input:
+    tuple path("gene2len.tsv"), 
+      path("reference2genome.tsv"), 
+      path("species_taxid.fasta"), 
+      path("taxonomy.tsv")
+    val(refseq_version_bacteria)
+    
+    output:
+    path "lemur_${refseq_version_bacteria}_db/", emit: lemur_db
+    
+    script:
+    """
+    mkdir lemur_${refseq_version_bacteria}_db
+
+    mv *.tsv lemur_${refseq_version_bacteria}_db/
+    mv *.fasta lemur_${refseq_version_bacteria}_db/
+    """
+    
+    stub:
+    """
+    mkdir lemur_221_db
+    mv *.tsv lemur_221_db/
+    mv *.fasta lemur_221_db/
     """
 }
