@@ -1,12 +1,12 @@
-process EMU_DOWNLOADDB {
+process EMU_DOWNLOAD_DB {
     label 'process_single'
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda "conda-forge::osfclient"
     
     output:
-    path "db", emit: emu_db
-    tuple path ("db/species_taxid.fasta"), path ("db/taxonomy.tsv"), emit: species_and_taxonomy
+    tuple path ("species_taxid.fasta"), path ("taxonomy.tsv"), emit: emu_db_files
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -17,10 +17,14 @@ process EMU_DOWNLOADDB {
     osf \\
         $args \\
         --project 56uf7 \\
-        fetch osfstorage/emu-prebuilt/emu.tar.gz
+        fetch osfstorage/emu-prebuilt/emu.tar
 
-    tar -xzf emu.tar.gz
-    mv emu db
+    tar -xvf emu.tar
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        osf: \$(echo \$(osf --version 2>&1) | grep 'osf version' | cut -f3 -d ' ')
+    END_VERSIONS
     """
 
     stub:
@@ -36,9 +40,37 @@ process EMU_DOWNLOADDB {
     """
     echo $args
     
-    mkdir db
-    touch db/species_taxid.fasta
-    touch db/taxonomy.tsv
+    touch species_taxid.fasta
+    touch taxonomy.tsv
 
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        osf: \$(echo \$(osf --version 2>&1) | grep 'osf version' | cut -f3 -d ' ')
+    END_VERSIONS
+    """
+}
+
+
+process EMU_STAGE_DB {
+    label 'process_single'
+    
+    input:
+    tuple path ("species_taxid.fasta"), path ("taxonomy.tsv")
+    
+    output:
+    path "emu_db/", emit: emu_db
+    
+    script:
+    """
+    mkdir emu_db
+    mv species_taxid.fasta emu_db/
+    mv taxonomy.tsv emu_db/
+    """
+    
+    stub:
+    """
+    mkdir emu_db
+    mv species_taxid.fasta emu_db/
+    mv taxonomy.tsv emu_db/
     """
 }
