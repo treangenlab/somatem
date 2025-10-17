@@ -5,8 +5,8 @@ process EMU_DOWNLOAD_DB {
     conda "conda-forge::osfclient"
     
     output:
-    tuple path ("species_taxid.fasta"), path ("taxonomy.tsv"), emit: emu_db_files
-    path "versions.yml", emit: versions
+    tuple path ("species_taxid.fasta"), path ("taxonomy.tsv"), emit: db_files
+    // path "versions.yml", emit: versions // not emitted since I don't have write access to the existing db directory
 
     when:
     task.ext.when == null || task.ext.when
