@@ -30,7 +30,7 @@ process LEMUR_DATABASEDOWNLOAD {
       path("species_taxid.fasta"), 
       path("taxonomy.tsv"), emit: db_files
     val(refseq_version_bacteria) , emit: refseq_version_bacteria
-    // path("versions.yml")                                 , emit: versions
+    // path("versions.yml")                                 , emit: versions // not emitted since I don't have write access to the existing db directory
 
     when:
     task.ext.when == null || task.ext.when
