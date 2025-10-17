@@ -5,7 +5,7 @@
 */
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
-include { DOWNLOAD_DBS } from '../subworkflows/local/download_dbs.nf'
+include { DOWNLOAD_DBS } from '../subworkflows/local/download_databases.nf'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
