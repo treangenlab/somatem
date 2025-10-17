@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
-include { EMU_DOWNLOADDB } from "../modules/local/emu/downloaddb/main.nf"
+include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../modules/local/emu/downloaddb/main.nf"
 include { EMU_ABUNDANCE } from "../modules/local/emu/main.nf"
 
 // -------------------------
@@ -19,7 +19,10 @@ workflow {
 
     // output_dir = Channel.fromPath(params.output_dir)
     
-    EMU_DOWNLOADDB() // test download db
+    EMU_DOWNLOAD_DB() // test download db
+    EMU_STAGE_DB(EMU_DOWNLOAD_DB.out.emu_db_files)
+
+    EMU_STAGE_DB.out.emu_db.view { dir -> "directory: $dir" }
 
     // EMU_ABUNDANCE(reads_ch)  
     // ch_versions = ch_versions.mix(EMU_ABUNDANCE.out.versions.first())
