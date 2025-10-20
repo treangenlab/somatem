@@ -80,7 +80,7 @@ workflow DOWNLOAD_DBS {
     ch_hostile_db = ch_hostile_db
 
     // taxonomic profiling databases
-    ch_emu_db = ch_emu_db
+    ch_emu_db = ch_emu_db // not used currently ; 
     ch_lemur_db = ch_lemur_db
     
     // assembly databases

@@ -12,7 +12,8 @@ process LEMUR {
     container "oras://community.wave.seqera.io/library/lemur:1.0.1--8e0c5d342d286d0b" 
 
     input:
-      tuple val(meta), path(reads)
+      tuple val(meta), path(reads) // reads to be profiled
+      path(lemur_db) // lemur database directory
 
     output:
       tuple val(meta), path("results/relative_abundance.tsv")     , emit: report
@@ -25,6 +26,7 @@ process LEMUR {
     lemur -i ${reads} \
       ${args} \
       --num-threads $task.cpus \
+      --db-prefix ${lemur_db} \
       -o results/
 
     cat <<-END_VERSIONS > versions.yml
