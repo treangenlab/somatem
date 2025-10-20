@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "../toolsource/gms_16S"
+		},
+		{
+			"path": "../toolsource/seqscreen2"
+		},
+		{
+			"path": "../omi-command-base"
 		}
 	]
 }
