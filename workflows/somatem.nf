@@ -45,7 +45,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
+        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
