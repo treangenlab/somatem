@@ -19,23 +19,30 @@ params.database_dir = "${params.db_base_dir}/hostile"
 workflow {
 
     reads = convert_to_nfcore_tuple(params.reads)
-    database_name = Channel.of(params.database_name)
+    // database_name = Channel.of(params.database_name)
 
-    // if database is in the default directory, use it
-    if ( params.database_name == 'human-t2t-hla-argos985-mycob140.mmi' ) {
+    // testing db fetch with storeDir 
+    db_name_without_extension = params.database_name.replaceAll('\\.mmi$', '')
+    HOSTILE_FETCH(db_name_without_extension)
+    
+    HOSTILE_CLEAN(reads, HOSTILE_FETCH.out.reference)
 
-        database_dir = Channel.of(params.database_dir)
-        database_tuple = database_name.combine(database_dir)
 
-        HOSTILE_CLEAN(reads, database_tuple)
+    // // if database is in the default directory, use it
+    // if ( params.database_name == 'human-t2t-hla-argos985-mycob140.mmi' ) {
 
-    } else { 
-        // if database is not in the default directory, fetch it
+    //     database_dir = Channel.of(params.database_dir)
+    //     database_tuple = database_name.combine(database_dir)
 
-        printf("fetching database: %s", params.database_name)
-        HOSTILE_FETCH(database_name)
-        HOSTILE_CLEAN(reads, HOSTILE_FETCH.out.reference)
-    }
+    //     HOSTILE_CLEAN(reads, database_tuple)
+
+    // } else { 
+    //     // if database is not in the default directory, fetch it
+
+    //     printf("fetching database: %s", params.database_name)
+    //     HOSTILE_FETCH(database_name)
+    //     HOSTILE_CLEAN(reads, HOSTILE_FETCH.out.reference)
+    // }
 }
     
 

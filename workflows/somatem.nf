@@ -5,7 +5,7 @@
 */
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
-include { DOWNLOAD_DBS } from '../subworkflows/local/download_dbs.nf'
+include { DOWNLOAD_DBS } from '../subworkflows/local/download_databases.nf'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
@@ -29,14 +29,15 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // Download databases
     // -----------------------------------------------------------------
-    DOWNLOAD_DBS(0)
+    DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
+            params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
 
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, contam_ref)
+    PREPROCESSING(ch_samplesheet, contam_ref, DOWNLOAD_DBS.out.ch_hostile_db)
     ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
 
     // -----------------------------------------------------------------
@@ -44,7 +45,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads)
+        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
