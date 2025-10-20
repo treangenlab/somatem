@@ -21,6 +21,9 @@ workflow TAXONOMIC_PROFILING {
     take:
     clean_reads_ch
 
+    ch_lemur_db // channel: [ path(lemur_db) ]
+    // ch_emu_db // channel: [ path(emu_db) ] // using the storeDir location supplied by ext.args for now (following TRANA/gms_16S format) 
+
     main:
 
     ch_versions = Channel.empty() // collect versions from all modules
@@ -41,11 +44,11 @@ workflow TAXONOMIC_PROFILING {
     // metagenomic reads (default)
     } else {
         // multi-marker gene (16S + 18S + ITS) based tax profiling
-        LEMUR(clean_reads_ch)
+        LEMUR(clean_reads_ch, ch_lemur_db)
 
         taxonomy_report = LEMUR.out.report
         classification_report = taxonomy_report
-            .map { meta, classification -> classification } // drop meta
+            .map { _meta, classification -> classification } // drop meta
         ch_versions = ch_versions.mix(LEMUR.out.versions)
 
         // visualise taxonomy with Taxburst
