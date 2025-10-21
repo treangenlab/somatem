@@ -1,7 +1,22 @@
 # Interactive HTML Reporting Framework for Somatem
 
 ## Overview
-This document outlines the framework for implementing interactive HTML reporting in the Somatem pipeline, leveraging Nextflow's built-in reporting capabilities and MultiQC integration for a comprehensive, interactive pipeline report.
+This document outlines the framework for implementing interactive HTML reporting in the Somatem pipeline, leveraging Nextflow's built-in reporting capabilities and MultiQC integration for a comprehensive, interactive pipeline report. The implementation ensures both live monitoring during pipeline execution and full functionality when downloaded for offline/archival use.
+
+## Report Persistence
+The reporting system generates self-contained HTML reports that work both during pipeline execution and when downloaded for offline viewing:
+
+### Live Execution Features
+- Real-time process status updates via weblog
+- Live DAG updates showing current execution state
+- Progressive MultiQC report generation
+
+### Offline/Archived Features
+- Complete DAG visualization with all process states
+- Full MultiQC report with all tool outputs
+- Interactive data exploration capabilities
+- All JavaScript and styling bundled in HTML
+- No external dependencies required for viewing
 
 ## Components
 
@@ -17,20 +32,20 @@ This document outlines the framework for implementing interactive HTML reporting
 ```plaintext
 assets/
 └── report_templates/
-    ├── index.html          # Main dashboard template
-    ├── flowchart.js        # D3.js pipeline visualization
-    ├── live_updates.js     # WebSocket handling
+    ├── custom_multiqc_config.yaml  # MultiQC configuration
+    ├── dag_enhancer.js            # DAG interactivity scripts
+    ├── custom_report.html         # Custom report template
     └── styles/
-        └── dashboard.css   # Styling for the dashboard
+        └── custom_report.css      # Custom styling
 ```
 
 ### 3. Key Features
 
-#### 3.1 Live Pipeline Flowchart
-- Interactive D3.js visualization
-- Color-coded process states (running, completed, failed)
-- Clickable nodes linking to process details
-- Auto-updates via WebSocket connection
+#### 3.1 Enhanced DAG Visualization
+- Utilize Nextflow's built-in DAG visualization (`-with-dag`)
+- Enhance DAG with custom JavaScript for node clicking
+- Link DAG nodes to corresponding MultiQC sections
+- Color-coded process states using Nextflow's execution data
 
 ```javascript
 // Example flowchart structure in flowchart.js
@@ -49,142 +64,206 @@ assets/
 }
 ```
 
-#### 3.2 Process Output Tabs
-- Dynamic tab generation for each process
-- Automatic content type detection
-- Support for:
-  - Tables (CSV, TSV)
-  - Plots (PNG, PDF, SVG)
-  - Interactive visualizations (HTML)
-  - Log files
-  - MultiQC reports
+#### 3.2 MultiQC Integration
+- Comprehensive tool output aggregation
+- Built-in support for many bioinformatics tools
+- Customizable report sections
+- Interactive data visualization
+- Support for custom content and statistics
 
 #### 3.3 Live Updates Implementation
 
 ```javascript
-// WebSocket connection for live updates
-const ws = new WebSocket('ws://localhost:PORT');
+// Using Server-Sent Events with Nextflow's weblog
+const evtSource = new EventSource('http://localhost:PORT/events');
 
-ws.onmessage = (event) => {
-  const update = JSON.parse(event.data);
-  switch(update.type) {
-    case 'process_start':
-      updateFlowchart(update);
-      break;
-    case 'process_complete':
-      updateProcessTab(update);
-      break;
-    case 'new_output':
-      addOutputToTab(update);
-      break;
-  }
+evtSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    switch(data.event) {
+        case 'process_submitted':
+            updateDagNode(data.process, 'running');
+            break;
+        case 'process_completed':
+            updateDagNode(data.process, 'complete');
+            updateMultiQCSection(data.process);
+            break;
+        case 'error':
+            updateDagNode(data.process, 'failed');
+            showError(data.error);
+            break;
+    }
 };
+
+// Example of DAG node enhancement
+function enhanceDagNode(nodeId, outputs) {
+    const node = document.querySelector(`#dag-${nodeId}`);
+    node.addEventListener('click', () => {
+        // Scroll to corresponding MultiQC section
+        document.querySelector(`#multiqc-${nodeId}`).scrollIntoView();
+        // Show process-specific outputs
+        showOutputs(outputs);
+    });
+}
 ```
 
 ### 4. Integration with Nextflow
 
-#### 4.1 Process Output Publishing
+#### 4.1 Process Output Configuration
 ```nextflow
 process EXAMPLE_PROCESS {
     publishDir "${params.outdir}/process_name", mode: 'copy',
         saveAs: { filename ->
-            if (filename.endsWith('.html')) "reports/$filename"
-            else if (filename.endsWith('.csv')) "tables/$filename"
-            else if (filename.endsWith('.png')) "plots/$filename"
+            if (filename.endsWith('.html')) "qc_reports/$filename"
+            else if (filename.endsWith('.txt')) "stats/$filename"
+            else if (filename.endsWith('.log')) "logs/$filename"
             else filename
         }
     
     script:
     """
     # Process commands here
+    # Ensure output formats are MultiQC-compatible
     """
 }
 ```
 
-#### 4.2 Report Generation Process
+#### 4.2 MultiQC Process
 ```nextflow
-process GENERATE_REPORT {
-    publishDir "${params.outdir}/report", mode: 'copy'
+process MULTIQC {
+    publishDir "${params.outdir}/multiqc", mode: 'copy'
 
     input:
-    // Collect all process outputs
+    path '*'  // Collect all QC reports
+    path config from ch_multiqc_config
 
     output:
-    path "interactive_report.html"
+    path "multiqc_report.html"
+    path "multiqc_data"
 
     script:
     """
-    # Generate final HTML report
-    # Combine all outputs
-    # Setup WebSocket server
+    multiqc . \
+        --config $config \
+        --interactive \
+        -o . \
+        --title "${params.title}" \
+        --comment "Somatem pipeline report"
     """
 }
 ```
 
 ### 5. Implementation Steps
 
-1. **Setup Report Server**
-   - Create a lightweight server (Node.js/Python) to handle WebSocket connections
-   - Implement file watching for output directories
-   - Setup route handling for different output types
+1. **Configure Nextflow Reporting**
+   ```bash
+   nextflow run main.nf \
+       -with-dag flowchart.html \
+       -with-report execution_report.html \
+       -with-timeline timeline.html \
+       -with-weblog 'http://localhost:8000/events'
+   ```
 
-2. **Create Base Templates**
-   - Design main dashboard layout
-   - Implement tab navigation system
-   - Create flowchart visualization
+2. **Setup MultiQC Configuration**
+   - Create custom MultiQC config
+   - Define module order
+   - Configure custom content
+   - Set up custom visualization options
 
-3. **Process Integration**
-   - Modify process definitions to publish outputs in structured format
-   - Implement output processors for different file types
-   - Add metadata generation for each process
+3. **Enhance DAG Visualization**
+   - Add custom JavaScript for node interactions
+   - Link nodes to MultiQC sections
+   - Implement live updates using weblog events
 
-4. **Testing**
-   - Verify real-time updates
-   - Test different output types
-   - Validate mobile responsiveness
+4. **Process Output Integration**
+   - Ensure tool outputs are MultiQC-compatible
+   - Structure output directories for proper collection
+   - Add custom MultiQC modules if needed
+
+5. **Testing**
+   - Validate DAG interactivity
+   - Check MultiQC report generation
+   - Test live update functionality
+   - Verify mobile compatibility
 
 ### 6. Configuration
 
 Add to `nextflow.config`:
 ```nextflow
 params {
-    // Interactive report settings
-    interactive_report = true
-    report_port = 8080
-    report_update_interval = 10 // seconds
-    report_dir = "${params.outdir}/interactive_report"
+    // MultiQC settings
+    multiqc_config = "$projectDir/assets/report_templates/custom_multiqc_config.yaml"
+    max_multiqc_email_size = '25.MB'
+    
+    // Report customization
+    title = 'Somatem Pipeline Report'
+    custom_logo = "$projectDir/assets/logo.png"
+    
+    // Web report settings
+    weblog_port = 8000
+    enable_dag_visualization = true
+    
+    // Offline report settings
+    bundle_resources = true     // Bundle all resources into self-contained HTML
+    save_intermediate = true    // Save intermediate files for offline browsing
+}
+
+// Configure reporting
+dag {
+    enabled = true
+    file = "${params.outdir}/pipeline_dag.html"
+    overwrite = true
+}
+
+report {
+    enabled = true
+    file = "${params.outdir}/execution_report.html"
+}
+
+timeline {
+    enabled = true
+    file = "${params.outdir}/execution_timeline.html"
+}
+
+weblog {
+    enabled = true
+    url = "http://localhost:${params.weblog_port}/events"
 }
 ```
 
 ### 7. Usage
 
-To enable interactive reporting:
+Run the pipeline with reporting enabled:
 
 ```bash
-nextflow run main.nf -param-file assets/custom_metadata.yaml --interactive_report true
+nextflow run main.nf \
+    -param-file assets/custom_metadata.yaml \
+    -with-dag \
+    -with-report \
+    -with-timeline \
+    -with-weblog
 ```
 
-The interactive report will be available at:
-```
-http://localhost:8080
-```
+Reports will be available at:
+- Pipeline DAG: `${params.outdir}/pipeline_dag.html`
+- Execution Report: `${params.outdir}/execution_report.html`
+- Timeline: `${params.outdir}/execution_timeline.html`
+- MultiQC Report: `${params.outdir}/multiqc/multiqc_report.html`
 
 ## Security Considerations
 
-- Implement authentication for sensitive data
-- Use HTTPS for secure connections
-- Sanitize all user inputs
-- Implement rate limiting for WebSocket connections
-- Configure proper CORS policies
+- Use local-only access for weblog server
+- Implement proper file permissions for output directories
+- Consider access controls for sensitive data
+- Use secure protocols if exposing reports externally
 
 ## Dependencies
 
 Add to `nf_base_env.yml`:
 ```yaml
 dependencies:
-  - nodejs>=14.0.0
   - python>=3.8
-  - websockets
-  - aiohttp
-  - plotly
+  - multiqc>=1.14
+  - jinja2>=3.0
+  - markdown>=3.3
+  - pymdown-extensions>=9.4
 ```
