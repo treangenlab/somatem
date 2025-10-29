@@ -51,6 +51,17 @@ workflow ORCHESTRATE_SOMATEM {
     SOMATEM (
         samplesheet
     )
+
+    emit:
+    versions       = SOMATEM.out.versions                 // channel: [ path(versions.yml) ]
+    clean_reads    = SOMATEM.out.clean_reads
+    key_outputs    = SOMATEM.out.key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
+
+    // separate key emits for publishing convenience
+    mapping        = SOMATEM.out.mapping                  // channel: [ val(meta), path(*.bam) ]
+    bin_tables     = SOMATEM.out.bin_tables               // channel: [ path(*.csv) | path(*.tsv) ]
+    bin_fasta      = SOMATEM.out.bin_fasta                // channel: [ path(*.fa.gz) ]
+
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,7 +97,27 @@ workflow {
         params.outdir,
         params.monochrome_logs,
     )
+
+    publish:
+    collated_versions = SOMATEM.out.versions
+
+    mapping = SOMATEM.out.mapping
+    binning_tables = SOMATEM.out.bin_tables
+    binning_fasta  = SOMATEM.out.bin_fasta
 }
+
+output {
+    mapping {
+        path { meta, _bam -> "mapping/${meta.id}" }
+    }
+    binning_tables {
+        path { meta, _bin_table -> "binning/tables/${meta.id}" }
+    }
+    binning_fasta {
+        path { meta, _bin_fasta -> "binning/fasta/${meta.id}" }
+     }
+}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
