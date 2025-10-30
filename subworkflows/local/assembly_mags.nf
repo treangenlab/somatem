@@ -73,7 +73,7 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
     // Sort BAM files
-    SAMTOOLS_SORT(MINIMAP2_ALIGN.out.bam, FLYE.out.fasta)
+    SAMTOOLS_SORT(MINIMAP2_ALIGN.out.bam, FLYE.out.fasta, 'bai')
     ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions)
 
     // Calculate coverage
@@ -294,7 +294,7 @@ workflow ASSEMBLY_MAGS {
     pigeon_html     = PIGEON.out.html
     pigeon_metrics  = PIGEON.out.metrics
     pigeon_outdir   = PIGEON.out.outdir
-    
+
     // Bakta annotation outputs
     bakta_embl              = BAKTA_BAKTA.out.embl
     bakta_faa               = BAKTA_BAKTA.out.faa
