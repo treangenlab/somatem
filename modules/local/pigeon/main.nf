@@ -20,15 +20,6 @@ process PIGEON {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_pigeon"
     
-    // Extract pigeon parameters from task.ext or use defaults
-    def ksize = task.ext.ksize ?: params.pigeon_ksize ?: 17
-    def scaled = task.ext.scaled ?: params.pigeon_scaled ?: 1000
-    def seed = task.ext.seed ?: params.pigeon_seed ?: 42
-    def top_bins = task.ext.top_bins ?: params.pigeon_top_bins ?: 20
-    def skip_db = task.ext.skip_db ?: params.pigeon_skip_db ?: false
-    
-    def skip_db_arg = skip_db ? "--skip-db" : ""
-    
     """
     # List the bins directory to verify files are there
     echo "Contents of bins directory:"
@@ -44,13 +35,8 @@ process PIGEON {
     python ${projectDir}/bin/pigeon.py \\
         --gfa ${gfa} \\
         --assembly ${assembly} \\
-        --bins_dir bins \\
+        --bins_dir ${bins} \\
         --outdir ${prefix} \\
-        --ksize ${ksize} \\
-        --scaled ${scaled} \\
-        --seed ${seed} \\
-        --top-bins ${top_bins} \\
-        ${skip_db_arg} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
@@ -66,6 +52,8 @@ process PIGEON {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_pigeon"
     """
+    echo $args  
+    
     mkdir -p ${prefix}
     touch ${prefix}/report.html
     touch ${prefix}/novel_metrics.json
