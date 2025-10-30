@@ -17,6 +17,7 @@ include { SINGLEM_PIPE }            from '../../modules/local/singlem/pipe/main'
 include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/pipe/main'
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
+include { PIGEON }                  from '../../modules/local/pigeon/main'
 
 
 workflow ASSEMBLY_MAGS {
@@ -124,9 +125,34 @@ workflow ASSEMBLY_MAGS {
         new_meta.input_type = 'genome'
         [new_meta, bins]
     }
-    
+
     SINGLEM_PIPE_BINS(ch_bins_for_singlem, ch_singlem_db)
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
+
+    
+    // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
+    log.info "=== PREPARING PIGEON INPUTS ==="
+    
+    // Simple direct join approach - no branching needed since we're not reusing these channels elsewhere
+    ch_pigeon_input = FLYE.out.gfa
+        .join(FLYE.out.fasta, by: [0])
+        .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
+        .map { meta, gfa, assembly, bins ->
+            log.info "PIGEON - Preparing input for ${meta.id}: gfa=${gfa}, assembly=${assembly}, bins=${bins}"
+            [meta, gfa, assembly, bins]
+        }
+    
+    // Debug the channel content
+    ch_pigeon_input.view { meta, gfa, assembly, bins -> 
+        "PIGEON INPUT: ${meta.id} -> GFA: ${gfa}, Assembly: ${assembly}, Bins: ${bins}"
+    }
+    
+    ch_pigeon_input.count().view { count -> "PIGEON will process ${count} samples" }
+    
+    PIGEON(ch_pigeon_input)
+    ch_versions = ch_versions.mix(PIGEON.out.versions)
+    PIGEON.out.html.view { meta, _html -> "✓ Pigeon post-hoc analysis completed for ${meta.id}" } // log
+
 
     // SingleM appraise - simplified input preparation
     ch_metagenome_otu = SINGLEM_PIPE.out.otu_table
@@ -263,6 +289,11 @@ workflow ASSEMBLY_MAGS {
     checkm2_report  = CHECKM2_PREDICT.out.checkm2_tsv
     checkm2_output  = CHECKM2_PREDICT.out.checkm2_output
     completeness_map = CHECKM2_PARSE.out.completeness_map
+    
+    // Pigeon outputs
+    pigeon_html     = PIGEON.out.html
+    pigeon_metrics  = PIGEON.out.metrics
+    pigeon_outdir   = PIGEON.out.outdir
     
     // Bakta annotation outputs
     bakta_embl              = BAKTA_BAKTA.out.embl
