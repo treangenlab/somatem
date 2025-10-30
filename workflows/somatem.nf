@@ -37,7 +37,7 @@ workflow SOMATEM {
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, contam_ref, DOWNLOAD_DBS.out.ch_hostile_db)
+    PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
     ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
 
     // -----------------------------------------------------------------
