@@ -24,13 +24,7 @@ process PIGEON {
     # List the bins directory to verify files are there
     echo "Contents of bins directory:"
     ls -la bins/
-    
-    # Check if gfatools is available
-    if ! command -v gfatools &> /dev/null; then
-        echo "ERROR: gfatools is not available. Please install gfatools."
-        exit 1
-    fi
-    
+        
     # Run pigeon analysis using GFA file instead of reads
     python ${projectDir}/bin/pigeon.py \\
         --gfa ${gfa} \\
@@ -53,7 +47,7 @@ process PIGEON {
     prefix = task.ext.prefix ?: "${meta.id}_pigeon"
     """
     echo $args  
-    
+
     mkdir -p ${prefix}
     touch ${prefix}/report.html
     touch ${prefix}/novel_metrics.json
