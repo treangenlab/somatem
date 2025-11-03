@@ -10,6 +10,7 @@ include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
+include { ASSEMBLY_MAVS } from '../subworkflows/local/assembly_mavs.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,6 +22,7 @@ workflow SOMATEM {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
+    
     main:
 
     ch_versions = Channel.empty()
@@ -31,7 +33,6 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
             params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
-
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
@@ -52,7 +53,7 @@ workflow SOMATEM {
     }
 
     // -----------------------------------------------------------------
-    // assembly
+    // Assembly
     // -----------------------------------------------------------------
     if (params.analysis_type == "assembly") {
 
@@ -73,7 +74,7 @@ workflow SOMATEM {
     }
 
     // -----------------------------------------------------------------
-    // genome dynamics : Longitudinal analysis
+    // Genome dynamics : Longitudinal analysis
     // -----------------------------------------------------------------
     if (params.analysis_type == "genome-dynamics") {
         GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
@@ -81,6 +82,26 @@ workflow SOMATEM {
         ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
     }
 
+    // -----------------------------------------------------------------
+    // Viral metagenomics analysis
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "viral-metagenomics") {
+        // Prepare host fasta channel if provided
+        ch_host_fasta = params.host_fasta ? 
+            Channel.fromPath(params.host_fasta, checkIfExists: true) : 
+            Channel.empty()
+        
+        ASSEMBLY_MAVS(PREPROCESSING.out.clean_reads, ch_host_fasta)
+        ch_versions = ch_versions.mix(ASSEMBLY_MAVS.out.versions)
+        
+        // Collect all ASSEMBLY_MAVS outputs to key outputs
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.vmags)
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.curated_contigs)
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.host_predictions)
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.taxonomy_results)
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.assembly_stats)
+        ch_key_outputs = ch_key_outputs.mix(ASSEMBLY_MAVS.out.viral_quality)
+    }
 
     // -----------------------------------------------------------------
     // Collate and save software versions
