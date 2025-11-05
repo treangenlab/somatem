@@ -253,10 +253,22 @@ Recording the source of each example dataset and database in the database folder
 
 
 ## Example files (`examples/`)
-All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh)
-- `data/mock9_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
-- `data/mock20_sub10k.fastq.gz`: From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
+All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh). `seqtk` is installed in `utils` micromamba env.
+- `data/mock9_sub10k.fastq.gz` (has <6 M reads): From zymo mock data with kit 9 (ZymoBIOMICS Gut Microbiome Standard
+, 21 species), subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+- `data/mock20_sub10k.fastq.gz` (has <1.7 M reads) : From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
   - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed. Understand what the samples mean: read paper about these samples [here](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01415-8) : _Liu, Lei, et al. "Nanopore long-read-only metagenomics enables complete and high-quality genome reconstruction from mock and complex metagenomes." Microbiome 10.1 (2022): 209._
+  - subsample to 50 K high quality reads. 
+  1. quality filter with chopper (for testing assembly). chopper env: `env-955b8cae971ef20a-fc555a3dbd46f0d6334849c854650578` (_Kept 1211025 reads out of 1679780 reads_)
+  ```bash
+  chopper --trim-approach best-read-segment --cutoff 15 -q 15 -l 500 -i /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq > assets/examples/data/temp-mock20_hiq.fastq 
+  ```
+  2. subsample with seqtk (`utils` micromamba env)
+  ```bash
+  seqtk sample -s100 assets/examples/data/temp-mock20_hiq.fastq 50000 | gzip > assets/examples/data/mock20_hiq50k.fastq.gz
+  ```
+
+
 - `data/zymoM95.fastq.gz`: From zymo mock? 16S, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/zymoM95.fastq.gz`
 
 Other tools' example files:
@@ -267,8 +279,11 @@ Other tools' example files:
 - `data/rhea`: 2 `.fasta` files from OSF.io storage/[examples](https://osf.io/fvhw8/files/osfstorage#)
 
 Note:
-- Need smaller example files for assembly workflow. Check this [tutorial](https://conmeehan.github.io/PathogenDataCourse/Worksheets/GenomeAssembly_Flye.html) for a 100 MB file from Zenodo [here](https://zenodo.org/record/4534098/files/DRR187567.fastq.bz2)
-- Small isolate genome data for ONT available at SRA:[DRX178043](https://www.ncbi.nlm.nih.gov/sra/DRX178043) from paper [asm, 2019](https://journals.asm.org/doi/10.1128/mra.01212-19)
+Need smaller example files for faster iteration/testing of the assembly workflow. 
+- Check this [tutorial](https://conmeehan.github.io/PathogenDataCourse/Worksheets/GenomeAssembly_Flye.html) for a 100 MB file from Zenodo [here](https://zenodo.org/record/4534098/files/DRR187567.fastq.bz2)
+  - These are small isolate genome data for ONT available at SRA:[DRX178043](https://www.ncbi.nlm.nih.gov/sra/DRX178043) from paper [asm, 2019](https://journals.asm.org/doi/10.1128/mra.01212-19). 
+  - _Would be preferable to have metagenome data or a mix with ~5 isolates?_ 
+- explore larger subsamples of the zymo mock data (_known species advantage_) or `abx_depl.fastq.gz` (_many more species.._)?
 
 ### Zymo mock
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
