@@ -89,16 +89,9 @@ workflow ASSEMBLY_MAGS {
     SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
     // Binning with SemiBin2
-    ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0])
+    ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0]) // join by sample ID (meta.id)
     
-    // Set SemiBin2 environment parameter
-    ch_asm_bam_with_env = ch_asm_bam.map { meta, fasta, bam ->
-        def new_meta = meta.clone()
-        new_meta.semibin_env = params.sample_environment
-        [new_meta, fasta, bam]
-    }
-    
-    SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
+    SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
     SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
 
