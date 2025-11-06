@@ -10,6 +10,7 @@ process SINGLEM_PIPE {
     input:
     tuple val(meta), path(reads)
     path metapackage
+    val sample_type 
 
     output:
     tuple val(meta), path("*.tsv")                                      , emit: taxonomic_profile, optional: true
@@ -36,17 +37,17 @@ process SINGLEM_PIPE {
     }
     
     // Handle genome input
-    if (meta.input_type == 'genome') {
+    if (sample_type == 'genome') {
         input_args = "--genome-fasta-files ${reads.join(' ')}"
     }
     
     // Handle SRA input
-    if (meta.input_type == 'sra') {
+    if (sample_type == 'sra') {
         input_args = "--sra-files ${reads.join(' ')}"
     }
     
-    // Build metapackage argument
-    def metapackage_args = metapackage ? "--metapackage ${metapackage}" : ""
+    // Build metapackage argument (database)
+    def metapackage_arg = metapackage ? "--metapackage ${metapackage}" : ""
     
     // Build output arguments
     def output_args = ""
@@ -75,7 +76,7 @@ process SINGLEM_PIPE {
     
     // If no outputs specified, provide defaults based on input type
     if (!has_output) {
-        if (meta.input_type == 'reads') {
+        if (sample_type == 'reads') {
             output_args += " --taxonomic-profile ${prefix}_profile.tsv --otu-table ${prefix}_otu_table.csv"
         } else {
             output_args += " --otu-table ${prefix}_otu_table.csv"
@@ -85,7 +86,7 @@ process SINGLEM_PIPE {
     """
     singlem pipe \\
         ${input_args} \\
-        ${metapackage_args} \\
+        ${metapackage_arg} \\
         ${output_args} \\
         --threads ${task.cpus} \\
         ${args}
@@ -126,7 +127,7 @@ process SINGLEM_PIPE {
     
     # If no outputs specified, create defaults
     if [[ "\$has_output" == "false" ]]; then
-        if [[ "${meta.input_type}" == "reads" ]]; then
+        if [[ "${sample_type}" == "reads" ]]; then
             touch ${prefix}_profile.tsv
             touch ${prefix}_otu_table.csv
         else

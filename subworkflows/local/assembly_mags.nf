@@ -36,14 +36,7 @@ workflow ASSEMBLY_MAGS {
     reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
 
     // Taxonomic profiling with SingleM on raw reads
-    ch_metagenome_reads = reads.map { meta, reads_file ->
-        def new_meta = meta.clone()
-        new_meta.single_end = true
-        new_meta.input_type = 'reads'
-        [new_meta, reads_file]
-    }
-    
-    SINGLEM_PIPE(ch_metagenome_reads, ch_singlem_db)
+    SINGLEM_PIPE(reads, ch_singlem_db, input_type: 'reads')
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
     // Interactive taxonomic visualization with TaxBurst
