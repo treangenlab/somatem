@@ -105,14 +105,7 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(CHECKM2_PARSE.out.versions)
 
     // Run SingleM pipe on bins - FIXED: Add suffix to avoid filename collision
-    ch_bins_for_singlem = SEMIBIN_SINGLEEASYBIN.out.output_fasta.map { meta, bins ->
-        def new_meta = meta.clone()
-        new_meta.id = "${meta.id}_bins"  // Add suffix to change output filename
-        new_meta.input_type = 'genome'
-        [new_meta, bins]
-    }
-
-    SINGLEM_PIPE_BINS(ch_bins_for_singlem, ch_singlem_db)
+    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, sample_type: 'genome')
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     
