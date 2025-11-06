@@ -77,7 +77,7 @@
                     },
                     "semibin/singleeasybin": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "27c79c80af5837c7137f63ebf535698d5f5854f4",
                         "installed_by": ["modules"]
                     }
                 }
