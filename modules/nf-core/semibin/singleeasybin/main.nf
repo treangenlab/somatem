@@ -1,14 +1,11 @@
-// custom somatem module
 process SEMIBIN_SINGLEEASYBIN {
     tag "$meta.id"
     label 'process_medium'
 
-    // Outputs
-    publishDir "${params.output_dir}/binning/${meta.id}", mode: 'copy', pattern: "*.fa"
-    publishDir "${params.output_dir}/binning/${meta.id}", mode: 'copy', pattern: "*.csv"
-    publishDir "${params.output_dir}/binning/${meta.id}", mode: 'copy', pattern: "*.tsv"
-
     conda "${moduleDir}/environment.yml"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/semibin:2.2.0--pyhdfd78af_0':
+        'biocontainers/semibin:2.2.0--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(fasta), path(bam)
@@ -27,23 +24,8 @@ process SEMIBIN_SINGLEEASYBIN {
     def args  = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ""
     prefix    = task.ext.prefix ?: "${meta.id}"
-    
-    // Extract environment from meta if available, otherwise use from args
-    def environment = meta.semibin_env ?: ''
-    def env_arg = environment ? "--environment ${environment}" : ''
-    
-    // Valid environments for validation (optional)
-    def valid_environments = [
-        'human_gut', 'dog_gut', 'mouse_gut', 'pig_gut', 'chicken_gut',
-        'ocean', 'soil', 'built_environment', 'wastewater', 'global'
-    ]
-    
-    // Validate environment if provided
-    if (environment && !valid_environments.contains(environment)) {
-        log.warn "Warning: '${environment}' is not a recognized SemiBin2 environment. Valid options: ${valid_environments.join(', ')}"
-    }
-    
     """
+
     SemiBin2 \\
         $args \\
         single_easy_bin \\
@@ -51,7 +33,6 @@ process SEMIBIN_SINGLEEASYBIN {
         --input-bam ${bam} \\
         --output ${prefix} \\
         -t $task.cpus \\
-        $env_arg \\
         $args2
 
     cat <<-END_VERSIONS > versions.yml
@@ -59,7 +40,6 @@ process SEMIBIN_SINGLEEASYBIN {
         SemiBin: \$( SemiBin2 --version )
     END_VERSIONS
     """
-    
     stub:
     prefix    = task.ext.prefix ?: "${meta.id}"
     """
