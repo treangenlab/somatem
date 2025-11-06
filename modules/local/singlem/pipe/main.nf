@@ -1,5 +1,5 @@
 process SINGLEM_PIPE {
-    tag "$meta.id"
+    tag "$meta.id_$sample_type"
     label 'process_medium'
 
     // Outputs
@@ -25,7 +25,7 @@ process SINGLEM_PIPE {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}_${sample_type}"
     
     // Handle different input types
     def input_args = ""
@@ -99,7 +99,7 @@ process SINGLEM_PIPE {
 
     stub:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}_${sample_type}"
     """
     # Create default outputs based on input type if none specified
     has_output=false
