@@ -258,7 +258,7 @@ All example files are stored in google drive/[data/examples](https://drive.googl
 , 21 species), subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
 - `data/mock20_sub10k.fastq.gz` (has <1.7 M reads) : From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
   - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed. Understand what the samples mean: read paper about these samples [here](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01415-8) : _Liu, Lei, et al. "Nanopore long-read-only metagenomics enables complete and high-quality genome reconstruction from mock and complex metagenomes." Microbiome 10.1 (2022): 209._
-  - subsample to 50 K high quality reads. 
+  - subsample to 50 K high quality reads. zymo `mock20_hiq50k.fastq.gz`:
   1. quality filter with chopper (for testing assembly). chopper env: `env-955b8cae971ef20a-fc555a3dbd46f0d6334849c854650578` (_Kept 1211025 reads out of 1679780 reads_)
   ```bash
   chopper --trim-approach best-read-segment --cutoff 15 -q 15 -l 500 -i /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq > assets/examples/data/temp-mock20_hiq.fastq 
