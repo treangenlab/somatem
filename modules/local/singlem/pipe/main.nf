@@ -1,5 +1,5 @@
 process SINGLEM_PIPE {
-    tag "$meta.id_$sample_type"
+    tag "${meta.id}_${sample_type}"
     label 'process_medium'
 
     // Outputs
