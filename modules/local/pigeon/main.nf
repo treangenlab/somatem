@@ -20,16 +20,13 @@ process PIGEON {
     prefix = task.ext.prefix ?: "${meta.id}"
     
     """
-    echo "Contents of bins directory:"
-    ls -la ${bins}
-
     # Run pigeon analysis
     pigeon.py \\
-        --gfa ${gfa} \\
-        --assembly ${assembly} \\
-        --bins_dir ${bins} \\
-        --outdir ./ \\
-        $args
+      --gfa ${gfa} \\
+      --assembly ${assembly} \\
+      --bins_dir bins/ \\
+      --outdir ./ \\
+      $args
 
     # Append prefix to outputs
     cp "report.html" "${prefix}_report.html"
