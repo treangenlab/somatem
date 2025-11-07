@@ -30,13 +30,13 @@ workflow ASSEMBLY_MAGS {
     ch_singlem_db // channel: path(metapackage)
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
-    // Check input channel
-    reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
+    // Check input channel (debug)
+    // reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" } // debug
 
     // Taxonomic profiling with SingleM on raw reads
-    SINGLEM_PIPE(reads, ch_singlem_db, input_type: 'reads')
+    SINGLEM_PIPE(reads, ch_singlem_db, 'reads')
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
     // Interactive taxonomic visualization with TaxBurst
@@ -105,12 +105,12 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(CHECKM2_PARSE.out.versions)
 
     // Run SingleM pipe on bins - FIXED: Add suffix to avoid filename collision
-    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, sample_type: 'genome')
+    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, 'genome')
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     
     // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
-    log.info "=== PREPARING PIGEON INPUTS ==="
+    log.info "=== PREPARING PIGEON INPUTS ===" // log
     
     // join gfa, assembly, and bins to prepare pigeon input
     ch_pigeon_input = FLYE.out.gfa
@@ -120,15 +120,15 @@ workflow ASSEMBLY_MAGS {
     
     // Debug the channel content
     ch_pigeon_input.view { meta, gfa, assembly, bins -> 
-        "PIGEON INPUT: ${meta.id} -> GFA: ${gfa}, Assembly: ${assembly}, Bins: ${bins}"
+        "PIGEON INPUT: ${meta.id} -> GFA: ${gfa}, Assembly: ${assembly}, Bins: ${bins}" // debug
     }
     
-    ch_pigeon_input.count().view { count -> "PIGEON will process ${count} samples" }
+    ch_pigeon_input.count().view { count -> "PIGEON will process ${count} samples" } // debug
     
-    
+
     PIGEON(ch_pigeon_input)
     ch_versions = ch_versions.mix(PIGEON.out.versions)
-    PIGEON.out.html.view { meta, _html -> "✓ Pigeon post-hoc analysis completed for ${meta.id}" } // log
+    PIGEON.out.report.view { meta, _report -> "✓ Pigeon post-hoc analysis completed for ${meta.id}" } // log
 
 
     // SingleM appraise - simplified input preparation
@@ -268,9 +268,8 @@ workflow ASSEMBLY_MAGS {
     completeness_map = CHECKM2_PARSE.out.completeness_map
     
     // Pigeon outputs
-    pigeon_html     = PIGEON.out.html
+    pigeon_html     = PIGEON.out.report
     pigeon_metrics  = PIGEON.out.metrics
-    pigeon_outdir   = PIGEON.out.outdir
 
     // Bakta annotation outputs
     bakta_embl              = BAKTA_BAKTA.out.embl
