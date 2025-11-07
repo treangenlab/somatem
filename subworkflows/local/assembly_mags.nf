@@ -110,21 +110,9 @@ workflow ASSEMBLY_MAGS {
 
     
     // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
-    log.info "=== PREPARING PIGEON INPUTS ===" // log
-    
-    // join gfa, assembly, and bins to prepare pigeon input
-    ch_pigeon_input = FLYE.out.gfa
+    ch_pigeon_input = FLYE.out.gfa // join gfa, assembly, and bins to prepare pigeon input
         .join(FLYE.out.fasta, by: [0])
         .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
-
-    
-    // Debug the channel content
-    ch_pigeon_input.view { meta, gfa, assembly, bins -> 
-        "PIGEON INPUT: ${meta.id} -> GFA: ${gfa}, Assembly: ${assembly}, Bins: ${bins}" // debug
-    }
-    
-    ch_pigeon_input.count().view { count -> "PIGEON will process ${count} samples" } // debug
-    
 
     PIGEON(ch_pigeon_input)
     ch_versions = ch_versions.mix(PIGEON.out.versions)
