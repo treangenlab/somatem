@@ -112,14 +112,11 @@ workflow ASSEMBLY_MAGS {
     // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
     log.info "=== PREPARING PIGEON INPUTS ==="
     
-    // Simple direct join approach - no branching needed since we're not reusing these channels elsewhere
+    // join gfa, assembly, and bins to prepare pigeon input
     ch_pigeon_input = FLYE.out.gfa
         .join(FLYE.out.fasta, by: [0])
         .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
-        .map { meta, gfa, assembly, bins ->
-            log.info "PIGEON - Preparing input for ${meta.id}: gfa=${gfa}, assembly=${assembly}, bins=${bins}"
-            [meta, gfa, assembly, bins]
-        }
+
     
     // Debug the channel content
     ch_pigeon_input.view { meta, gfa, assembly, bins -> 
@@ -127,6 +124,7 @@ workflow ASSEMBLY_MAGS {
     }
     
     ch_pigeon_input.count().view { count -> "PIGEON will process ${count} samples" }
+    
     
     PIGEON(ch_pigeon_input)
     ch_versions = ch_versions.mix(PIGEON.out.versions)
