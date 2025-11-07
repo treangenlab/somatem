@@ -5,7 +5,7 @@ process PIGEON {
     conda "${moduleDir}/environment.yml"
 
     input:
-    tuple val(meta), path(gfa), path(assembly), path(bins, stageAs: "bins/*")
+    tuple val(meta), path(gfa), path(assembly), path(bins, stageAs: "bins/")
 
     output:
     tuple val(meta), path("${prefix}_report.html")     , emit: report
@@ -51,8 +51,6 @@ process PIGEON {
     echo $args
 
     mkdir -p ${prefix}
-    touch ${prefix}.html
-    touch ${prefix}.json
     touch ${prefix}_report.html
     touch ${prefix}_metrics.json
 
