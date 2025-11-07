@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# Author: Austin Marshall
+# Date: 26/Oct/25
+
 """
 Pigeon - post-hoc branchwater/sourmash comparison (unitigs from GFA)
 
