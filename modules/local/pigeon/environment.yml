@@ -12,3 +12,4 @@ dependencies:
   - conda-forge::python-rocksdb
   - conda-forge::tqdm
   - conda-forge::pigz
+  - conda-forge::markdown # for html report notes

@@ -34,7 +34,7 @@ Dependencies:
     * tqdm
     * pandas
     * pigz
-
+    * markdown (optional, for rendering plot guide in HTML report)
 """
 
 import os, sys, json, argparse, subprocess, gzip, struct, shutil
@@ -404,7 +404,44 @@ def make_report(outdir: Path,
         margin=dict(l=60, r=20, t=60, b=60),
         title=f"Post-hoc comparison of {title_primary}, assembly, and bins"
     )
-    fig.write_html(str(outdir / "report.html"), include_plotlyjs="cdn")
+    
+    # Generate HTML with plot summaries appended
+    html_content = fig.to_html(include_plotlyjs="cdn")
+    
+    # Load and convert markdown guide to HTML
+    guide_md_path = Path(__file__).parent / "pigeon_report_guide.md"
+    if guide_md_path.exists():
+        try:
+            import markdown
+            with open(guide_md_path, "r") as f:
+                md_content = f.read()
+            guide_html = markdown.markdown(md_content, extensions=['extra', 'nl2br'])
+            # Wrap in styled div
+            summary_html = f"""
+<div style="max-width: 1400px; margin: 40px auto; padding: 20px; font-family: Arial, sans-serif;">
+    <style>
+        .guide-content h1 {{ border-bottom: 2px solid #333; padding-bottom: 10px; }}
+        .guide-content h2 {{ color: #2c5aa0; margin-top: 20px; }}
+        .guide-content ul {{ line-height: 1.8; }}
+        .guide-content hr + h2 {{ margin-top: 30px; }}
+        .guide-content p {{ background-color: #f0f0f0; padding: 15px; border-left: 4px solid #2c5aa0; }}
+    </style>
+    <div class="guide-content">
+{guide_html}
+    </div>
+</div>
+"""
+        except ImportError:
+            # Fallback if markdown module not available
+            summary_html = f"<!-- Markdown conversion requires 'markdown' package. Install with: pip install markdown -->"
+    else:
+        summary_html = "<!-- Plot guide markdown file not found -->"
+    
+    # Insert summary before closing </body> tag
+    html_with_summary = html_content.replace("</body>", summary_html + "</body>")
+    
+    with open(outdir / "report.html", "w") as f:
+        f.write(html_with_summary)
 
 
 # ---------------- Main ----------------
