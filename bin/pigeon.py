@@ -289,8 +289,8 @@ def make_report(outdir: Path,
         ],
         column_widths=[0.38, 0.32, 0.30],
         subplot_titles=(
-            f"1 − Jaccard ({title_primary}/assembly/bins)",
-            "MDS on 1 − Jaccard",
+            f"1 - Jaccard ({title_primary}/assembly/bins)",
+            "MDS on 1 - Jaccard",
             "Top bins by explained hashes",
             f"{title_primary} partition (A only / B only / both / unexplained)",
             "Cumulative explained vs #bins",
@@ -303,7 +303,7 @@ def make_report(outdir: Path,
 
     # Heatmap & MDS
     fig.add_trace(go.Heatmap(z=D, x=labels, y=labels, colorscale="Viridis",
-                             colorbar=dict(title="1−J")), row=1, col=1)
+                             colorbar=dict(title="1-J")), row=1, col=1)
     fig.add_trace(go.Scatter(x=coords[:, 0], y=coords[:, 1], mode="markers+text",
                              text=[short_name(n) for n in names],
                              textposition="top center"), row=1, col=2)
