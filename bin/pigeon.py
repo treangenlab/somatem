@@ -37,6 +37,7 @@ Dependencies:
     * markdown (optional, for rendering plot guide in HTML report)
 """
 
+import re
 import os, sys, json, argparse, subprocess, gzip, struct, shutil
 from pathlib import Path
 from typing import Dict, List, Tuple, Set, Iterable, Optional
@@ -57,18 +58,33 @@ except Exception:
 
 # ---------------- I/O helpers ----------------
 def ensure_dir(p: Path):
+    """Create directory and any missing parent directories."""
     p.mkdir(parents=True, exist_ok=True)
 
 def open_maybe_gzip(path, mode="rt"):
+    """Open file, automatically handling gzip compression based on extension."""
     return gzip.open(path, mode) if str(path).endswith(".gz") else open(path, mode)
 
 def safe_name(s: str) -> str:
+    """Sanitize string for use as filename (alphanumeric, dash, underscore, dot only)."""
     allowed = set("-_.")
     return "".join(ch if ch.isalnum() or ch in allowed else "_" for ch in s)[:200]
 
-def short_name(s: str) -> str:
-    return Path(s).name
+def format_name(s: str) -> str:
+    """If the filename contains 'contig_' prefix it with 'bin_', otherwise keep the file basename (for assembly/unitig)."""
+    p = Path(s)
+    name = p.name
+    if "contig_" in name:
+        name = "bin_" + name
+    return safe_name(name)
 
+def display_name(s: str) -> str:
+    """Shorten bin labels for display. E.g., 'bin_contig_1.fa.gz' -> '1'."""
+    p = Path(s)
+
+    # replace either "contig_" or "bin_contig_" with ""
+    name = re.sub(r'(?:bin_)?contig_', '', p.name)
+    return name
 
 # ---------------- GFA -> unitigs ----------------
 def extract_unitigs_from_gfa(gfa_path: str, out_fa: Path):
@@ -260,7 +276,7 @@ def make_report(outdir: Path,
                 primary_key: str,
                 top_bins: int = 20):
     ensure_dir(outdir)
-    labels = [short_name(n) for n in names]
+    labels = [display_name(n) for n in names]
 
     # Pairwise Jaccard & MDS
     N = len(names)
@@ -305,12 +321,12 @@ def make_report(outdir: Path,
     fig.add_trace(go.Heatmap(z=D, x=labels, y=labels, colorscale="Viridis",
                              colorbar=dict(title="1-J")), row=1, col=1)
     fig.add_trace(go.Scatter(x=coords[:, 0], y=coords[:, 1], mode="markers+text",
-                             text=[short_name(n) for n in names],
+                             text=[display_name(n) for n in names],
                              textposition="top center"), row=1, col=2)
 
     # Top bins bar
     top = novel_metrics.get("per_bin_explained", [])[:top_bins]
-    fig.add_trace(go.Bar(x=[b for b, _ in top], y=[v for _, v in top], showlegend=False), row=1, col=3)
+    fig.add_trace(go.Bar(x=[display_name(b) for b, _ in top], y=[v for _, v in top], showlegend=False), row=1, col=3)
     fig.update_yaxes(row=1, col=3, title="Hashes explained (count)")
 
     # Primary partition bar (percent)
@@ -381,7 +397,7 @@ def make_report(outdir: Path,
 
     # Per-bin explained as % of primary
     if top:
-        xs = [b for b, _ in top]
+        xs = [display_name(b) for b, _ in top]
         ys = [v / total_primary for _, v in top]
         fig.add_trace(go.Bar(x=xs, y=ys, showlegend=False,
                              text=[f"{y*100:.1f}%" for y in ys],
@@ -531,11 +547,12 @@ def main():
     sig_asm = load_sig_zip(str(asm_sig), ksize=args.ksize)[0]
     sets["assembly"] = get_hash_set(sig_asm); sizes["assembly"] = len(sets["assembly"])
 
+    # Load signatures for bins
     bin_sigs = load_sig_zip(str(bins_sig), ksize=args.ksize)
     bin_names: List[str] = []
     for sig in bin_sigs:
         nm = sig.name or sig.filename or "bin"
-        nm = safe_name(short_name(nm))
+        nm = format_name(nm)
         base = nm; i = 1
         while nm in sets:
             nm = f"{base}_{i}"; i += 1
