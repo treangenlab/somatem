@@ -1,7 +1,6 @@
 process SINGLEM_APPRAISE {
     tag "$meta.id"
     label 'process_single'
-    cpus { 12 * task.attempt } // increase from process_single's 1 cpu
     
 
     // Outputs

@@ -1,3 +1,2 @@
 sample,fastq_1
-S4,assets/examples/data/for_asm/nasa_lsk_s4.fastq.gz
-S2,assets/examples/data/for_asm/nasa_lsk_s2.fastq.gz
+zymo,assets/examples/data/mock20_hiq100k.fastq.gz
