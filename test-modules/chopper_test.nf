@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { CHOPPER } from "../modules/nf-core/chopper/main.nf"
-include { convert_to_nfcore_tuple } from "../subworkflows/utils/nf-core-compatibility.nf"
+include { convert_to_nfcore_tuple } from "../subworkflows/local/utils/nf-core-compatibility.nf"
 // note: path of module is relative to the directory containing this file! (./testing/)
 
 // -------------------------

@@ -32,6 +32,6 @@ process TAXBURST_CONVERT {
 
     # record tool versions
     echo "${task.process}:" > versions.yml
-    echo "  python: \$(python --version | sed 's/Python //'\)" >> versions.yml
+    echo "  python: \$(python --version | sed 's/Python //')" >> versions.yml
     """
 }

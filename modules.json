@@ -72,12 +72,12 @@
                     },
                     "samtools/sort": {
                         "branch": "master",
-                        "git_sha": "d5d785b3d8b422cda9c6d84a23f629a8e9ff8cd8",
+                        "git_sha": "c8be52dba1166c678e74cda9c3a3c221635c8bb1",
                         "installed_by": ["modules"]
                     },
                     "semibin/singleeasybin": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "27c79c80af5837c7137f63ebf535698d5f5854f4",
                         "installed_by": ["modules"]
                     }
                 }
