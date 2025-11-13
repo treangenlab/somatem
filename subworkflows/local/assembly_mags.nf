@@ -17,6 +17,7 @@ include { SINGLEM_PIPE }            from '../../modules/local/singlem/pipe/main'
 include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/pipe/main'
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
+include { PIGEON }                  from '../../modules/local/pigeon/main'
 
 
 workflow ASSEMBLY_MAGS {
@@ -29,20 +30,13 @@ workflow ASSEMBLY_MAGS {
     ch_singlem_db // channel: path(metapackage)
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
-    // Check input channel
-    reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" }
+    // Check input channel (debug)
+    // reads.view { meta, file -> "Input reads: ${meta.id} -> ${file}" } // debug
 
     // Taxonomic profiling with SingleM on raw reads
-    ch_metagenome_reads = reads.map { meta, reads_file ->
-        def new_meta = meta.clone()
-        new_meta.single_end = true
-        new_meta.input_type = 'reads'
-        [new_meta, reads_file]
-    }
-    
-    SINGLEM_PIPE(ch_metagenome_reads, ch_singlem_db)
+    SINGLEM_PIPE(reads, ch_singlem_db, 'reads')
     ch_versions = ch_versions.mix(SINGLEM_PIPE.out.versions)
 
     // Interactive taxonomic visualization with TaxBurst
@@ -72,7 +66,7 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
     // Sort BAM files
-    SAMTOOLS_SORT(MINIMAP2_ALIGN.out.bam, FLYE.out.fasta)
+    SAMTOOLS_SORT(MINIMAP2_ALIGN.out.bam, FLYE.out.fasta, 'bai')
     ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions)
 
     // Calculate coverage
@@ -95,16 +89,9 @@ workflow ASSEMBLY_MAGS {
     SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
     // Binning with SemiBin2
-    ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0])
+    ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0]) // join by sample ID (meta.id)
     
-    // Set SemiBin2 environment parameter
-    ch_asm_bam_with_env = ch_asm_bam.map { meta, fasta, bam ->
-        def new_meta = meta.clone()
-        new_meta.semibin_env = params.sample_environment
-        [new_meta, fasta, bam]
-    }
-    
-    SEMIBIN_SINGLEEASYBIN(ch_asm_bam_with_env)
+    SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
     ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
     SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
 
@@ -118,15 +105,19 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(CHECKM2_PARSE.out.versions)
 
     // Run SingleM pipe on bins - FIXED: Add suffix to avoid filename collision
-    ch_bins_for_singlem = SEMIBIN_SINGLEEASYBIN.out.output_fasta.map { meta, bins ->
-        def new_meta = meta.clone()
-        new_meta.id = "${meta.id}_bins"  // Add suffix to change output filename
-        new_meta.input_type = 'genome'
-        [new_meta, bins]
-    }
-    
-    SINGLEM_PIPE_BINS(ch_bins_for_singlem, ch_singlem_db)
+    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, 'genome')
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
+
+    
+    // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
+    ch_pigeon_input = FLYE.out.gfa // join gfa, assembly, and bins to prepare pigeon input
+        .join(FLYE.out.fasta, by: [0])
+        .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
+
+    PIGEON(ch_pigeon_input)
+    ch_versions = ch_versions.mix(PIGEON.out.versions)
+    PIGEON.out.report.view { meta, _report -> "✓ Pigeon post-hoc analysis completed for ${meta.id}" } // log
+
 
     // SingleM appraise - simplified input preparation
     ch_metagenome_otu = SINGLEM_PIPE.out.otu_table
@@ -264,6 +255,10 @@ workflow ASSEMBLY_MAGS {
     checkm2_output  = CHECKM2_PREDICT.out.checkm2_output
     completeness_map = CHECKM2_PARSE.out.completeness_map
     
+    // Pigeon outputs
+    pigeon_html     = PIGEON.out.report
+    pigeon_metrics  = PIGEON.out.metrics
+
     // Bakta annotation outputs
     bakta_embl              = BAKTA_BAKTA.out.embl
     bakta_faa               = BAKTA_BAKTA.out.faa
