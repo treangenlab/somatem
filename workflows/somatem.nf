@@ -66,6 +66,10 @@ workflow SOMATEM {
                 ch_bakta_db,
                 ch_singlem_db
         )
+        ch_versions = ch_versions.mix(ASSEMBLY_MAGS.out.versions)
+
+        // collect key outputs: not using right now ; have separate emits below
+
     }
 
     // -----------------------------------------------------------------
@@ -87,12 +91,17 @@ workflow SOMATEM {
             name:  'somatem_software_'  + 'versions.yml',
             sort: true,
             newLine: true
-        ).set { ch_collated_versions }
+        ).set { _ch_collated_versions }
 
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
     key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
+    
+    // separate key emits for publishing convenience
+    mapping       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bam_sorted : channel.empty()  // channel: [ val(meta), path(*.bam) ]
+    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
+    bin_fasta     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins : channel.empty() // channel: [ path(*.fa.gz) ]
 }
 
 /*
