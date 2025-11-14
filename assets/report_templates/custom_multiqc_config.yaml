@@ -1,0 +1,56 @@
+# Custom MultiQC Configuration for Somatem Pipeline
+# Ensures reports work both online and offline
+
+title: "Somatem Pipeline Report"
+subtitle: "Quality Control and Analysis Report"
+
+# Report Configuration
+export_plots: true
+make_sections: true
+strip_headers: true
+data_dir_name: 'multiqc_data'  # Keep data alongside HTML for offline use
+
+# Offline Support
+plots_force_interactive: true   # Always use interactive plots
+plots_flat_numseries: 100      # Include all data series
+compress_data: false           # Keep data accessible for offline viewing
+decimalPoint_format: '.'       # Ensure consistent number formatting
+
+# Interactive Features (work offline)
+show_hide_buttons: true
+make_sections_interactive: true
+collapse_tables: false         # Keep tables expanded for easier offline viewing
+template: 'default'            # Use default template for better offline compatibility
+
+# File Configuration
+data_format: 'yaml'           # More portable than JSON
+output_fn_name: 'multiqc_report.html'
+plots_dir_name: 'multiqc_plots'
+
+# Custom Content
+custom_content:
+  order: []                    # Will be populated by pipeline
+
+# Report Sections
+section_comments:
+  quality_control: 'Quality control metrics for input data'
+  host_removal: 'Results from host sequence removal'
+  taxonomic_classification: 'Taxonomic classification results'
+  assembly: 'Assembly statistics and quality metrics'
+  pathogen_detection: 'Pathogen detection results'
+
+# Module Order (customize based on your pipeline)
+module_order:
+    - fastqc:
+        name: 'FastQC'
+        info: 'Quality control of input reads'
+    - nanoplot:
+        name: 'NanoPlot'
+        info: 'Long read QC metrics'
+    - hostile:
+        name: 'Hostile'
+        info: 'Host removal statistics'
+    # Add other modules as needed
+
+# Avoid using CDN resources - bundle everything
+no_cdn: true
