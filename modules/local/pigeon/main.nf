@@ -36,7 +36,7 @@ process PIGEON {
     "${task.process}":
         pigeon: "1.0.0"
         sourmash: \$(sourmash --version 2>&1 | sed 's/sourmash //' | head -1)
-        gfatools: \$(gfatools 2>&1 | head -n1 | sed 's/Version: //' || echo "unknown")
+        gfatools: \$(gfatools version 2>&1 | tail -n1 | sed 's/gfatools: //' || echo "unknown")
         python: \$(python --version 2>&1 | sed 's/Python //')
     END_VERSIONS
     """
