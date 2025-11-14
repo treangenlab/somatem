@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { SYLPH } from "../modules/local/sylph/main.nf"
+include { SYLPH } from "../modules/local/sylph_profile/main.nf"
 
 // -------------------------
 // Parameters

@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "pigeon"
+description: Compare k-mer composition from unitigs, contigs and bins
+keywords:
+  - metagenomics
+  - k-mer
+  - binning
+  - post-hoc analysis
+tools:
+  - "pigeon":
+      description: "Tool for post-hoc analysis of metagenome assemblies and bins using k-mer composition. Built as a part of Somatem pipeline"
+      homepage: 
+      documentation: 
+      tool_dev_url: 
+      licence: 
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - gfa:
+      type: file
+      description: Assembly graph file in GFA format from assembler
+      pattern: "*.gfa"
+  - assembly:
+      type: file
+      description: Assembly contigs in FASTA format
+      pattern: "*.{fa,fasta,fna}"
+  - bins:
+      type: file
+      description: Metagenomic bin files from tools like semibin2
+      pattern: "*.{fa.gz,fasta.gz,fna.gz}"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - report:
+      type: file
+      description: HTML report with k-mer composition analysis results
+      pattern: "*.html"
+  - metrics:
+      type: file
+      description: JSON file containing quantitative metrics from the analysis
+      pattern: "*.json"
+
+
+authors:
+  - "@microbemarshall"
+maintainers:
+  - "@ppreshant"
