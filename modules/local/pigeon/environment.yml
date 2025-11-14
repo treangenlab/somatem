@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::sourmash
+  - conda-forge::sourmash_plugin_branchwater
+  - conda-forge::biopython
+  - conda-forge::numpy
+  - conda-forge::plotly
+  - conda-forge::pandas
+  - bioconda::gfatools
+  - conda-forge::python-rocksdb
+  - conda-forge::tqdm
+  - conda-forge::pigz
+  - conda-forge::markdown # for html report notes
