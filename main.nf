@@ -99,22 +99,21 @@ workflow {
     )
 
     publish:
-    collated_versions = SOMATEM.out.versions
-
-    mapping = SOMATEM.out.mapping
-    binning_tables = SOMATEM.out.bin_tables
-    binning_fasta  = SOMATEM.out.bin_fasta
+    mapping         = ORCHESTRATE_SOMATEM.out.mapping
+    binning_tables  = ORCHESTRATE_SOMATEM.out.bin_tables
+    binning_fasta   = ORCHESTRATE_SOMATEM.out.bin_fasta
 }
 
 output {
+    
     mapping {
-        path { meta, _bam -> "mapping/${meta.id}" }
+        path { "mapping/" }
     }
     binning_tables {
-        path { meta, _bin_table -> "binning/tables/${meta.id}" }
+        path { "binning/tables/" }
     }
     binning_fasta {
-        path { meta, _bin_fasta -> "binning/fasta/${meta.id}" }
+        path { "binning/fasta/" }
      }
 }
 
