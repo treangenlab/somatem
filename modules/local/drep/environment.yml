@@ -1,0 +1,6 @@
+name: drep
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - drep
