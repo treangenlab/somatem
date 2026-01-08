@@ -3,8 +3,8 @@ process CHECKM2_PARSE {
     tag "$meta.id"
     label 'process_low'
 
-    // Outputs
-    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.csv"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     conda "conda-forge::python=3.9 conda-forge::pandas=2.0.3"
 
