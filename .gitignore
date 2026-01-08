@@ -8,6 +8,12 @@ bin/taxburstprep.py
 # other files (for testing/development; temporary)
 archive/
 
+# Large example reads / generated outputs (do not version)
+examples/data/*.fastq.gz
+examples/data/*_sub*.fastq.gz
+examples/soma_prep_out/
+examples/sylph/*.fastq.gz
+
 # intermediate outputs
 assets/examples/lemur/46_1_sub10k.fastq-lemur-output/
 assets/examples/lemur/46_1_sub10k_relative_abundance.tsv
@@ -16,6 +22,7 @@ assets/examples/lemur/46_1_sub10k_relative_abundance.tsv
 .nextflow.log*
 work/
 .nextflow/
+.nextflow_cache/
 
 # vscode files
 SOMAteM.code-workspace

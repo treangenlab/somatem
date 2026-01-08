@@ -21,8 +21,8 @@ process CLAIR3 {
 
     script:
     def prefix = "${meta.id}"
-    def model_arg = clair3_model ? "--model_path=${clair3_model}" : ""
-    def model_path = clair3_model && clair3_model.name != 'input' ? clair3_model : "\${CONDA_PREFIX}/bin/models/${clair3_platform}"
+    // Auto-detect model path from conda environment if not provided
+    def model_path = clair3_model ?: "\${CONDA_PREFIX}/bin/models/${clair3_platform}"
     """
     # Ensure reference FASTA index exists
     if [ ! -f "${reference}.fai" ]; then
@@ -36,7 +36,7 @@ process CLAIR3 {
         --output=clair3_output \\
         --threads=${task.cpus} \\
         --platform=${clair3_platform} \\
-        ${model_arg}
+        --model_path=${model_path}
 
     # Convert to uncompressed VCF, then re-compress and index
     bcftools view -Ov clair3_output/merge_output.vcf.gz > ${prefix}.vcf

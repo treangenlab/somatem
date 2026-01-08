@@ -7,3 +7,5 @@ channel_priority: strict
 dependencies:
   - python>=3.9
   - clair3
+  - bcftools
+  - htslib
