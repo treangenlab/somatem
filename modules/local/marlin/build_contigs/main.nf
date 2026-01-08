@@ -24,7 +24,7 @@ process BUILD_CONTIGS {
     script:
     def prefix = "${meta.id}"
     """
-    python ${workflow.projectDir}/bin/build_contigs.py \\
+    python $PWD/bin/build_contigs.py \\
         --consensus ${consensus} \\
         --depth ${depth_file} \\
         --min-cov ${min_cov} \\
