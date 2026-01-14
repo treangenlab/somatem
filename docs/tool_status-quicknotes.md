@@ -158,6 +158,10 @@ _Need to break these into individual `###` categories at some point for readabil
 _test module for profile with example data from repo works_
 - Made a local module for sylph_profile. Need to replace it with the official nf-core module [here](https://nf-co.re/modules/sylph_profile/)
   - (_old comment, not sure of it's relevance_) need to add an adapter module to get tax profiling output in mpa format (?). see here https://sylph-docs.github.io/sylph-tax/ 
+  - [x] (_configured path but not tested yet_) Could use the GTDB database from our `/home/dbs/gtdb-r220-c200-dbv1.syldb`
+
+**NOTE**: (6/Apr/26) Continue the sylph implementation from #73 for downloading viral, fungal and custom DBs (_using a csv file?_) in branch `sylph_i73` not merged yet. Current implementation focusing on the unified DBs and rebased part of the branch: `sylph_i73` at commit: f6c45ef 
+
 
 DBs: Note from Eddy (2/Apr/26)
 > Sylph specifically, running with its default db sources (but updated versions for each rather than its prebuilt versions; Sylph takes multiple dbs in case you are unaware of) may align better with its design purpose. But for people who like RefSeq, build a newer version RefSeq index for Sylph is fairly fast (about half hour)
@@ -470,6 +474,8 @@ _procedure suggested by perplexity_
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
 # Database files (`databases/`)
+
+Older notes: _Question is how do we handle the databases in the config file of the pipeline repo?_
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
 Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Shared: benefit of space ; Store updated versions separately
@@ -478,10 +484,17 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
 - Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
-Automatic DB download ideas:
+(_already implemented now_) Automatic DB download ideas:
 - advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
+
+### DB's config file plan
+- Let's make a db_paths config file that stores the paths to the dbs for each tool
+- There will be two versions of this file: 
+  - `db_paths_default.yaml`: makes dummy paths for each tool's db
+  - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
+-   
 
 
 ## Real databases
@@ -495,6 +508,7 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd. Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14897628)
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
+- sylph_gtdb: .. 
 
 ## Ensemble: Eddy's unified DBs from Bakeoff
 _Use local DBs from the location directly instead of copying them_
