@@ -88,6 +88,7 @@ _First test each module independently with example data from each tool's own rep
 
 - **Sylph**: test module for profile with example data from repo works
   - need to add an adapter module to get tax profiling output in mpa format (?). see here https://sylph-docs.github.io/sylph-tax/
+  - [ ] Get database from our `/home/dbs/gtdb-r220-c200-dbv1.syldb`
 
 - **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
   - feature integration: `taxburst`: Fails due to duplicate `Actinobacteria` for both class and phylum of Bifidobacteriales (confirmed in emu's db: `taxonomy.tsv`) ; _deleting this column makes taxburst work! : how to fix?_ ~ maybe update emu db with recent changes to phylum names?/ 
@@ -248,7 +249,7 @@ If module exists on nf-core,
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
 
-# data/databases to download
+# data/databases management 
 Recording the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
 
@@ -324,6 +325,8 @@ _procedure suggested by perplexity_
 
 
 ## Database files (`databases/`)
+
+_Question is how do we handle the databases in the config file of the pipeline repo?_
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
 Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Shared: benefit of space ; Store updated versions separately
@@ -337,6 +340,13 @@ Automatic DB download ideas:
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
 
+### DB's config file plan
+- Let's make a db_paths config file that stores the paths to the dbs for each tool
+- There will be two versions of this file: 
+  - `db_paths_default.yaml`: makes dummy paths for each tool's db
+  - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
+-   
+
 
 ### Real databases
 _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
@@ -349,6 +359,7 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd. Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14897628)
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
+- sylph_gtdb: .. 
 
 ### Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files
