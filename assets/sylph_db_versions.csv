@@ -1,0 +1,5 @@
+taxonomy,db_version,description
+prokaryotic,gtdb-r226-c200-dbv1,"GTDB r226 database with c=200 clustering. contains 143,614 species and is 18.4 GB in size"
+viral,imgvr_c200_v0.3.0.syldb,"IMG/VR v0.3.0 viral database with c=200 clustering. contains 2,917,516 viral genomes and is 2 GB in size"
+fungal,fungi-refseq-2025-10-11-c200-v0.3.syldb,"RefSeq Fungi - latest with 661 genomes, clustered at c=200, 750 MB in size"
+oceanographic,tara-eukmags-c200-v0.3.syldb,"TARA Oceans eukaryotic MAGs/SAGs database with 713 genomes, clustered at c=200, 900 MB in size"

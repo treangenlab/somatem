@@ -227,6 +227,10 @@ _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setu
 ---
 # Nextflow notes:
 
+Keeping up with updated syntax
+- When should we upgrade to static typing? source: [nextflow docs](https://www.nextflow.io/docs/latest/process-typed.html)
+  - Let's wait until the feature is stable and Somatem is preprinted. Then hopefully we can do this upgrade using seqera AI in a simple manner! 
+
 ## Process to make a local nextflow module
 
 1. Make a nf-core template module using `nf-core modules create`. Or for a barebones version, copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
@@ -326,6 +330,8 @@ _procedure suggested by perplexity_
 
 ## Database files (`databases/`)
 
+### DB's plan
+
 _Question is how do we handle the databases in the config file of the pipeline repo?_
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
 Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
@@ -335,12 +341,13 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
 - Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
-Automatic DB download ideas:
+@idea: 
+- Future idea for automatic database download: If we can use omi to nicely scrape the database pages and update a structured list of db versions, we can use this to download the latest dbs automatically as and when the authors update the dbs. 
+
+**Automatic DB download ideas:**
 - advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
-
-
-### DB's plan
+- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
 
 **Consistent config file for db paths:**
 - Let's make a db_paths config file that stores the paths to the dbs for each tool
@@ -348,8 +355,6 @@ Automatic DB download ideas:
   - `db_paths_default.yaml`: makes dummy paths for each tool's db
   - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
 
-**Automatic DB download:**
-- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
 
 
 ### Real databases
