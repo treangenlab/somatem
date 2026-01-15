@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
-include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../modules/local/emu/downloaddb/main.nf"
+include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../modules/local/emu/download_db/main.nf"
 include { EMU_ABUNDANCE } from "../modules/local/emu/main.nf"
 
 // -------------------------
