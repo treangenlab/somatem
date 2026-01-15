@@ -4,7 +4,7 @@
 nextflow.enable.dsl = 2
 
 include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
-include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../modules/local/lemur/databasedownload/main.nf"
+include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../modules/local/lemur/download_db/main.nf"
 include { LEMUR } from "../modules/local/lemur/main.nf"
 
 // -------------------------
