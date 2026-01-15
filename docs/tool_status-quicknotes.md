@@ -340,12 +340,16 @@ Automatic DB download ideas:
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
 
-### DB's config file plan
+### DB's plan
+
+**Consistent config file for db paths:**
 - Let's make a db_paths config file that stores the paths to the dbs for each tool
 - There will be two versions of this file: 
   - `db_paths_default.yaml`: makes dummy paths for each tool's db
   - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
--   
+
+**Automatic DB download:**
+- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
 
 
 ### Real databases
