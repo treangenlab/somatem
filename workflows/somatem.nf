@@ -23,20 +23,21 @@ workflow SOMATEM {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = Channel.empty()
-    ch_key_outputs = Channel.empty()
+    ch_versions = channel.empty()
+    ch_key_outputs = channel.empty()
 
     // -----------------------------------------------------------------
     // Download databases
     // -----------------------------------------------------------------
     DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
-            params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
+            params.lemur_db_zenodo_id, params.target_taxonomic_domain, params.sylph_db_picker,
+            params.checkm2_db_zenodo_id)
 
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
-    contam_ref = Channel.value([]) // empty channel for now
+    contam_ref = channel.value([]) // empty channel for now
     PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
     ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
 
@@ -45,7 +46,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
+        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db, DOWNLOAD_DBS.out.ch_sylph_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)

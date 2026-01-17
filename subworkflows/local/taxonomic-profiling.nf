@@ -22,11 +22,12 @@ workflow TAXONOMIC_PROFILING {
     clean_reads_ch
 
     ch_lemur_db // channel: [ path(lemur_db) ]
+    ch_sylph_db // channel: [ path(sylph_db) ]
     // ch_emu_db // channel: [ path(emu_db) ] // using the storeDir location supplied by ext.args for now (following TRANA/gms_16S format) 
 
     main:
 
-    ch_versions = Channel.empty() // collect versions from all modules
+    ch_versions = channel.empty() // collect versions from all modules
 
     // 16S amplicon reads
     if (params.data_type == "16S") {
