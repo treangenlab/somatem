@@ -6,7 +6,7 @@ process SYLPH_DOWNLOAD_DB {
     val (db_picker) // string: path to the CSV file containing database versions
 
     output:
-    tuple path ("*.syldb"), emit: sylph_db
+    path ("*.syldb"), emit: sylph_db
     // path "versions.yml", emit: versions // not emitted since I don't have write access to the existing db directory
 
     when:
@@ -15,23 +15,18 @@ process SYLPH_DOWNLOAD_DB {
     script:
     def args = task.ext.args ?: ''
     """
-    log.info "Downloading Sylph database for ${target_taxonomy}"
+    # Execute the script and capture its output
+    db_version=\$(get_sylph_db_version.sh "${target_taxonomy}" "${db_picker}" 2>/dev/null)
 
-    // Get database version using the shell script
-    db_version = "get_sylph_db_version.sh ${target_taxonomy} ${db_picker}".execute().text.trim()
+    # print db version
+    echo "Database version: \${db_version}"
     
-    if (!db_version) {
-        log.error "Failed to determine database version for ${target_taxonomy}"
-        exit 1
-    }
-
-    
-    wget \
-        http://faust.compbio.cs.cmu.edu/sylph-stuff/${db_version}.syldb
+    wget \\
+        http://faust.compbio.cs.cmu.edu/sylph-stuff/\${db_version}.syldb
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        osf: \$(echo \$(osf --version 2>&1) | grep 'osf version' | cut -f3 -d ' ')
+        sylph_DB: \${db_version}
     END_VERSIONS
     """
 
@@ -52,7 +47,7 @@ process SYLPH_DOWNLOAD_DB {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        osf: \$(echo \$(osf --version 2>&1) | grep 'osf version' | cut -f3 -d ' ')
+        wget: \$(echo \$(wget --version 2>&1) | grep 'wget version' | cut -f3 -d ' ')
     END_VERSIONS
     """
 }
