@@ -16,8 +16,9 @@ The pipeline includes key [subworkflows](https://github.com/treangenlab/SOMAteM/
 
 1. Clone this repo from GitHub
 ```
-git clone https://github.com/treangenlab/Somatem
+git clone --recurse-submodules https://github.com/treangenlab/Somatem
 ```
+    - Note: The repo contains submodules that need to be cloned as well. If you cloned without the `--recurse-submodules` flag, then run `git submodule update --init --recursive` in the repo directory. Read [submodules documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more information or troubleshooting.
 
 2. Install the latest version of micromamba from [here](https://github.com/mamba-org/mamba/releases) using `"${SHELL}" <(curl -L https://micro.mamba.pm/install.sh)` for linux/MacOS (This pipeline cannot run on Windows). `micromamba` is a faster version of `conda` that is used to create and manage conda environments. _We will use conda/micromamba terms interchangably_
 
