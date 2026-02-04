@@ -235,6 +235,18 @@ _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setu
 
 - nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
 
+## Report generation
+
+Generate html reports and standardized csv like files for feeding into omi's report generation system and LLM context for follow up chats.
+
+- Nanoplot: _Currently using the `NanoStats.txt` file_
+need to enable this option ([NanoPlot readme](https://github.com/wdecoster/NanoPlot))
+```bash
+--tsv_stats           Output the stats file as a properly formatted TSV.
+```
+
+
+
 ---
 # Nextflow notes:
 
