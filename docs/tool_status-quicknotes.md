@@ -222,6 +222,24 @@ _First test each module independently with example data from each tool's own rep
 ### Organization notes
 _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
 
+### Cloud executor
+- Need to test cloud executor with gcloud : 24/Feb/26 
+
+Read issue [#79](https://github.com/treangenlab/Somatem/issues/79) thread 3 for more details ; and also check the [google cloud documentation](https://www.nextflow.io/docs/latest/google.html) for more information.
+- other ref: [gcloud executor documentation](https://www.nextflow.io/docs/latest/executor.html#google-cloud-batch)
+
+#### Testing cloud executor with gcloud for taxonomic profiling on `gcloud_executor` branch : 24/Feb/26 
+Steps:
+- Download the json file from Felix and scp it into `assets/secrets/`
+- Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the path of the json file : 
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/home/Users/pbk1/Somatem/assets/secrets/tti-rava-treangen-406d46297258.json"
+```
+
+- Run the pipeline with the cloud executor
+- Later 
+  - Move the export command into the nextflow config file? or `.bashrc`?
+
 
 ## nf-core compatibility
 - Created a template using `nf-core pipelines create` with custom settings
