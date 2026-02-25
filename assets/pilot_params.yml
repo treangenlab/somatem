@@ -1,5 +1,5 @@
 # note: replace the ? with the actual values for pilot testing various sub-workflows (TAXONOMIC PROFILING, ASSEMBLY, PATHOGEN DETECTION, GENOME DYNAMICS)
-# usage: nextflow run main.nf --params_file assets/pilot_params.yml
+# usage: nextflow run main.nf -params-file assets/pilot_params.yml
 
 # input file path ------------------------------
 

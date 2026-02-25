@@ -1,3 +1,6 @@
+# credentials and other secrets
+assets/secrets/
+
 # databases (large files)
 assets/databases/
 assets/examples/
