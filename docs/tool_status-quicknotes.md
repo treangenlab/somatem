@@ -346,6 +346,7 @@ _procedure suggested by perplexity_
     ```
 - **caveats**: Limits: For large Google Drive files (>100MB), you may need additional logic to handle Google’s virus scan/interruption page. For most small files, the above works.
 
+- [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
 ## Database files (`databases/`)
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
