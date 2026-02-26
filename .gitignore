@@ -1,34 +1,28 @@
 # credentials and other secrets
 assets/secrets/
 
-# databases (large files)
+# databases and example data (large files, fastq, etc.)
 assets/databases/
 assets/examples/
 
-#python custom scripts
-bin/taxburstprep.py
-
 # other files (for testing/development; temporary)
 archive/
-
-# intermediate outputs
-assets/examples/lemur/46_1_sub10k.fastq-lemur-output/
-assets/examples/lemur/46_1_sub10k_relative_abundance.tsv
 
 # nextflow outputs and logs
 .nextflow.log*
 work/
 .nextflow/
 
-# vscode files
-SOMAteM.code-workspace
-
-# nf-core template files
-data/
+# Results directories
 results/
+null/
+
+# other nf-core template generated dirs/files
+data/
 .DS_Store
 testing/
 testing*
 *.pyc
-null/
 
+# vscode files
+SOMAteM.code-workspace
