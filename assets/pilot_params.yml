@@ -1,0 +1,27 @@
+# note: replace the ? with the actual values for pilot testing various sub-workflows (TAXONOMIC PROFILING, ASSEMBLY, PATHOGEN DETECTION, GENOME DYNAMICS)
+# usage: nextflow run main.nf -params-file assets/pilot_params.yml
+
+# input file path ------------------------------
+
+input: "assets/meta_tax_samplesheet.csv"
+
+# standard options ------------------------------
+
+# describe the type of data you have from the options below
+# 1. 16S = 16S amplicon sequence data from a microbial community
+# 2. isolate = genomic DNA sequence data from a single microbial isolate
+# 3. metagenomic = metagenomic sequence data from a microbial community
+data_type: "metagenomic"
+
+# describe the type of analysis you want to perform from the options below
+# 1. taxonomic-profiling = Profiling the taxonomic composition (species match and relative abundance)
+# 2. assembly = assemble the reads into genomes to yield annotated genome/contigs (.fasta) and circos plot
+# 3. pathogen-detection = detect pathogens in the reads using functional profiling (based on genes/functional sequences of known pathogens)
+# 4. genome-dynamics = genomic variation across multiple samples (time-series or cross-section). Provides a variant abundance over time plot. 
+analysis_type: "taxonomic-profiling"
+
+
+
+# other options --------------------------------
+
+# sample_environment: "human_gut"

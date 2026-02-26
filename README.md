@@ -1,16 +1,15 @@
 # Somatem
 LLM accessible long-read metagenomics pipeline with best practices
 ## Outline
-[Plannning tools: for development](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#plannning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
+[Planning tools: for development](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#planning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
 
 Somatem is a collection of nextflow scripts for long-read sequencing metagenomics from 4th generation sequencing technologies (Oxford Nanopore Technologies and PacBio). The scripts are designed to be modular and easy to use, with a focus on best practices for long-read sequencing data analysis.
 
-The pipeline includes key subworkflows for 
-- data pre-processing: Visualize quality with [NanoPlot](https://github.com/wdecoster/NanoPlot), then remove host contamination using [hostile](https://github.com/bede/hostile), followed by sequence quality and length filtering with [chopper](https://github.com/wdecoster/chopper), then one last __NanoPlot__ analysis to show the statistics of your final reads
-- taxonomic classification: 
-- genome assembly / metagenome-assembled genome (MAG) analysis: 
-- pathogen detection: using seqscreen to screen the reads for pathogens: 
-
+The pipeline includes key [subworkflows](https://github.com/treangenlab/SOMAteM/tree/main/?tab=readme-ov-file#pipeline-tools) elaborated below for 
+- **Pre-processing**: Quality control and read filtering
+- **Taxonomic profiling**: Classification and abundance estimation
+- **Assembly & MAG analysis**: De novo assembly, binning, quality assessment, and functional annotation
+- **Genome dynamics**: Structural variant and horizontal gene transfer detection for timecourse samples
 
 
 ## Initial setup
@@ -58,7 +57,7 @@ Since the pipeline has multiple subworkflows, you have to pick which one(s) are 
 
 - Input your configuration by copying the `metadata_template.yaml` file and filling it out. _The file has helpful comments to guide you through the process_
 ```sh
-cp docs/somatem_docs/metadata_template.yaml assets/custom_metadata.yaml
+cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
 ```
 
 - Run the pipeline from the base directory (`Somatem/`) using the following command in the terminal:
@@ -68,45 +67,73 @@ nextflow run . -param-file assets/custom_metadata.yaml
 
 Note that the `assembly_mags` section could take a few hours to run and it depends on the complexity of your data and your computational resources. It took 6 hours to run the 2 example files `assets/mag_big_samplesheet.csv` on a cluster with 128 GB memory, 128 cpus and 6 TB of free space.
 
-- This command automatically downloads required databases ranging from 2-60 GB size: 
-For the `assembly_mags` workflow there are a few large sized databases including the [checkm2](https://github.com/chklovski/CheckM2) and [gtdbtk](https://gtdb.ecogenomic.org/) databases, as well as the [singlem metapackage](https://zenodo.org/records/15232972).
+- This command automatically downloads required databases ranging from <3 GB size, except [bakta](https://zenodo.org/records/14916843) used in `assembly_mags` which is a large database (60GB of space).
 
-**Cleanup the README below this**
+## Pipeline Tools
 
-GTDB-Tk v2.4.1 requires ~140G of external data which needs to be downloaded and extracted. This can be done automatically, or manually.
-```
-# Automatic:
-# Run the command "download-db.sh" to automatically download and extract to:
-/path/to/miniforge3/envs/singlem/share/gtdbtk-2.4.1/db/
+Somatem integrates state-of-the-art bioinformatics tools organized into modular subworkflows:
 
-# Manual:
-# Manually download the latest reference data:
-wget https://data.ace.uq.edu.au/public/gtdb/data/releases/release226/226.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz
+### Pre-processing
+Quality control and read filtering to prepare data for downstream analysis.
 
-# Extract the archive to a target directory:
-tar -xvzf gtdbtk_r226_data.tar.gz -C "/path/to/target/db" --strip 1 › /dev/null
-rm gtdbtk_r226_data.tar.gz
+- **[NanoPlot](https://github.com/wdecoster/NanoPlot)** - QC plotting suite for long-read sequencing data and alignments. Used for initial and final quality assessment.
+- **[hostile](https://github.com/bede/hostile)** - Removes host contamination from microbial metagenomes by filtering reads that align to a host genome.
+- **[chopper](https://github.com/wdecoster/chopper)** - Filters nanopore sequencing reads by quality and length to remove low-quality and short reads.
 
-# Set the GTDBTK DATA PATH environment variable by running:
-conda env config vars set GTDBTK DATA PATH="/path/to/target/db"
-```
+### Taxonomic Profiling
+Rapid and accurate taxonomic classification for both 16S amplicon and metagenomic data.
+
+- **[Emu](https://github.com/treangenlab/emu)** - Taxonomic classification and abundance estimation for 16S rRNA reads optimized for long-read data.
+- **[Lemur](https://github.com/treangenlab/lemur)** - Rapid and accurate taxonomic profiling on long-read metagenomic datasets using multi-marker genes.
+- **[MAGnet](https://github.com/treangenlab/magnet)** - Refines taxonomic profiles for accuracy using reference genome mapping to correct false positives.
+- **[SingleM pipe](https://github.com/wwood/singlem)** - Profiles microbial communities using universal marker genes for both reads and assembled genomes.
+- **[SingleM appraise](https://github.com/wwood/singlem)** - Assesses and compares metagenomic samples to evaluate binning completeness.
+
+### Assembly & MAG Analysis
+De novo assembly, binning, quality assessment, and functional annotation.
+
+- **[Flye](https://github.com/fenderglass/Flye)** - De novo assembler for single-molecule sequencing reads using repeat graphs. Optimized for PacBio and Oxford Nanopore.
+- **[minimap2](https://github.com/lh3/minimap2)** - Pairwise alignment of assemblies to reference genomes and read mapping.
+- **[samtools](https://github.com/samtools/samtools)** - Alignment processing and coverage calculation.
+- **[SemiBin2](https://github.com/BigDataBiology/SemiBin)** - Metagenomic binning with semi-supervised deep learning for improved binning accuracy.
+- **[CheckM2](https://github.com/chklovski/CheckM2)** - Accurate prediction of genome quality using machine learning for fast bin quality assessment.
+- **[bakta](https://github.com/oschwengers/bakta)** - Rapid and accurate annotation of bacterial genomes and plasmids. Comprehensive annotation pipeline for high-quality bins.
+
+### Genome Dynamics
+Detection of structural variants and horizontal gene transfer events.
+
+- **[rhea](https://github.com/treangenlab/rhea)** - Detects structural variants and horizontal gene transfer between temporally evolving microbial metagenomic samples.
+- **[bandage](https://github.com/rrwick/Bandage)** - Interactive visualization of assembly graphs. Useful for visualizing results after rhea analysis.
+
+### Functional Annotation
+Screening for pathogenic sequences and antimicrobial resistance genes.
+
+- **[SeqScreen](https://gitlab.com/treangenlab/seqscreen)** - Functional screening of pathogenic sequences in metagenomic data, including antibiotic resistance genes.
+
+### Reporting & Visualization
+Aggregation and interactive visualization of analysis results.
+
+- **[taxburst](https://github.com/taxburst/taxburst)** - Interactive web-based visualization of taxonomic profiles.
+- **[MultiQC](https://github.com/multiqc/multiqc)** - Aggregates and visualizes results from multiple tools and samples in a single report.
 
 
 ---
-# Plannning and other documentation
-_We will make a wiki to document the planning tools to be included in the pipeline ([flowchart](../docs/SOMAteM-sketch-v1.2.jpg)). This can be moved to the [wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages#cloning-wikis-to-your-computer) when it is created eventually._
 
-See `docs/` for more documentation stuff including: [Plannning tools](https://github.com/treangenlab/SOMAteM/blob/main/docs/bioinformatic_tools_planner.md#plannning-tools)
+## Additional Documentation
 
----
+For more detailed information, see the `docs/` directory:
+- [Planning tools and development roadmap](https://github.com/treangenlab/SOMAteM/blob/main/docs/bioinformatic_tools_planner.md)
+- [Installation guide](docs/installation.md)
+- [Tool status and notes](docs/tool_status-quicknotes.md)
 
-# Overarching goals
+## Citation
 
-**Outline**: Goal is to make a novel bioinformatic mega-pipeline that incorporates best practices the key contribution of the paper. We will pivot omi's current implementation (RAG-LLM) to work as a UI to run this pipeline. Omi will use text prompts to choose between various paths of tool-calls within the flowchart of this nextflow pipeline. The pipeline will have some decision points to choose between overarching themes (such as `genome assembly` vs using `reads` directly) and between different tools with proficiencies in speed, accuracy, and false-positives. 
+If you use Somatem in your research, please cite the tools used in your analysis. Links to citations are available in the [tool_links.csv](docs/somatem-docs/tool_links.csv) file.
 
-**Points:**
-- **Novelty/unfilled niche**: The pipeline will be geared towards the newer long-read technologies (`nanopore`, `pacbio`) where there aren't many established/optimal tools yet
-- **Better bioinformatic tools**: Todd's lab has a lot of tools that are fast and efficient for this. 
-        - This project will be a good wrapper for promoting all the good tools produced by the lab ; and benefits of LLM
-- Clear goal & **timeline**: A concrete pipeline allows us to move faster towards a paper (*outline around Sep 1st*)
- - **Competition**: Having our own custom made pipeline gives  an edge over the [highly resourced](https://seqera.io/blog/seqera-raises-26m-series-b/) seqera company's (owns nextflow) [AI-chat](https://seqera.io/ask-ai/chat) doing [similar work](https://www.healthcareittoday.com/2024/08/29/seqera-acquires-tinybio-to-advance-science-for-everyone-now-through-genai/) (news [release](https://seqera.io/blog/seqera-ai-launch/))
+## Contributing
+
+Contributions are welcome! Please see our development documentation for guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

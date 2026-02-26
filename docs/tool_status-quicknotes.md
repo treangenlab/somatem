@@ -1,3 +1,15 @@
+# Testing specs 
+
+Run tests using the config file `pilot_params.yml` where you can specify a path and paramers based on the sample sheets below.
+
+Sample sheets list the paths of the files to be used for testing. These `.csv` files are included within the `assets/` directory
+- `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_
+- `mag_big_samplesheet.csv` : (takes 8+ h) Metagenomics sequencing data (large) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+- `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
+- `timeseries_samples.csv` : Time series sequencing data. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+
+
 # Tool Status
 _First test each module independently with example data from each tool's own repo_
 
@@ -223,6 +235,18 @@ _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setu
 
 - nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
 
+## Report generation
+
+Generate html reports and standardized csv like files for feeding into omi's report generation system and LLM context for follow up chats.
+
+- Nanoplot: _Currently using the `NanoStats.txt` file_
+need to enable this option ([NanoPlot readme](https://github.com/wdecoster/NanoPlot))
+```bash
+--tsv_stats           Output the stats file as a properly formatted TSV.
+```
+
+
+
 ---
 # Nextflow notes:
 
@@ -322,6 +346,7 @@ _procedure suggested by perplexity_
     ```
 - **caveats**: Limits: For large Google Drive files (>100MB), you may need additional logic to handle Google’s virus scan/interruption page. For most small files, the above works.
 
+- [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
 ## Database files (`databases/`)
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
