@@ -1,3 +1,3 @@
 sample,fastq_1
-Abx,assets/examples/data/for_asm/abx_depl.fastq.gz
-Veh,assets/examples/data/for_asm/veh_depl.fastq.gz
+SRR23926923,/home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR23926923.fastq.gz
+SRR23926924,/home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR23926924.fastq.gz

@@ -1,2 +1,3 @@
 sample,fastq_1
-zymoM95,assets/examples/data/zymoM95.fastq.gz
+FBB38036_pass_barcode07,/dodo/am503/emu_zymo_test/GutMock_demux_out/FBB38036_pass_barcode07_674d971e_00000000_0.fastq.gz
+FBB38036_pass_barcode08,/dodo/am503/emu_zymo_test/GutMock_demux_out/FBB38036_pass_barcode08_674d971e_00000000_0.fastq.gz
