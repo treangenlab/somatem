@@ -6,7 +6,7 @@ question: ""
 
 # other options --------------------------------
 
-input: "assets/mag_samplesheet.csv"
+input: "assets/mag_big_samplesheet.csv"
 sample_environment: "human_gut"
 
 
