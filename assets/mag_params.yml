@@ -1,3 +1,6 @@
+# (note: the first 2 lines are not present in the omi generated file!) 
+# usage: nextflow run main.nf -params-file assets/mag_params.yml
+
 # describe your ultimate goal from the bioinformatics analysis
 # e.g. "I want to identify the microbial communities in my samples"
 question: "" 

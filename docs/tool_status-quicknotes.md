@@ -9,6 +9,9 @@ Sample sheets list the paths of the files to be used for testing. These `.csv` f
 - `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
 - `timeseries_samples.csv` : Time series sequencing data. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
 
+Notes:
+- important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)
+
 
 # Tool Status
 _First test each module independently with example data from each tool's own repo_
