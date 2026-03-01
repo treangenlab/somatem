@@ -25,7 +25,8 @@ def sanitize_taxonomy_for_taxburst(out):
     Ensure Taxburst/Krona never sees empty taxonomy names.
     Fills blanks with deterministic placeholders using parent context.
     """
-    # Normalize whitespace first
+    # Strip leading/trailing whitespace from every taxonomy rank value so that
+    # blank-padded fields (common in CSV exports) are treated as truly empty
     for k in RANKS_IN:
         v = out.get(k, "")
         out[k] = v.strip() if isinstance(v, str) else ""
