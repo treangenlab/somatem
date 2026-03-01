@@ -20,6 +20,33 @@ LEMUR_COLS = {
     "fraction": r"^(F|abundance)$"  # Match either 'F' or 'abundance' for fraction
 }
 
+def sanitize_taxonomy_for_taxburst(out):
+    """
+    Ensure Taxburst/Krona never sees empty taxonomy names.
+    Fills blanks with deterministic placeholders using parent context.
+    """
+    # Strip leading/trailing whitespace from every taxonomy rank value so that
+    # blank-padded fields (common in CSV exports) are treated as truly empty
+    for k in RANKS_IN:
+        v = out.get(k, "")
+        out[k] = v.strip() if isinstance(v, str) else ""
+
+    # Top level must never be empty
+    if not out["superkingdom"]:
+        out["superkingdom"] = "unclassified"
+
+    # Fill any remaining missing ranks with non-empty placeholders
+    # Include parent context to reduce risk of duplicate-name assertions in Taxburst
+    for i, rank in enumerate(RANKS_IN[1:], start=1):
+        if not out[rank]:
+            parent_rank = RANKS_IN[i - 1]
+            parent_name = out[parent_rank] or "root"
+            # keep placeholder compact and filesystem/html safe-ish
+            parent_safe = str(parent_name).replace(" ", "_")
+            out[rank] = f"unclassified_{rank}_in_{parent_safe}"
+
+    return out
+
 def detect_delimiter(path):
     # Default to tab; fall back to comma if needed
     with open(path, "r", newline="") as fh:
@@ -63,6 +90,8 @@ def read_lemur_rows(path, from_tool):
             if from_tool == "emu":
                 if out["class"] == "Actinobacteria":
                     out["class"] = "Actinomycetes"
+
+            out = sanitize_taxonomy_for_taxburst(out)
 
             # parse fraction (abundance) from LEMUR 'F'
             f_str = get(row, "fraction")
