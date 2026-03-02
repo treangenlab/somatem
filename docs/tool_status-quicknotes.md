@@ -4,10 +4,25 @@ Run tests using the config file `pilot_params.yml` where you can specify a path 
 
 Sample sheets list the paths of the files to be used for testing. These `.csv` files are included within the `assets/` directory
 - `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_
-- `mag_big_samplesheet.csv` : (takes 8+ h) Metagenomics sequencing data (large) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
-- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_. Run log in issue thread 2 / #86 and google drive/test_run_logs/mag_assembly
+- `mag_big_samplesheet.csv` : agm ran this ; 
 - `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
 - `timeseries_samples.csv` : Time series sequencing data. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+
+**Archived sample sheets:**.
+_archiving and explaining edits that occured in commit_: 560e4024d20bce2b9bb79c3be151b95275ef239e
+
+- `mag_big_samplesheet.csv` : (takes 8+ h) Metagenomics sequencing data (large) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"` using these files_. See issue #26 [comment here](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) for more info.
+```csv
+sample,fastq_1
+Abx,assets/examples/data/for_asm/abx_depl.fastq.gz
+Veh,assets/examples/data/for_asm/veh_depl.fastq.gz
+```
+- `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_. Previously included this one file subsampled from `SRR17913200` (10k reads): 
+```csv
+sample,fastq_1
+zymoM95,assets/examples/data/zymoM95.fastq.gz
+```
 
 Notes:
 - important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)

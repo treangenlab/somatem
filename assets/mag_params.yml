@@ -9,9 +9,11 @@ question: ""
 
 # other options --------------------------------
 
-input: "assets/mag_big_samplesheet.csv"
-sample_environment: "human_gut"
+input: "assets/mag_samplesheet.csv"
 
+# The environment of the microbiome sample 
+# options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
+sample_environment: "human_gut"
 
 # standard options ------------------------------
 
