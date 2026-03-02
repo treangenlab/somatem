@@ -5,6 +5,4 @@ channels:
   - defaults
 channel_priority: strict
 dependencies:
-  - python=3.12
-  - singlem=0.19.0
-  - tqdm=4.66.5
+  - singlem=0.20.3
