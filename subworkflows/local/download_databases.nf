@@ -33,11 +33,20 @@ workflow DOWNLOAD_DBS {
     // ------------------------------------------------
     // pre-processing databases 
     // ------------------------------------------------
-    // TODO: need to add conditional for running hostile based on params.sample_environment
-    db_name_without_extension = hostile_index.replaceAll('\\.mmi$', '')
-    log.info "Fetching hostile index/database: ${db_name_without_extension} for minimap2. Will take > 5 min"
-    HOSTILE_FETCH(db_name_without_extension)
-    ch_hostile_db = HOSTILE_FETCH.out.reference
+
+    if (params.run_hostile) {
+        db_name_without_extension = hostile_index.replaceAll('\\.mmi$', '')
+
+        // TODO: move this log message to the process itself
+        log.info "Fetching hostile index/database: ${db_name_without_extension} for minimap2. Will take > 5 min"
+        HOSTILE_FETCH(db_name_without_extension)
+        ch_hostile_db = HOSTILE_FETCH.out.reference
+    } else {
+        // skip hostile database download ; ch_hostile_db remains empty
+    }
+
+
+    
 
     // ------------------------------------------------
     // taxonomic profiling databases 

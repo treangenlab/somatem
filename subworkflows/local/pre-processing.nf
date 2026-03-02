@@ -25,12 +25,8 @@ workflow PREPROCESSING {
     RawNanoPlot(reads_ch) // initial QC
     ch_versions = ch_versions.mix(RawNanoPlot.out.versions.first())
     
-    // Conditional HOSTILE_CLEAN based on params.sample_environment
-    def run_hostile = params.sample_environment =~ /human/ 
-    // TODO: future update: enable hostile db change between human default and mouse based on params.sample_environment
-    // Then change the matcher to =~ /human|mouse/ to pick up both!
-
-    if (run_hostile) {
+    // if using a host derived sample (human, mouse supported for now)
+    if (params.run_hostile) {
         HOSTILE_CLEAN(reads_ch, ch_hostile_db) // host contamination removal
         ch_versions = ch_versions.mix(HOSTILE_CLEAN.out.versions)
         reads_dehosted_ch = HOSTILE_CLEAN.out.fastq
