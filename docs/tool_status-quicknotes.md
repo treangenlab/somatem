@@ -12,8 +12,9 @@ Sample sheets list the paths of the files to be used for testing. These `.csv` f
 Notes:
 - important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)
 
-Listing a few CLI logs and useful stuff from finished runs below
-## meta-taxonomic profiling
+## Outputs/CLI logs : finished runs
+
+### meta-taxonomic profiling
 - `meta_tax_params.yml` : 
 ```yaml
 input: "assets/meta_tax_samplesheet.csv"
@@ -63,7 +64,68 @@ Duration    : 7m 25s
 CPU hours   : 1.5
 Succeeded   : 15
 ```
-## metagenomic assembly: mag
+
+### 16S
+detailed run logs recorded in google drive/run logs/16S [here](https://drive.google.com/drive/folders/1rBY8pUiZEIcHm1DU7PVeNShbpD0eVsVB?usp=sharing)
+- `16S_params.yml`
+```yaml
+input: "assets/16S_pilot.csv"
+data_type: "16S"
+analysis_type: "taxonomic-profiling"
+# sample_environment: "mock" # no need for this param
+``` 
+
+- `16S_pilot.csv`  
+```csv
+sample,fastq_1
+mock1,assets/examples/data/16S/mockm95_sub10k.fastq.gz
+mock2,assets/examples/data/16S/mockm91_sub10k.fastq.gz
+```
+
+- CLI log 
+```bash
+(nf_base_env) pbk1@owlet03:~/Somatem$ nextflow run main.nf -params-file assets/16S_params.yml
+
+ N E X T F L O W   ~  version 25.10.4
+
+Launching `main.nf` [nasty_kare] DSL2 - revision: 66dfc095de
+
+WARN: [nf-core/somatem] You are attempting to run the pipeline without any custom configuration!
+
+This will be dependent on your local compute environment but can be achieved via one or more of the following:
+   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`
+   (2) Using an existing nf-core/configs for your Institution e.g. `-profile crick` or `-profile uppmax`
+   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`
+
+Please refer to the quick start section and usage docs for the pipeline.
+ 
+Downloading databases for analysis type: taxonomic-profiling
+executor >  local (13)
+[skipped  ] ORCHESTRATE_SOMATEM:SOMATEM:DOWNLOAD_DBS:EMU_DOWNLOAD_DB                 [100%] 1 of 1, stored: 1 ✔
+[d3/b23c59] ORCHESTRATE_SOMATEM:SOMATEM:DOWNLOAD_DBS:EMU_STAGE_DB                    [100%] 1 of 1 ✔
+[b8/1a33cd] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:RawNanoPlot (mock2)            [100%] 2 of 2 ✔
+[b9/c6a244] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:CHOPPER (mock1)                [100%] 2 of 2 ✔
+[91/b3d0f8] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:FinalNanoPlot (mock1)          [100%] 2 of 2 ✔
+[1a/c35db8] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:EMU_ABUNDANCE (mock1)    [100%] 2 of 2 ✔
+[cc/3bb496] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:TAXBURST_CONVERT (mock1) [100%] 2 of 2 ✔
+[9e/3f9ea8] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:TAXBURST (mock1)         [100%] 2 of 2 ✔
+Unmapped read count: 0
+Filtered read count: 2
+Filtered 26 alignments outside aligned query length bounds (min_align_len=0, max_align_len=2000).
+Filtered 0 alignments below min-pid (0%) threshold.
+Mapped read count: 9882
+Number of EM iterations: 9
+Unclassified mapped read count: 49
+
+-[nf-core/somatem] Pipeline completed successfully-
+Completed at: 03-Mar-2026 13:30:43
+Duration    : 7m 29s
+CPU hours   : 1.3
+Succeeded   : 13
+```
+
+
+### metagenomic assembly: mag
 
 - mag_samplesheet.csv
 ```csv
