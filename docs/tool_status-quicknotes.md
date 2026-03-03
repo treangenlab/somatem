@@ -12,6 +12,65 @@ Sample sheets list the paths of the files to be used for testing. These `.csv` f
 Notes:
 - important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)
 
+Listing a few CLI logs and useful stuff from finished runs below
+## meta-taxonomic profiling
+- `meta_tax_params.yml` : 
+```yaml
+input: "assets/meta_tax_samplesheet.csv"
+data_type: "metagenomics"
+analysis_type: "taxonomic-profiling"
+sample_environment: "mock"
+```
+- `meta_tax_samplesheet.csv` : 
+```csv
+sample,fastq_1
+mock9,assets/examples/data/small_metagenome/mock9_sub10k.fastq.gz
+mock20,assets/examples/data/small_metagenome/mock20_sub10k.fastq.gz
+```
+
+- CLI log 
+```bash
+(nf_base_env) pbk1@owlet03:~/Somatem$ nextflow run main.nf -params-file assets/meta_tax_params.yml
+Nextflow 25.10.4 is available - Please consider updating your version to it
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `main.nf` [jovial_babbage] DSL2 - revision: 66dfc095de
+
+WARN: [nf-core/somatem] You are attempting to run the pipeline without any custom configuration!
+
+This will be dependent on your local compute environment but can be achieved via one or more of the following:
+   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`
+   (2) Using an existing nf-core/configs for your Institution e.g. `-profile crick` or `-profile uppmax`
+   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`
+
+Please refer to the quick start section and usage docs for the pipeline.
+ 
+Downloading databases for analysis type: taxonomic-profiling
+executor >  local (15)
+[skipped  ] ORCHESTRATE_SOMATEM:SOMATEM:DOWNLOAD_DBS:LEMUR_DATABASEDOWNLOAD          [100%] 1 of 1, stored: 1 ✔
+[88/fad972] ORCHESTRATE_SOMATEM:SOMATEM:DOWNLOAD_DBS:LEMUR_STAGE_DB                  [100%] 1 of 1 ✔
+[87/30065a] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:RawNanoPlot (mock9)            [100%] 2 of 2 ✔
+[04/d64bae] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:CHOPPER (mock9)                [100%] 2 of 2 ✔
+[83/f30337] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:FinalNanoPlot (mock9)          [100%] 2 of 2 ✔
+[49/a7c078] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:LEMUR (mock9)            [100%] 2 of 2 ✔
+[10/6c3926] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:TAXBURST_CONVERT (mock9) [100%] 2 of 2 ✔
+[cb/1eaa91] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:TAXBURST (mock9)         [100%] 2 of 2 ✔
+[1b/a6c84c] ORCHESTRATE_SOMATEM:SOMATEM:TAXONOMIC_PROFILING:MAGNET (mock9)           [100%] 2 of 2 ✔
+-[nf-core/somatem] Pipeline completed successfully-
+Completed at: 02-Mar-2026 15:03:19
+Duration    : 7m 25s
+CPU hours   : 1.5
+Succeeded   : 15
+```
+## metagenomic assembly: mag
+
+- mag_samplesheet.csv
+```csv
+sample,fastq_1
+zymo,assets/examples/data/assembly/mock20_hiq100k.fastq.gz
+```
+
 
 # Tool Status
 _First test each module independently with example data from each tool's own repo_
