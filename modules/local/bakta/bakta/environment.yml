@@ -3,4 +3,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bakta
+  - bioconda::bakta=1.11.4 
+  - bioconda::pyhmmer=0.11.4 #downgrading pyhmmer as mentioned https://github.com/oschwengers/bakta/issues/424
