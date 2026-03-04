@@ -4,10 +4,28 @@ Run tests using the config file `pilot_params.yml` where you can specify a path 
 
 Sample sheets list the paths of the files to be used for testing. These `.csv` files are included within the `assets/` directory
 - `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_
-- `mag_big_samplesheet.csv` : (takes 8+ h) Metagenomics sequencing data (large) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
-- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_. Run log in issue thread 2 / #86 and google drive/test_run_logs/mag_assembly
+- `mag_big_samplesheet.csv` : agm ran this ; 
 - `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
 - `timeseries_samples.csv` : Time series sequencing data. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
+
+**Archived sample sheets:**.
+_archiving and explaining edits that occured in commit_: 560e4024d20bce2b9bb79c3be151b95275ef239e
+
+- `mag_big_samplesheet.csv` : (takes 8+ h) Metagenomics sequencing data (large) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"` using these files_. See issue #26 [comment here](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) for more info.
+```csv
+sample,fastq_1
+Abx,assets/examples/data/for_asm/abx_depl.fastq.gz
+Veh,assets/examples/data/for_asm/veh_depl.fastq.gz
+```
+- `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_. Previously included this one file subsampled from `SRR17913200` (10k reads): 
+```csv
+sample,fastq_1
+zymoM95,assets/examples/data/zymoM95.fastq.gz
+```
+
+Notes:
+- important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)
 
 
 # Tool Status
@@ -272,14 +290,16 @@ If module exists on nf-core,
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
 
-# data/databases to download
+# data/databases downloaded notes
 Recording the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
 
-## Example files (`examples/`)
+# Example files (`examples/`)
 All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh). `seqtk` is installed in `utils` micromamba env.
+
+## metagenomic data 
 - `data/mock9_sub10k.fastq.gz` (has <6 M reads): From zymo mock data with kit 9 (ZymoBIOMICS Gut Microbiome Standard
-, 21 species), subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
+, 21 species across kingdoms, cat # : [D6331](https://files.zymoresearch.com/protocols/_d6331_zymobiomics_gut_microbiome_standard.pdf)), subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
 - `data/mock20_sub10k.fastq.gz` (has <1.7 M reads) : From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
   - Note: get original data from [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) if needed. Understand what the samples mean: read paper about these samples [here](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01415-8) : _Liu, Lei, et al. "Nanopore long-read-only metagenomics enables complete and high-quality genome reconstruction from mock and complex metagenomes." Microbiome 10.1 (2022): 209._
   - subsample to 50 K high quality reads. zymo `mock20_hiq50k.fastq.gz`:
@@ -292,8 +312,28 @@ All example files are stored in google drive/[data/examples](https://drive.googl
   seqtk sample -s100 assets/examples/data/temp-mock20_hiq.fastq 50000 | gzip > assets/examples/data/mock20_hiq50k.fastq.gz
   ```
 
+## 16S data
+- `data/16S/mockm95_sub10k.fastq.gz` (SRR23926885) and `data/16S/mockm91_sub10k.fastq.gz` (SRR23926890): from Zymo gut microbiome, 21 community mock data D6331 from bioproject: [PRJNA804004](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=GridIon&o=assay_type_s%3Aa%3Bacc_s%3Aa)
+  - Chosen these two files as the smallest and the largest from the dataset used by Eddy for the bakeoff work. Not sure if Eddy used 16S data but the same [paper](https://link.springer.com/article/10.1186/s40168-022-01415-8) and bioproject had these under `Assay Type` = `AMPLICON`. 
 
-- `data/zymoM95.fastq.gz`: From zymo mock? 16S, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/zymoM95.fastq.gz`
+To get the data for these 2 files use sra-toolkit to download and seqtk to subsample:
+references: sra-tk [bioinformatics beginner tutorial](https://bioinformatics.ccr.cancer.gov/docs/bioinformatics-for-beginners-2025/Module1_Unix_Biowulf/L5/#fasterq-dump) ; 
+```bash
+# Activate sra-tools containing env
+micromamba activate utils
+
+# Download the data
+prefetch SRR23926885 SRR23926890
+
+# Convert to fastq
+fasterq-dump --split-files SRR23926885 SRR23926890 # not sure why --split-files was suggested?
+
+# subsample using seqtk
+seqtk sample -s100 SRR23926885.fastq 10000 | gzip > mockm95_sub10k.fastq.gz
+seqtk sample -s100 SRR23926890.fastq 10000 | gzip > mockm91_sub10k.fastq.gz
+```
+
+From zymo mock? 16S, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/zymoM95.fastq.gz`
 
 Other tools' example files:
 - `data/emu_full_length.fa`: From EMU repo [here](https://github.com/treangenlab/emu/tree/master/example)
@@ -309,7 +349,7 @@ Need smaller example files for faster iteration/testing of the assembly workflow
   - _Would be preferable to have metagenome data or a mix with ~5 isolates?_ 
 - explore larger subsamples of the zymo mock data (_known species advantage_) or `abx_depl.fastq.gz` (_many more species.._)?
 
-### Zymo mock
+## Zymo mock communities notes
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
 - Notes: ZymoBIOMICS® Microbial Community Standard contains three easy-to-lyse bacteria, five tough-
 to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymoresearch.com/datasheets/ds1706_zymobiomics_microbial_community_standards_data_sheet.pdf)
@@ -317,9 +357,10 @@ to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymo
 - Eddy has some zymo mock data here `/home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq` (pacbio also exists)
 : This is a 54 GB file of Zymo-gut-mock-Kit9 sample ; check [details](https://trace.ncbi.nlm.nih.gov/Traces/index.html?view=run_browser&acc=SRR17913200&display=metadata) on SRA.  
   - There are other samples in this [SRA](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=WGS%20AND%20GridIon&o=instrument_s%3Aa%3Bacc_s%3Aa) with `Library Name`s `M46 - 50` ; not sure what these mean.
+  - This data is from a more complex mock community: (ZymoBIOMICS Gut Microbiome Standard
+, 21 species across kingdoms, cat # : [D6331](https://files.zymoresearch.com/protocols/_d6331_zymobiomics_gut_microbiome_standard.pdf))
 
-
-### Setup automatic download script
+## Setup automatic download script
 Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_ : COuld put this in `subworkflow/local/utils/example_data_download.nf`
 - Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
@@ -348,7 +389,7 @@ _procedure suggested by perplexity_
 
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
-## Database files (`databases/`)
+# Database files (`databases/`)
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
 Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Shared: benefit of space ; Store updated versions separately
@@ -363,7 +404,7 @@ Automatic DB download ideas:
 
 
 
-### Real databases
+## Real databases
 _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
 
 - hostile: using default `human-t2t-hla-argos985-mycob140` using the `hostile/fetch` module, source: [hostile readme](https://github.com/bede/hostile?tab=readme-ov-file#indexes) 
@@ -375,13 +416,13 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
 
-### Testing/demo databases
+## Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files
   - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 - centrifuger: mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 
 
-### archive: future DBs?
+## archive: future DBs?
 - centrifuger (_not downloaded_): GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
 
 _notes from Austin: Aug 9th 2025_

@@ -20,16 +20,21 @@ workflow PREPROCESSING {
 
     main:
 
-    ch_versions = Channel.empty() // collect versions from all modules
+    ch_versions = channel.empty() // collect versions from all modules
     
     RawNanoPlot(reads_ch) // initial QC
     ch_versions = ch_versions.mix(RawNanoPlot.out.versions.first())
     
-    // TODO: make conditional param to enable/disable hostile based on params.sample_environment
-    HOSTILE_CLEAN(reads_ch, ch_hostile_db)// host contamination removal
-    ch_versions = ch_versions.mix(HOSTILE_CLEAN.out.versions)
+    // if using a host derived sample (human, mouse supported for now)
+    if (params.run_hostile) {
+        HOSTILE_CLEAN(reads_ch, ch_hostile_db) // host contamination removal
+        ch_versions = ch_versions.mix(HOSTILE_CLEAN.out.versions)
+        reads_dehosted_ch = HOSTILE_CLEAN.out.fastq
+    } else {
+        reads_dehosted_ch = reads_ch
+    }
 
-    CHOPPER(HOSTILE_CLEAN.out.fastq, contam_ref) // quality filtering; future contam removal)
+    CHOPPER(reads_dehosted_ch, contam_ref) // quality filtering; future contam removal
     ch_versions = ch_versions.mix(CHOPPER.out.versions.first())
     
     FinalNanoPlot(CHOPPER.out.fastq) // final QC

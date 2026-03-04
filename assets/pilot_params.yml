@@ -24,4 +24,6 @@ analysis_type: "taxonomic-profiling"
 
 # other options --------------------------------
 
-# sample_environment: "human_gut"
+# The environment of the microbiome sample 
+# options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
+sample_environment: "mock"

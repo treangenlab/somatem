@@ -1,3 +1,6 @@
+# (note: the first 2 lines are not present in the omi generated file!) 
+# usage: nextflow run main.nf -params-file assets/mag_params.yml
+
 # describe your ultimate goal from the bioinformatics analysis
 # e.g. "I want to identify the microbial communities in my samples"
 question: "" 
@@ -6,9 +9,11 @@ question: ""
 
 # other options --------------------------------
 
-input: "assets/mag_big_samplesheet.csv"
-sample_environment: "human_gut"
+input: "assets/mag_samplesheet.csv"
 
+# The environment of the microbiome sample 
+# options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
+sample_environment: "human_gut"
 
 # standard options ------------------------------
 
