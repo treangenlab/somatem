@@ -194,6 +194,35 @@ _First test each module independently with example data from each tool's own rep
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
+## metro map: nf-metro
+_handy commands_
+
+```sh
+# top level
+%%metro title: nf-core/rnaseq
+%%metro file: fastq_in | FASTQ
+%%metro line: taxp | taxonomic profiling | #4CAF50
+
+# within subgraphs
+subgraph preprocessing [Pre-processing]
+        %%metro exit: right | star_salmon, star_rsem, hisat2, bowtie2_salmon
+        %%metro exit: bottom | pseudo_salmon, pseudo_kallisto
+
+        %%metro entry: left | star_salmon, star_rsem, hisat2, bowtie2_salmon
+
+        %%metro direction: TB
+
+# between sections 
+%% Inter-section edges
+fastqc_filtered -->|star_salmon,star_rsem| star
+...
+
+```
+
+- `metro validate` 
+- `metro build`
+- `metro publish`
+
 ## Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
 - standardize modules: 
