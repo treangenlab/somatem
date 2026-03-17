@@ -30,11 +30,13 @@ We utilize `micromamba` (a faster, drop-in replacement for `conda`) to manage en
 ```
 
 **3. Create and Activate the Nextflow Environment**
-Set up a dedicated base environment for Nextflow:
+Set up a dedicated base environment for Nextflow: (this installs nextflow and nf-core; _needs to be run once_)
 ```bash
-micromamba create -n nf_base_env nextflow
+micromamba create -f nf_base_env.yml
+```
+Activate the environment each time you use the pipeline:
+```bash
 micromamba activate nf_base_env
-micromamba install nextflow
 ```
 
 **4. Download Example Data (Optional but Recommended)**
