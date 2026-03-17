@@ -1,7 +1,7 @@
 # somatem
 **A modular and open source metagenomic analysis toolkit designed for long reads**
 
-[Planning Tools & Development Roadmap](https://github.com/treangenlab/somatem-docs/tree/main?tab=readme-ov-file#planning-tools) | [Overarching Goals](https://github.com/treangenlab/somatem/#overarching-goals)
+[Planning Tools & Development Roadmap](https://github.com/treangenlab/somatem-docs/tree/main?tab=readme-ov-file#planning-tools)
 
 somatem is a modular Nextflow based pipeline designed for long-read microbiome analysis, including both 16S and metagenomic support. somatem supports both Oxford Nanopore Technologies and PacBio. Built with ease of use and analytical rigor in mind, somatem enforces best practices for long-read sequencing data analysis.
 
