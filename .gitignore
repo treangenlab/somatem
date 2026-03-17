@@ -24,5 +24,9 @@ testing/
 testing*
 *.pyc
 
+# conda/micromamba env folders
+miniforge
+micromamba
+
 # vscode files
 SOMAteM.code-workspace
