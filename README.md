@@ -1,139 +1,142 @@
-# Somatem
-LLM accessible long-read metagenomics pipeline with best practices
-## Outline
-[Planning tools: for development](https://github.com/ppreshant/somatem-docs/tree/main?tab=readme-ov-file#planning-tools) | [Overarching goals](https://github.com/treangenlab/SOMAteM/#overarching-goals)
+# somatem
+**A modular and open source metagenomic analysis toolkit designed for long reads**
 
-Somatem is a collection of nextflow scripts for long-read sequencing metagenomics from 4th generation sequencing technologies (Oxford Nanopore Technologies and PacBio). The scripts are designed to be modular and easy to use, with a focus on best practices for long-read sequencing data analysis.
+[Planning Tools & Development Roadmap](https://github.com/treangenlab/somatem-docs/tree/main?tab=readme-ov-file#planning-tools) | [Overarching Goals](https://github.com/treangenlab/somatem/#overarching-goals)
 
-The pipeline includes key [subworkflows](https://github.com/treangenlab/SOMAteM/tree/main/?tab=readme-ov-file#pipeline-tools) elaborated below for 
-- **Pre-processing**: Quality control and read filtering
-- **Taxonomic profiling**: Classification and abundance estimation
-- **Assembly & MAG analysis**: De novo assembly, binning, quality assessment, and functional annotation
-- **Genome dynamics**: Structural variant and horizontal gene transfer detection for timecourse samples
+somatem is a modular Nextflow based pipeline designed for long-read microbiome analysis, including both 16S and metagenomic support. somatem supports both Oxford Nanopore Technologies and PacBio. Built with ease of use and analytical rigor in mind, somatem enforces best practices for long-read sequencing data analysis.
 
+The pipeline is divided into key subworkflows, allowing users to run the exact analyses they need:
+* **Pre-processing:** Quality control and read filtering.
+* **Taxonomic Profiling:** Taxonomic classification and relative abundance estimation.
+* **Assembly & MAG Analysis:** *De novo* metagenomic assembly, binning, quality assessment, and functional annotation.
+* **Genome Dynamics:** Structural variant and horizontal gene transfer detection for temporal samples.
 
-## Initial setup
+---
 
-1. Clone this repo from GitHub
+## Initial Setup
+
+Follow these steps to configure your environment and download the somatem pipeline. Note: This pipeline is designed for Linux/macOS environments and is not compatible with Windows.
+
+**1. Clone the Repository**
+Clone the somatem repository along with its required submodules:
+```bash
+git clone --recurse-submodules [https://github.com/treangenlab/somatem](https://github.com/treangenlab/somatem)
+cd somatem
 ```
-git clone --recurse-submodules https://github.com/treangenlab/Somatem
-```
-    - Note: The repo contains submodules that need to be cloned as well. If you cloned without the `--recurse-submodules` flag, then run `git submodule update --init --recursive` in the repo directory. Read [submodules documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more information or troubleshooting.
+> **Note:** If you accidentally cloned the repository without the `--recurse-submodules` flag, you can fetch them by running `git submodule update --init --recursive` inside the repo directory. See the [Git Submodules documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for troubleshooting.
 
-2. Install the latest version of micromamba from [here](https://github.com/mamba-org/mamba/releases) using `"${SHELL}" <(curl -L https://micro.mamba.pm/install.sh)` for linux/MacOS (This pipeline cannot run on Windows). `micromamba` is a faster version of `conda` that is used to create and manage conda environments. _We will use conda/micromamba terms interchangably_
-
-3. Navigate to the cloned repo directory `Somatem/` and create a conda environment for nextflow. 
+**2. Install Micromamba**
+We utilize `micromamba` (a faster, drop-in replacement for `conda`) to manage environments. Install the latest version:
+```bash
+"${SHELL}" <(curl -L [https://micro.mamba.pm/install.sh](https://micro.mamba.pm/install.sh))
 ```
+
+**3. Create and Activate the Nextflow Environment**
+Set up a dedicated base environment for Nextflow:
+```bash
 micromamba create -n nf_base_env nextflow
-```
-
-4. Activate the conda environment and install nextflow
-```
 micromamba activate nf_base_env
 micromamba install nextflow
 ```
-Now you are ready to run nextflow. If you want to test the pipelines with example datasets, proceed to step 5.
 
-5. Download the example data using the `get_example_data` subworkflow by running this command in the root directory of the repo (after activating the `nf_base_env` conda environment):
+**4. Download Example Data (Optional but Recommended)**
+To verify your installation, you can download our provided test datasets. From the root `somatem/` directory (with your environment activated), run:
 ```bash
-micromamba activate nf_base_env
 nextflow run subworkflows/local/get_example_data.nf
 ```
-_This will download the example data to the `examples/data` directory for testing the pipelines._
+*This will populate the `examples/data` directory with sample files for pipeline testing.*
 
-## Database configuration
-1. Decide if you want a dedicated directory for the databases within the `Somatem` directory or use a common shared directory for other members of your organization (highly recommended if you are using a cluster). 
+---
 
-2. Some of the databases (e.g. bakta, checkm2, singlem) run upto 100GB of space, so make sure you have enough space available
+## Database Configuration
 
-3. Update the `nextflow.config` file to point to the database directory by modifying this variable
-```
-db_base_dir                = "/home/dbs"
-```
-Change this to `./assets/databases` if not using a shared directory
+Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively.
+
+* **Storage Requirements:** Some databases (e.g., Bakta, CheckM2, SingleM) require up to 100 GB of free space. Ensure your target drive has adequate capacity.
+* **Directory Setup:** Decide whether you want a local database directory within the `somatem` folder, or a shared, centralized directory (highly recommended for HPC cluster environments).
+* **Configuration:** Update the `nextflow.config` file to point the pipeline to your chosen directory. Locate and modify the following variable:
+    ```groovy
+    db_base_dir = "/home/dbs" // Change this to "./assets/databases" for local storage
+    ```
+
+---
 
 ## Usage
-Since the pipeline has multiple subworkflows, you have to pick which one(s) are most relevant to your use case. 
 
-- Input your configuration by copying the `metadata_template.yaml` file and filling it out. _The file has helpful comments to guide you through the process_
-```sh
+Due to the modular design of somatem, you must configure the pipeline to run the specific subworkflows relevant to your research questions.
+
+**1. Prepare Your Metadata**
+Copy the provided metadata template to create your custom configuration file. The template contains detailed comments to guide you through the available parameters.
+```bash
 cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
 ```
 
-- Run the pipeline from the base directory (`Somatem/`) using the following command in the terminal:
+**2. Execute the Pipeline**
+Run somatem from the base directory, passing in your customized metadata file:
 ```bash
 nextflow run . -param-file assets/custom_metadata.yaml
 ```
 
-Note that the `assembly_mags` section could take a few hours to run and it depends on the complexity of your data and your computational resources. It took 6 hours to run the 2 example files `assets/mag_big_samplesheet.csv` on a cluster with 128 GB memory, 128 cpus and 6 TB of free space.
+**Performance & Resource Notes:**
+* **Automated Downloads:** The pipeline automatically downloads most required databases (<3 GB). However, the [Bakta database](https://zenodo.org/records/14916843) used in the `assembly_mags` subworkflow is approximately 60 GB and may require additional time.
+* **Compute Time:** The `assembly_mags` step is computationally intensive. As a benchmark, processing the two example files (`assets/mag_big_samplesheet.csv`) takes roughly 6 hours on an HPC cluster equipped with 128 CPUs, 128 GB of memory, and 2 TB of free storage.
 
-- This command automatically downloads required databases ranging from <3 GB size, except [bakta](https://zenodo.org/records/14916843) used in `assembly_mags` which is a large database (60GB of space).
+---
 
 ## Pipeline Tools
 
-Somatem integrates state-of-the-art bioinformatics tools organized into modular subworkflows:
+somatem integrates state-of-the-art bioinformatics tools, neatly organized into the following subworkflows:
 
 ### Pre-processing
-Quality control and read filtering to prepare data for downstream analysis.
-
-- **[NanoPlot](https://github.com/wdecoster/NanoPlot)** - QC plotting suite for long-read sequencing data and alignments. Used for initial and final quality assessment.
-- **[hostile](https://github.com/bede/hostile)** - Removes host contamination from microbial metagenomes by filtering reads that align to a host genome.
-- **[chopper](https://github.com/wdecoster/chopper)** - Filters nanopore sequencing reads by quality and length to remove low-quality and short reads.
+Prepares raw data for downstream analysis through rigorous quality control and filtering.
+* **[NanoPlot](https://github.com/wdecoster/NanoPlot):** QC plotting suite for initial and final assessment of long-read sequencing data.
+* **[Hostile](https://github.com/bede/hostile):** Depletes host contamination by filtering reads that align to a host reference genome.
+* **[Chopper](https://github.com/wdecoster/chopper):** Filters nanopore reads by quality and length, removing sub-par data.
 
 ### Taxonomic Profiling
-Rapid and accurate taxonomic classification for both 16S amplicon and metagenomic data.
-
-- **[Emu](https://github.com/treangenlab/emu)** - Taxonomic classification and abundance estimation for 16S rRNA reads optimized for long-read data.
-- **[Lemur](https://github.com/treangenlab/lemur)** - Rapid and accurate taxonomic profiling on long-read metagenomic datasets using multi-marker genes.
-- **[MAGnet](https://github.com/treangenlab/magnet)** - Refines taxonomic profiles for accuracy using reference genome mapping to correct false positives.
-- **[SingleM pipe](https://github.com/wwood/singlem)** - Profiles microbial communities using universal marker genes for both reads and assembled genomes.
-- **[SingleM appraise](https://github.com/wwood/singlem)** - Assesses and compares metagenomic samples to evaluate binning completeness.
+Delivers rapid and accurate taxonomic classification for metagenomic datasets.
+* **[Emu](https://github.com/treangenlab/emu):** Taxonomic classification and abundance estimation optimized for long-read 16S rRNA.
+* **[Lemur](https://github.com/treangenlab/lemur):** Rapid, multi-marker gene taxonomic profiling for long-read metagenomes.
+* **[MAGnet](https://github.com/treangenlab/magnet):** Refines taxonomic profiles via reference genome mapping to correct false positives.
+* **[SingleM](https://github.com/wwood/singlem):** Profiles microbial communities using universal marker genes. Includes the `pipe` module for reads/assemblies and the `appraise` module to evaluate binning completeness.
 
 ### Assembly & MAG Analysis
-De novo assembly, binning, quality assessment, and functional annotation.
-
-- **[Flye](https://github.com/fenderglass/Flye)** - De novo assembler for single-molecule sequencing reads using repeat graphs. Optimized for PacBio and Oxford Nanopore.
-- **[minimap2](https://github.com/lh3/minimap2)** - Pairwise alignment of assemblies to reference genomes and read mapping.
-- **[samtools](https://github.com/samtools/samtools)** - Alignment processing and coverage calculation.
-- **[SemiBin2](https://github.com/BigDataBiology/SemiBin)** - Metagenomic binning with semi-supervised deep learning for improved binning accuracy.
-- **[CheckM2](https://github.com/chklovski/CheckM2)** - Accurate prediction of genome quality using machine learning for fast bin quality assessment.
-- **[bakta](https://github.com/oschwengers/bakta)** - Rapid and accurate annotation of bacterial genomes and plasmids. Comprehensive annotation pipeline for high-quality bins.
+Handles *de novo* assembly, genome binning, and functional annotation.
+* **[Flye](https://github.com/fenderglass/Flye):** Repeat-graph-based *de novo* assembler optimized for PacBio and Nanopore reads.
+* **[Minimap2](https://github.com/lh3/minimap2) & [SAMtools](https://github.com/samtools/samtools):** Pairwise alignment processing, read mapping, and coverage calculation.
+* **[SemiBin2](https://github.com/BigDataBiology/SemiBin):** Metagenomic binning leveraging semi-supervised deep learning.
+* **[CheckM2](https://github.com/chklovski/CheckM2):** Machine-learning-driven prediction of genome bin quality and completeness.
+* **[Bakta](https://github.com/oschwengers/bakta):** Comprehensive and rapid annotation of bacterial genomes and plasmids.
 
 ### Genome Dynamics
-Detection of structural variants and horizontal gene transfer events.
-
-- **[rhea](https://github.com/treangenlab/rhea)** - Detects structural variants and horizontal gene transfer between temporally evolving microbial metagenomic samples.
-- **[bandage](https://github.com/rrwick/Bandage)** - Interactive visualization of assembly graphs. Useful for visualizing results after rhea analysis.
+Investigates structural variations over time.
+* **[Rhea](https://github.com/treangenlab/rhea):** Detects structural variants and horizontal gene transfer events in temporally evolving microbial samples.
+* **[Bandage](https://github.com/rrwick/Bandage):** Interactive visualization tool for assembly graphs, highly useful for reviewing Rhea outputs.
 
 ### Functional Annotation
-Screening for pathogenic sequences and antimicrobial resistance genes.
-
-- **[SeqScreen](https://gitlab.com/treangenlab/seqscreen)** - Functional screening of pathogenic sequences in metagenomic data, including antibiotic resistance genes.
+Screens for targets of clinical and functional interest.
+* **[SeqScreen](https://gitlab.com/treangenlab/seqscreen):** Functional screening of pathogenic sequences and antimicrobial resistance (AMR) genes.
 
 ### Reporting & Visualization
-Aggregation and interactive visualization of analysis results.
-
-- **[taxburst](https://github.com/taxburst/taxburst)** - Interactive web-based visualization of taxonomic profiles.
-- **[MultiQC](https://github.com/multiqc/multiqc)** - Aggregates and visualizes results from multiple tools and samples in a single report.
-
+Aggregates and visualizes complex datasets.
+* **[Taxburst](https://github.com/taxburst/taxburst):** Interactive, web-based visualization of taxonomic profiles.
+* **[MultiQC](https://github.com/multiqc/multiqc):** Aggregates logs and results across multiple tools into a single, user-friendly HTML report.
 
 ---
 
 ## Additional Documentation
 
-For more detailed information, see the `docs/` directory:
-- [Planning tools and development roadmap](https://github.com/treangenlab/SOMAteM/blob/main/docs/bioinformatic_tools_planner.md)
-- [Installation guide](docs/installation.md)
-- [Tool status and notes](docs/tool_status-quicknotes.md)
+For deeper dives into pipeline architecture and tool notes, please see the `docs/` directory:
+* [Installation Guide](docs/installation.md)
+* [Planning Tools & Development Roadmap](docs/bioinformatic_tools_planner.md)
+* [Tool Status and Quick Notes](docs/tool_status-quicknotes.md)
 
 ## Citation
 
-If you use Somatem in your research, please cite the tools used in your analysis. Links to citations are available in the [tool_links.csv](docs/somatem-docs/tool_links.csv) file.
+If somatem facilitates your research, please cite the underlying tools that made your analysis possible. A comprehensive list of citation links is available in [docs/somatem-docs/tool_links.csv](docs/somatem-docs/tool_links.csv).
 
-## Contributing
+## Contributing & License
 
-Contributions are welcome! Please see our development documentation for guidelines.
+Contributions from the community are welcome! Please review our development documentation for guidelines on how to submit pull requests. 
 
-## License
-
-This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the `LICENSE` file for full details.
