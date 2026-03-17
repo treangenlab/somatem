@@ -195,8 +195,27 @@ _First test each module independently with example data from each tool's own rep
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
 ## metro map: nf-metro
-_handy commands_
+Update: 
+- Using nf-metro to make a base chart, later edited by hand in Inkscape 
+versions 
+- v1.3 : Shortened / less wordy, tool name in newline ; pre-processing top to bottom
+- Find v1.3.5 : edited by hand in prashant's local computer / box folder!
 
+
+- nf-metro: run with this ; need each branch to be labelled A -->|label| B
+```bash
+cd docs/somatem-docs/planning/flowcharts
+micromamba activate nf-metro # activate the envelope
+
+# render the metro map from example file
+nf-metro render nf-metro/simple_pipeline.mmd -o nf-metro/simple_pipeline.svg --theme light
+
+# render the actual metro map
+nf-metro render flowchart_metro.mmd --theme light
+```
+
+
+_handy commands: code to add in .mmd_
 ```sh
 # top level
 %%metro title: nf-core/rnaseq
