@@ -65,16 +65,22 @@ Several tools in this pipeline rely on large reference databases. Proper configu
 
 Due to the modular design of somatem, you must configure the pipeline to run the specific subworkflows relevant to your research questions.
 
-**1. Prepare Your Metadata**
-Copy the provided metadata template to create your custom configuration file. The template contains detailed comments to guide you through the available parameters.
+**1. Prepare Your parmeter configuration file**
+Copy the provided parameter template(s) to create your custom configuration file. The template(s) contain detailed comments to guide you through the available parameters.
+Available files:
+- `assets/16S_params.yml` - for 16S rRNA gene analysis
+- `assets/meta_tax_params.yml` - for metagenomic taxonomic analysis
+- `assets/mag_params.yml` - for whole genome shotgun metagenomics, mag assembly and binning workflow
+
+Copy the file over before editing it: for example
 ```bash
-cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
+cp assets/16S_params.yml assets/custom_16S_params.yml
 ```
 
 **2. Execute the Pipeline**
-Run somatem from the base directory, passing in your customized metadata file:
+Run somatem from the base directory, passing in your customized parameter configuration file:
 ```bash
-nextflow run . -param-file assets/custom_metadata.yaml
+nextflow run . -param-file assets/custom_16S_params.yml
 ```
 
 **Performance & Resource Notes:**
