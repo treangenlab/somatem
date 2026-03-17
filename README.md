@@ -1,8 +1,6 @@
 # somatem
 **A modular and open source metagenomic analysis toolkit designed for long reads**
 
-[Planning Tools & Development Roadmap](https://github.com/treangenlab/somatem-docs/tree/main?tab=readme-ov-file#planning-tools)
-
 somatem is a modular Nextflow based pipeline designed for long-read microbiome analysis, including both 16S and metagenomic support. somatem supports both Oxford Nanopore Technologies and PacBio. Built with ease of use and analytical rigor in mind, somatem enforces best practices for long-read sequencing data analysis.
 
 The pipeline is divided into key subworkflows, allowing users to run the exact analyses they need:
@@ -20,7 +18,7 @@ Follow these steps to configure your environment and download the somatem pipeli
 **1. Clone the Repository**
 Clone the somatem repository along with its required submodules:
 ```bash
-git clone --recurse-submodules [https://github.com/treangenlab/somatem](https://github.com/treangenlab/somatem)
+git clone --recurse-submodules https://github.com/treangenlab/somatem
 cd somatem
 ```
 > **Note:** If you accidentally cloned the repository without the `--recurse-submodules` flag, you can fetch them by running `git submodule update --init --recursive` inside the repo directory. See the [Git Submodules documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for troubleshooting.
@@ -28,15 +26,17 @@ cd somatem
 **2. Install Micromamba**
 We utilize `micromamba` (a faster, drop-in replacement for `conda`) to manage environments. Install the latest version:
 ```bash
-"${SHELL}" <(curl -L [https://micro.mamba.pm/install.sh](https://micro.mamba.pm/install.sh))
+"${SHELL}" <(curl -L https://micro.mamba.pm/install.sh)
 ```
 
 **3. Create and Activate the Nextflow Environment**
-Set up a dedicated base environment for Nextflow:
+Set up a dedicated base environment for Nextflow: (this installs nextflow and nf-core; _needs to be run once_)
 ```bash
-micromamba create -n nf_base_env nextflow
+micromamba create -f nf_base_env.yml
+```
+Activate the environment each time you use the pipeline:
+```bash
 micromamba activate nf_base_env
-micromamba install nextflow
 ```
 
 **4. Download Example Data (Optional but Recommended)**
@@ -65,16 +65,22 @@ Several tools in this pipeline rely on large reference databases. Proper configu
 
 Due to the modular design of somatem, you must configure the pipeline to run the specific subworkflows relevant to your research questions.
 
-**1. Prepare Your Metadata**
-Copy the provided metadata template to create your custom configuration file. The template contains detailed comments to guide you through the available parameters.
+**1. Prepare Your parmeter configuration file**
+Copy the provided parameter template(s) to create your custom configuration file. The template(s) contain detailed comments to guide you through the available parameters.
+Available files:
+- `assets/16S_params.yml` - for 16S rRNA gene analysis
+- `assets/meta_tax_params.yml` - for metagenomic taxonomic analysis
+- `assets/mag_params.yml` - for whole genome shotgun metagenomics, mag assembly and binning workflow
+
+Copy the file over before editing it: for example
 ```bash
-cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
+cp assets/16S_params.yml assets/custom_16S_params.yml
 ```
 
 **2. Execute the Pipeline**
-Run somatem from the base directory, passing in your customized metadata file:
+Run somatem from the base directory, passing in your customized parameter configuration file:
 ```bash
-nextflow run . -param-file assets/custom_metadata.yaml
+nextflow run . -param-file assets/custom_16S_params.yml
 ```
 
 **Performance & Resource Notes:**
@@ -128,12 +134,12 @@ Aggregates and visualizes complex datasets.
 
 For deeper dives into pipeline architecture and tool notes, please see the `docs/` directory:
 * [Installation Guide](docs/installation.md)
-* [Planning Tools & Development Roadmap](docs/bioinformatic_tools_planner.md)
+* [Planning Tools & Development Roadmap: ARCHIVED](https://github.com/treangenlab/somatem-docs/blob/main/planning/bioinformatic_tools_planner.md)
 * [Tool Status and Quick Notes](docs/tool_status-quicknotes.md)
 
 ## Citation
 
-If somatem facilitates your research, please cite the underlying tools that made your analysis possible. A comprehensive list of citation links is available in [docs/somatem-docs/tool_links.csv](docs/somatem-docs/tool_links.csv).
+If somatem facilitates your research, please cite the underlying tools that made your analysis possible. A comprehensive list of citation links is available in [docs/somatem-docs/tool_links.csv](https://github.com/treangenlab/somatem-docs/blob/main/tool_links.csv).
 
 ## Contributing & License
 
