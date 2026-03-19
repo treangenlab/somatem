@@ -22,8 +22,9 @@ requirements:
 test:
   commands:
     - somatem --help
-    - test -f "${PREFIX}/share/{{ name }}/main.nf"
-    - test -f "${PREFIX}/share/{{ name }}/nextflow.config"
+    - test -f "${PREFIX}/share/{{ name }}-{{ version }}/main.nf"
+    - test -f "${PREFIX}/share/{{ name }}-{{ version }}/nextflow.config"
+    - test -f "${PREFIX}/bin/{{ name }}"
 
 about:
   home: https://github.com/treangenlab/Somatem
