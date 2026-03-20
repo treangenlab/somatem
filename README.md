@@ -30,22 +30,28 @@ Set up a dedicated base environment for somatem:
 micromamba create -n somatem -c bioconda somatem # Again use your package manager of interest
 ```
 
-**3. Download Example Data (Optional but Recommended)**
-To verify your installation, you can download our provided test datasets. From the root `somatem/` directory (with your environment activated), run:
+**3. Test out somatem!**
 
-__Caution: actively working on this as we have revamped our launch scripts.__
+To process long-read 16S sequencing with somatem one would simply
+
 ```bash
-somatem get_example_data
+# activate environment
+micromamba activate somatem
+
+# run the somatem 16S subworkflow
+somatem 16S -i /path/to/16S_samplesheet.csv -o /path/to/desired_output
 ```
+For help on making your input samplesheet, please see the example [here](https://github.com/treangenlab/somatem/blob/main/assets/16S_sheet.csv)
+
 ---
 
 ## Usage
 
-To run the subworkflows in somatem make sure to check out our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
+Information on how to run the various subworkflows in somatem can be found in our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
 
 ## Database Configuration
 
-Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively.
+Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively. The first time you run a pipeline requiring a database these will be installe for you and saved at that path for future runs.
 
 * **Storage Requirements:** Some databases (e.g., Bakta, CheckM2, SingleM) require up to 100 GB of free space. Ensure your target drive has adequate capacity.
 * **Directory Setup:** Decide whether you want a local database directory within the `somatem` folder, or a shared, centralized directory (highly recommended for HPC cluster environments).
