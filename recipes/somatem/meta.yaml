@@ -1,13 +1,13 @@
 {% set name = "somatem" %}
-{% set version = "0.7.0" %}
+{% set version = "0.7.1" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://github.com/treangenlab/Somatem/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 4ab197230b4fc16f169719c60891ab8701e8b92aac9f36c838397263684b4eca
+  url: https://github.com/treangenlab/Somatem/archive/refs/tags/{{ version }}.tar.gz
+  sha256: 32a4efe92ea1fa6ec89bd873c533ee15b6898d7b7991b648c8b17507059fad20
 
 build:
   noarch: generic
@@ -17,6 +17,7 @@ requirements:
   run:
     - bash
     - nextflow >=25.10.2
+    - micromamba
     - coreutils
 
 test:
@@ -35,6 +36,8 @@ about:
   doc_url: https://github.com/treangenlab/Somatem#readme
 
 extra:
+  skip-lints:
+    - missing_run_exports  # Top-level Nextflow application package, not intended as a pinned downstream library dependency
   recipe-maintainers:
     - ppreshant
     - microbemarsh

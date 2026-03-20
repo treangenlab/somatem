@@ -4,61 +4,62 @@ set -euo pipefail
 PIPELINE_DIR="@@PIPELINE_DIR@@"
 
 show_help() {
-    cat <<'EOF'
-somatem: launch the Somatem Nextflow pipeline
+    cat <<EOF
+Somatem
 
 Usage:
-  somatem [Nextflow pipeline options]
+  somatem <command> [nextflow args...]
+
+Commands:
+  pre_processing        Run the pre-processing workflow
+  mag                   Run the MAG assembly workflow
+  taxonomic_profiling   Run the taxonomic profiling workflow
+  genome_dynamics       Run the genome dynamics workflow
+  get_example_data      Download example data
+  download_databases    Download required databases
+  help                  Show this help message
 
 Examples:
-  somatem -params-file assets/16S_params.yml
-  somatem -params-file assets/custom_metadata.yaml
-  somatem --input samplesheet.csv --outdir results -profile conda
-  somatem -profile docker --input samplesheet.csv --outdir results
-
-Notes:
-  - Relative paths passed to -params-file or --params-file that match files
-    inside the installed Somatem pipeline will be resolved automatically.
-  - Any other arguments are passed directly to:
-      nextflow run <pipeline>/main.nf
-
-Support:
-  - If you run into any issues, please feel free to reach out.
-  - Repository:
-      https://github.com/treangenlab/Somatem
-  - Wiki:
-      https://github.com/treangenlab/Somatem/wiki
-  - You can look through the GitHub wiki pages for documentation on the
-    major subworkflows within Somatem.
-
-Help:
-  somatem -h
-  somatem --help
+  somatem pre_processing --help
+  somatem mag --help
+  somatem taxonomic_profiling --help
+  somatem genome_dynamics --help
+  somatem get_example_data --outdir ./somatem_example_data
+  somatem download_databases --help
 EOF
 }
 
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    show_help
-    exit 0
+cmd="${1:-help}"
+if [[ $# -gt 0 ]]; then
+    shift
 fi
 
-args=()
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -params-file|--params-file)
-            shift
-            pf="$1"
-            if [[ "$pf" != /* && -f "${PIPELINE_DIR}/${pf}" ]]; then
-                args+=("-params-file" "${PIPELINE_DIR}/${pf}")
-            else
-                args+=("-params-file" "$pf")
-            fi
-            ;;
-        *)
-            args+=("$1")
-            ;;
-    esac
-    shift
-done
-
-exec nextflow run "${PIPELINE_DIR}/main.nf" "${args[@]}"
+case "${cmd}" in
+    pre_processing|pre-processing|preprocessing)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/pre-processing.nf" "$@"
+        ;;
+    mag|assembly_mags|mag_assembly|assembly)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/assembly_mags.nf" "$@"
+        ;;
+    taxonomic_profiling|taxonomic-profiling|tax|profiling)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/taxonomic-profiling.nf" "$@"
+        ;;
+    genome_dynamics|genome-dynamics|dynamics)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/genome-dynamics.nf" "$@"
+        ;;
+    get_example_data|example_data|examples)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/get_example_data.nf" "$@"
+        ;;
+    download_databases|download-databases|databases|dbs)
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/download_databases.nf" "$@"
+        ;;
+    help|-h|--help)
+        show_help
+        ;;
+    *)
+        echo "Error: unknown command '${cmd}'" >&2
+        echo >&2
+        show_help >&2
+        exit 1
+        ;;
+esac
