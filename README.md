@@ -19,6 +19,7 @@ Follow these steps to configure your environment and download the somatem pipeli
 We utilize `micromamba` (a faster, drop-in replacement for `conda`) but any of the listed package managers will work for to install somatem.
 
 Here is an example of how to install micromamba
+```
 "${SHELL}" <(curl -L [https://micro.mamba.pm/install.sh](https://micro.mamba.pm/install.sh))
 ```
 
