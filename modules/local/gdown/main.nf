@@ -1,4 +1,4 @@
-// downloads test data from google drive `examples` directory into Somatem/assets/examples/ directory
+// downloads test data from google drive `examples` directory 
 
 process GDOWN {
     label 'process_single'

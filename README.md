@@ -17,34 +17,27 @@ The pipeline is divided into key subworkflows, allowing users to run the exact a
 
 Follow these steps to configure your environment and download the somatem pipeline. Note: This pipeline is designed for Linux/macOS environments and is not compatible with Windows.
 
-**1. Clone the Repository**
-Clone the somatem repository along with its required submodules:
-```bash
-git clone --recurse-submodules [https://github.com/treangenlab/somatem](https://github.com/treangenlab/somatem)
-cd somatem
-```
-> **Note:** If you accidentally cloned the repository without the `--recurse-submodules` flag, you can fetch them by running `git submodule update --init --recursive` inside the repo directory. See the [Git Submodules documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for troubleshooting.
+**1. Install conda/mamba/micromamba**
+We utilize `micromamba` (a faster, drop-in replacement for `conda`) but any of the listed package managers will work for to install somatem.
 
-**2. Install Micromamba**
-We utilize `micromamba` (a faster, drop-in replacement for `conda`) to manage environments. Install the latest version:
-```bash
+Here is an example of how to install micromamba
 "${SHELL}" <(curl -L [https://micro.mamba.pm/install.sh](https://micro.mamba.pm/install.sh))
 ```
 
-**3. Create and Activate the Nextflow Environment**
-Set up a dedicated base environment for Nextflow:
+**2. Create and Activate the somatem Environment**
+Set up a dedicated base environment for somatem:
+
 ```bash
-micromamba create -n nf_base_env nextflow
-micromamba activate nf_base_env
-micromamba install nextflow
+micromamba create -n somatem -c bioconda somatem # Again use your package manager of interest
 ```
 
-**4. Download Example Data (Optional but Recommended)**
+**3. Download Example Data (Optional but Recommended)**
 To verify your installation, you can download our provided test datasets. From the root `somatem/` directory (with your environment activated), run:
 ```bash
-nextflow run subworkflows/local/get_example_data.nf
+somatem get_example_data
 ```
-*This will populate the `examples/data` directory with sample files for pipeline testing.*
+
+To run the other subworkflows in somatem make sure to check out our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
 
 ---
 
@@ -74,7 +67,7 @@ cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
 **2. Execute the Pipeline**
 Run somatem from the base directory, passing in your customized metadata file:
 ```bash
-nextflow run . -param-file assets/custom_metadata.yaml
+somatem subworkflow_name -param-file assets/custom_metadata.yaml
 ```
 
 **Performance & Resource Notes:**
