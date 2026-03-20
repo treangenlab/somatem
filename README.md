@@ -1,8 +1,6 @@
 # somatem
 **A modular and open source metagenomic analysis toolkit designed for long reads**
 
-[Planning Tools & Development Roadmap](https://github.com/treangenlab/somatem-docs/tree/main?tab=readme-ov-file#planning-tools) | [Overarching Goals](https://github.com/treangenlab/somatem/#overarching-goals)
-
 somatem is a modular Nextflow based pipeline designed for long-read microbiome analysis, including both 16S and metagenomic support. somatem supports both Oxford Nanopore Technologies and PacBio. Built with ease of use and analytical rigor in mind, somatem enforces best practices for long-read sequencing data analysis.
 
 The pipeline is divided into key subworkflows, allowing users to run the exact analyses they need:
@@ -58,16 +56,22 @@ Several tools in this pipeline rely on large reference databases. Proper configu
 
 Due to the modular design of somatem, you must configure the pipeline to run the specific subworkflows relevant to your research questions.
 
-**1. Prepare Your Metadata**
-Copy the provided metadata template to create your custom configuration file. The template contains detailed comments to guide you through the available parameters.
+**1. Prepare Your parmeter configuration file**
+Copy the provided parameter template(s) to create your custom configuration file. The template(s) contain detailed comments to guide you through the available parameters.
+Available files:
+- `assets/16S_params.yml` - for 16S rRNA gene analysis
+- `assets/meta_tax_params.yml` - for metagenomic taxonomic analysis
+- `assets/mag_params.yml` - for whole genome shotgun metagenomics, mag assembly and binning workflow
+
+Copy the file over before editing it: for example
 ```bash
-cp docs/somatem-docs/metadata_template.yaml assets/custom_metadata.yaml
+cp assets/16S_params.yml assets/custom_16S_params.yml
 ```
 
 **2. Execute the Pipeline**
-Run somatem from the base directory, passing in your customized metadata file:
+Run somatem from the base directory, passing in your customized parameter configuration file: 
 ```bash
-somatem subworkflow_name -param-file assets/custom_metadata.yaml
+somatem subworkflow_name -param-file assets/custom_metadata.yaml 
 ```
 
 **Performance & Resource Notes:**
@@ -121,12 +125,12 @@ Aggregates and visualizes complex datasets.
 
 For deeper dives into pipeline architecture and tool notes, please see the `docs/` directory:
 * [Installation Guide](docs/installation.md)
-* [Planning Tools & Development Roadmap](docs/bioinformatic_tools_planner.md)
+* [Planning Tools & Development Roadmap: ARCHIVED](https://github.com/treangenlab/somatem-docs/blob/main/planning/bioinformatic_tools_planner.md)
 * [Tool Status and Quick Notes](docs/tool_status-quicknotes.md)
 
 ## Citation
 
-If somatem facilitates your research, please cite the underlying tools that made your analysis possible. A comprehensive list of citation links is available in [docs/somatem-docs/tool_links.csv](docs/somatem-docs/tool_links.csv).
+If somatem facilitates your research, please cite the underlying tools that made your analysis possible. A comprehensive list of citation links is available in [docs/somatem-docs/tool_links.csv](https://github.com/treangenlab/somatem-docs/blob/main/tool_links.csv).
 
 ## Contributing & License
 
