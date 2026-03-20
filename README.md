@@ -16,9 +16,9 @@ The pipeline is divided into key subworkflows, allowing users to run the exact a
 Follow these steps to configure your environment and download the somatem pipeline. Note: This pipeline is designed for Linux/macOS environments and is not compatible with Windows.
 
 **1. Install conda/mamba/micromamba**
-We utilize `micromamba` (a faster, drop-in replacement for `conda`) but any of the listed package managers will work for to install somatem.
 
-Here is an example of how to install micromamba
+We utilize `micromamba` (a faster, drop-in replacement for `conda`) but any of the listed package managers will work for to install somatem. See example below for micromamba installation.
+
 ```
 "${SHELL}" <(curl -L [https://micro.mamba.pm/install.sh](https://micro.mamba.pm/install.sh))
 ```
@@ -32,13 +32,16 @@ micromamba create -n somatem -c bioconda somatem # Again use your package manage
 
 **3. Download Example Data (Optional but Recommended)**
 To verify your installation, you can download our provided test datasets. From the root `somatem/` directory (with your environment activated), run:
+
+__Caution: actively working on this as we have revamped our launch scripts.__
 ```bash
 somatem get_example_data
 ```
-
-To run the other subworkflows in somatem make sure to check out our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
-
 ---
+
+## Usage
+
+To run the subworkflows in somatem make sure to check out our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
 
 ## Database Configuration
 
@@ -46,34 +49,12 @@ Several tools in this pipeline rely on large reference databases. Proper configu
 
 * **Storage Requirements:** Some databases (e.g., Bakta, CheckM2, SingleM) require up to 100 GB of free space. Ensure your target drive has adequate capacity.
 * **Directory Setup:** Decide whether you want a local database directory within the `somatem` folder, or a shared, centralized directory (highly recommended for HPC cluster environments).
-* **Configuration:** Update the `nextflow.config` file to point the pipeline to your chosen directory. Locate and modify the following variable:
+* **Configuration:** Update the `/path/to/env/somatem/share/somatem-{version}/nextflow.config` file to point the pipeline to your chosen directory. Locate and modify the following variable:
     ```groovy
     db_base_dir = "/home/dbs" // Change this to "./assets/databases" for local storage
     ```
 
 ---
-
-## Usage
-
-Due to the modular design of somatem, you must configure the pipeline to run the specific subworkflows relevant to your research questions.
-
-**1. Prepare Your parmeter configuration file**
-Copy the provided parameter template(s) to create your custom configuration file. The template(s) contain detailed comments to guide you through the available parameters.
-Available files:
-- `assets/16S_params.yml` - for 16S rRNA gene analysis
-- `assets/meta_tax_params.yml` - for metagenomic taxonomic analysis
-- `assets/mag_params.yml` - for whole genome shotgun metagenomics, mag assembly and binning workflow
-
-Copy the file over before editing it: for example
-```bash
-cp assets/16S_params.yml assets/custom_16S_params.yml
-```
-
-**2. Execute the Pipeline**
-Run somatem from the base directory, passing in your customized parameter configuration file: 
-```bash
-somatem subworkflow_name -param-file assets/custom_metadata.yaml 
-```
 
 **Performance & Resource Notes:**
 * **Automated Downloads:** The pipeline automatically downloads most required databases (<3 GB). However, the [Bakta database](https://zenodo.org/records/14916843) used in the `assembly_mags` subworkflow is approximately 60 GB and may require additional time.
