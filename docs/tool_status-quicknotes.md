@@ -137,7 +137,9 @@ _First test each module independently with example data from each tool's own rep
     Missing output file(s) `*abundance.tsv` expected by process `EMU_ABUNDANCE (test)`
     ```
 
-- **Centrifuger**: Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.
+### Centrifuger
+**Status**: Not used in the pipeline currently.. Might be useful for the *Ensemble* analysis, with bakeoff DB from Eddy.  
+ *Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.*
   
   - Database issue: (_figured that you need all 4 cfr_ref_idx files; hence created database from example files for the 2 legionella genomes in the example directory_)
     - Downloaded GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) ; _Downloaded only the `cfr_gtdb_r226.2.cfr` file_ ;
@@ -150,6 +152,17 @@ _First test each module independently with example data from each tool's own rep
     - (Mock run works) when run directly in conda env `/home/pbk1/micromamba/other-envs/env-0ae31dcc1c5dffe0dcb45b228367f9cc` with original files works `centrifuger -u examples/data/46_1_sub10k.fastq.gz -x databases/legionella_cfr_idx/cfr_ref_idx -t 4 > work/centrifugertest/test.tsv`
 
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
+
+### Ganon2 
+- Implementing the nf-core module for [ganon_classify](https://nf-co.re/modules/ganon_classify/) using `nf-core modules install ganon/classify`
+ - Do we also need? [ganon_report](https://nf-co.re/modules/ganon_report/): _What do we want as the output: some `tsv` similar to lemur?_ ; `ganon report --report-type abundance` might be the most relevant. Read [documentation](https://pirovc.github.io/ganon/reports/)
+- We will get the standardized DB from Eddy's bakeoff work!
+  - (*typically*) DB needs to be build locally with the latest Refseq etc. ; read [documentation](https://pirovc.github.io/ganon/default_databases/#commonly-used-sub-sets) for recommendations of commonly used subsets for DB
+
+- Is `Ganon suitable for long reads?` asked on a GitHub issue [here](https://github.com/pirovc/ganon/issues/297)
+  > ganon can be as well applied for long-reads. It's important to mind the usage of the thresholds: https://pirovc.github.io/ganon/classification/#cutoff-and-filter-rel-cutoff-rel-filter
+  
+  In this paper describing a similar method, ganon achieved good results with the thresholds -c 0.12 -e 0.9, which can be a good starting point. 
 
 
 
