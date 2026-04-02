@@ -37,6 +37,10 @@ _First test each module independently with example data from each tool's own rep
   - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
   - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
 
+
+### Older tools 
+_Need to break these into individual `###` categories at some point for readability!_
+
 - **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. 
   - Tried to run old file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
@@ -156,7 +160,7 @@ _First test each module independently with example data from each tool's own rep
 ### Ganon2 
 - Implementing the nf-core module for [ganon_classify](https://nf-co.re/modules/ganon_classify/) using `nf-core modules install ganon/classify`
  - Do we also need? [ganon_report](https://nf-co.re/modules/ganon_report/): _What do we want as the output: some `tsv` similar to lemur?_ ; `ganon report --report-type abundance` might be the most relevant. Read [documentation](https://pirovc.github.io/ganon/reports/)
-- We will get the standardized DB from Eddy's bakeoff work!
+- We will get the standardized DB from Eddy's bakeoff work! (and distribute it somehow..)
   - (*typically*) DB needs to be build locally with the latest Refseq etc. ; read [documentation](https://pirovc.github.io/ganon/default_databases/#commonly-used-sub-sets) for recommendations of commonly used subsets for DB
 
 - Is `Ganon suitable for long reads?` asked on a GitHub issue [here](https://github.com/pirovc/ganon/issues/297)
@@ -164,6 +168,10 @@ _First test each module independently with example data from each tool's own rep
   
   In this paper describing a similar method, ganon achieved good results with the thresholds -c 0.12 -e 0.9, which can be a good starting point. 
 
+### Kraken2
+- Implementing the nf-core module for [kraken2_kraken2](https://nf-co.re/modules/kraken2/kraken2/) using `nf-core modules install kraken2/kraken2`
+- Get the standardized DB from Eddy's bakeoff work along with the parameters.
+  - Figure out how to serve this DB to other somatem users : OSF ~ like Emu / (_more recent_) Zenodo ~ like lemur
 
 
 ## Pre-processing

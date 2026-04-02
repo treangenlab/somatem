@@ -50,6 +50,11 @@
                         "git_sha": "f9e0c7508d84c6bbb6aef566bb1f23cf44c2b5bf",
                         "installed_by": ["modules"]
                     },
+                    "kraken2/kraken2": {
+                        "branch": "master",
+                        "git_sha": "71a39f3598935d64ffd65f0960e4d2d4a42ab778",
+                        "installed_by": ["modules"]
+                    },
                     "minimap2/align": {
                         "branch": "master",
                         "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
