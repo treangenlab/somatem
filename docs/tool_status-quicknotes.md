@@ -139,7 +139,7 @@ _Need to break these into individual `###` categories at some point for readabil
     ```
 
 ### Centrifuger
-**Status**: Not used in the pipeline currently.. Might be useful for the *Ensemble* analysis, with bakeoff DB from Eddy.  
+**Status**: Not used in the pipeline currently. Keep as a backup tool : might be useful for the *Ensemble* analysis, with bakeoff DB from Eddy if the current 3 don't work out.  
  *Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.*
   
   - Database issue: (_figured that you need all 4 cfr_ref_idx files; hence created database from example files for the 2 legionella genomes in the example directory_)
@@ -169,7 +169,7 @@ DBs: Note from Eddy (2/Apr/26)
 ### Ganon2 
 - Implementing the nf-core module for [ganon_classify](https://nf-co.re/modules/ganon_classify/) using `nf-core modules install ganon/classify`
  - Do we also need? [ganon_report](https://nf-co.re/modules/ganon_report/): _What do we want as the output: some `tsv` similar to lemur?_ ; `ganon report --report-type abundance` might be the most relevant. Read [documentation](https://pirovc.github.io/ganon/reports/)
-- We will get the standardized DB from Eddy's bakeoff work! (and distribute it somehow..)
+- We will get the standardized DB from Eddy's bakeoff work! (_get locally first_)
   - (*typically*) DB needs to be build locally with the latest Refseq etc. ; read [documentation](https://pirovc.github.io/ganon/default_databases/#commonly-used-sub-sets) for recommendations of commonly used subsets for DB
 
 - Is `Ganon suitable for long reads?` asked on a GitHub issue [here](https://github.com/pirovc/ganon/issues/297)
@@ -496,14 +496,15 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
 
-## Bakeoff' Eddy's unified DBs
-Downloading the 3 key DBs using helper script `assets/scripts/copy_unified_dbs.sh`
+## Ensemble: Eddy's unified DBs from Bakeoff
+_Use local DBs from the location directly instead of copying them_
+Will implement a download module to fetch these databases from the remote location when they are uploaded to Zenodo etc. by Eddy eventually before her publication
+
+(_abandoned: use local to save space_) Downloading the 3 key DBs using helper script `archive/scripts/copy_unified_dbs.sh`
 Copies these 3 directories from `/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/` to `assets/databases/`:
 - sylph_abf_030325 : 8.5 GB
 - ganon2_abvf_030325 : 11 GB
-- k2_abfv_030325 : +36 GB 
-  - _renamed to kraken2_abfv_030325 to be more descriptive!_
-
+- k2_abfv_030325 : +106 GB 
 
 For more details: look for Eddy's unified databases (DB) here: 
 ```bash
