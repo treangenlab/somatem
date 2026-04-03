@@ -26,7 +26,7 @@ workflow TAXONOMIC_PROFILING {
 
     main:
 
-    ch_versions = Channel.empty() // collect versions from all modules
+    ch_versions = channel.empty() // collect versions from all modules
 
     // 16S amplicon reads
     if (params.data_type == "16S") {
