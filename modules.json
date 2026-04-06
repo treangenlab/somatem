@@ -92,7 +92,7 @@
                     },
                     "sylph/profile": {
                         "branch": "master",
-                        "git_sha": "bd80e43310021c28ddf9e0907680166aedc75246",
+                        "git_sha": "004e773fc35ebd24063ca4cbef057c94a24208aa",
                         "installed_by": ["modules"]
                     }
                 }
