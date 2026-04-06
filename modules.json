@@ -35,6 +35,11 @@
                         "git_sha": "bd0fa881f6b4ed108af6b1f7393d7d37d4dbca97",
                         "installed_by": ["modules"]
                     },
+                    "ganon/classify": {
+                        "branch": "master",
+                        "git_sha": "c8f2c72925cb42eeabc346563fe8fc5518181a3f",
+                        "installed_by": ["modules"]
+                    },
                     "hostile/clean": {
                         "branch": "master",
                         "git_sha": "cbe28fbf71fd3eddd868140ccd9c3456fa1df363",
@@ -43,6 +48,11 @@
                     "hostile/fetch": {
                         "branch": "master",
                         "git_sha": "f9e0c7508d84c6bbb6aef566bb1f23cf44c2b5bf",
+                        "installed_by": ["modules"]
+                    },
+                    "kraken2/kraken2": {
+                        "branch": "master",
+                        "git_sha": "71a39f3598935d64ffd65f0960e4d2d4a42ab778",
                         "installed_by": ["modules"]
                     },
                     "minimap2/align": {
@@ -78,6 +88,11 @@
                     "semibin/singleeasybin": {
                         "branch": "master",
                         "git_sha": "27c79c80af5837c7137f63ebf535698d5f5854f4",
+                        "installed_by": ["modules"]
+                    },
+                    "sylph/profile": {
+                        "branch": "master",
+                        "git_sha": "004e773fc35ebd24063ca4cbef057c94a24208aa",
                         "installed_by": ["modules"]
                     }
                 }

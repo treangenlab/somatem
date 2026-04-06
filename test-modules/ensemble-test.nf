@@ -1,11 +1,10 @@
 #!/usr/bin/env nextflow
 
-// enable dsl2 syntax
-nextflow.enable.dsl = 2
-
 include { convert_to_nfcore_tuple } from '../subworkflows/local/utils/nf-core-compatibility.nf'
-include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../modules/local/lemur/download_db/main.nf"
-include { LEMUR } from "../modules/local/lemur/main.nf"
+include { GANON_CLASSIFY } from "../modules/nf-core/ganon/classify/main.nf"
+include { KRAKEN2_KRAKEN2 } from "../modules/nf-core/kraken2/kraken2/main.nf"
+
+
 
 // -------------------------
 // Parameters
@@ -21,10 +20,8 @@ workflow {
     
     reads_ch = convert_to_nfcore_tuple(params.reads)
     
-    LEMUR_DATABASEDOWNLOAD(params.lemur_db_zenodo_id)
-    LEMUR_STAGE_DB(LEMUR_DATABASEDOWNLOAD.out.db_files, LEMUR_DATABASEDOWNLOAD.out.refseq_version_bacteria)
-    
-    LEMUR_STAGE_DB.out.lemur_db.view { x -> "lemur_db: $x"}
+    GANON_CLASSIFY(reads_ch, params.ganon_db)
+    KRAKEN2_KRAKEN2(reads_ch, params.kraken2_db)
     
     // LEMUR(reads_ch)
 }

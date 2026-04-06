@@ -37,6 +37,10 @@ _First test each module independently with example data from each tool's own rep
   - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
   - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
 
+
+### Older tools 
+_Need to break these into individual `###` categories at some point for readability!_
+
 - **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. 
   - Tried to run old file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
@@ -116,9 +120,6 @@ _First test each module independently with example data from each tool's own rep
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
 
-- **Sylph**: test module for profile with example data from repo works
-  - need to add an adapter module to get tax profiling output in mpa format (?). see here https://sylph-docs.github.io/sylph-tax/
-
 - **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
   - feature integration: `taxburst`: Fails due to duplicate `Actinobacteria` for both class and phylum of Bifidobacteriales (confirmed in emu's db: `taxonomy.tsv`) ; _deleting this column makes taxburst work! : how to fix?_ ~ maybe update emu db with recent changes to phylum names?/ 
     - Not a robust solution but could run with `errorStrategy: 'ignore'` in `taxburst`? [read more](https://www.nextflow.io/docs/latest/reference/process.html#process-error-strategy)
@@ -137,7 +138,9 @@ _First test each module independently with example data from each tool's own rep
     Missing output file(s) `*abundance.tsv` expected by process `EMU_ABUNDANCE (test)`
     ```
 
-- **Centrifuger**: Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.
+### Centrifuger
+**Status**: Not used in the pipeline currently. Keep as a backup tool : might be useful for the *Ensemble* analysis, with bakeoff DB from Eddy if the current 3 don't work out.  
+ *Runs with the 46_1_sub10k.fastq.gz file and legionella cfr database now.*
   
   - Database issue: (_figured that you need all 4 cfr_ref_idx files; hence created database from example files for the 2 legionella genomes in the example directory_)
     - Downloaded GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) ; _Downloaded only the `cfr_gtdb_r226.2.cfr` file_ ;
@@ -151,6 +154,39 @@ _First test each module independently with example data from each tool's own rep
 
   - (_Most reads are unclassified with the legionella database_) Download a mock nanopore fastq file from some nf-core module porechop etc. to test with.
 
+### Sylph
+_test module for profile with example data from repo works_
+- Made a local module for sylph_profile. Need to replace it with the official nf-core module [here](https://nf-co.re/modules/sylph_profile/)
+  - (_old comment, not sure of it's relevance_) need to add an adapter module to get tax profiling output in mpa format (?). see here https://sylph-docs.github.io/sylph-tax/ 
+  - [x] (_configured path but not tested yet_) Could use the GTDB database from our `/home/dbs/gtdb-r220-c200-dbv1.syldb`
+
+**NOTE**: (6/Apr/26) Continue the sylph implementation from #73 for downloading viral, fungal and custom DBs (_using a csv file?_) in branch `sylph_i73` not merged yet. Current implementation focusing on the unified DBs and rebased part of the branch: `sylph_i73` at commit: f6c45ef 
+
+
+DBs: Note from Eddy (2/Apr/26)
+> Sylph specifically, running with its default db sources (but updated versions for each rather than its prebuilt versions; Sylph takes multiple dbs in case you are unaware of) may align better with its design purpose. But for people who like RefSeq, build a newer version RefSeq index for Sylph is fairly fast (about half hour)
+- Is it worthwhile building a refseq DB for users: _There's the issue of periodic updates etc. right now we rely on the original tool authors to provide the up-to-date DBs_
+
+> For viral, there's an issue I'd suggest you to look up on the repo. Just search viral and there's one talking about unexpected viral or something like that
+- [ ] Find out about this viral DB issue of Sylph
+
+### Ganon2 
+- Implementing the nf-core module for [ganon_classify](https://nf-co.re/modules/ganon_classify/) using `nf-core modules install ganon/classify`
+ - Do we also need? [ganon_report](https://nf-co.re/modules/ganon_report/): _What do we want as the output: some `tsv` similar to lemur?_ ; `ganon report --report-type abundance` might be the most relevant. Read [documentation](https://pirovc.github.io/ganon/reports/)
+- We will get the standardized DB from Eddy's bakeoff work! (_get locally first_)
+  - (*typically*) DB needs to be build locally with the latest Refseq etc. ; read [documentation](https://pirovc.github.io/ganon/default_databases/#commonly-used-sub-sets) for recommendations of commonly used subsets for DB
+
+- Is `Ganon suitable for long reads?` asked on a GitHub issue [here](https://github.com/pirovc/ganon/issues/297)
+  > ganon can be as well applied for long-reads. It's important to mind the usage of the thresholds: https://pirovc.github.io/ganon/classification/#cutoff-and-filter-rel-cutoff-rel-filter
+  
+  In this paper describing a similar method, ganon achieved good results with the thresholds -c 0.12 -e 0.9, which can be a good starting point. 
+
+Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
+
+### Kraken2
+- Implementing the nf-core module for [kraken2_kraken2](https://nf-co.re/modules/kraken2/kraken2/) using `nf-core modules install kraken2/kraken2`
+- Get the standardized DB from Eddy's bakeoff work along with the parameters.
+  - Figure out how to serve this DB to other somatem users : OSF ~ like Emu / (_more recent_) Zenodo ~ like lemur
 
 
 ## Pre-processing
@@ -438,6 +474,8 @@ _procedure suggested by perplexity_
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
 # Database files (`databases/`)
+
+Older notes: _Question is how do we handle the databases in the config file of the pipeline repo?_
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
 Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Shared: benefit of space ; Store updated versions separately
@@ -446,10 +484,21 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Download: benefit of modularity ; ready to deploy on other machines ; can test the scripts easily to download the dbs.. 
 - Ideas for DB scripts: [Emu: osfclient](https://github.com/treangenlab/emu?tab=readme-ov-file#1-download-database) ; 
 
-Automatic DB download ideas:
+(_already implemented now_) Automatic DB download ideas:
 - advanced: use the [storeDir](https://www.nextflow.io/docs/latest/reference/process.html#storedir) feature to store the db in a shared location. As mentioned in [seqera forum](https://community.seqera.io/t/prevent-nextflow-from-running-a-process-if-the-output-file-exists/1723)
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
+
+### DB's plan
+
+**Consistent config file for db paths:**
+- Let's make a db_paths config file that stores the paths to the dbs for each tool
+- There will be two versions of this file: 
+  - `db_paths_default.yaml`: makes dummy paths for each tool's db
+  - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
+
+**Automatic DB download:**
+- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
 
 
 ## Real databases
@@ -463,6 +512,48 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - checkm2_db: (dir: `/home/dbs/checkm2_db/`) : uniref100.KO.1.dmnd. Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14897628)
 - bakta_db: (dir: `/home/dbs/bakta_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/14916843)
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
+- sylph_gtdb: .. 
+
+## Ensemble: Eddy's unified DBs from Bakeoff
+_Use local DBs from the location directly instead of copying them_
+Will implement a download module to fetch these databases from the remote location when they are uploaded to Zenodo etc. by Eddy eventually before her publication
+
+(_abandoned: use local to save space_) Downloading the 3 key DBs using helper script `archive/scripts/copy_unified_dbs.sh`
+Copies these 3 directories from `/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/` to `assets/databases/`:
+- sylph_abf_030325 : 8.5 GB
+- ganon2_abvf_030325 : 11 GB
+- k2_abfv_030325 : +106 GB 
+
+For more details: look for Eddy's unified databases (DB) here: 
+```bash
+cd /home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/ # sylph_abf_030325
+```
+
+Information about each of these tools is included in the `/home/Users/pacbio_bakeoff/doc/README` file. Excerpt pasted below
+```bash
+windsurf /home/Users/pacbio_bakeoff/doc/README # or any text viewer..
+```
+_from the above document:_
+- Database comparison: Prokaryotic(Arachea, Bacteria), Virus, Fungi, Human
+    - Kraken2: 
+        default: 255363 entries in seqid2taxid.map
+        unified: 148260 entries in seqid2taxid.map
+    - Centrifuge:
+        default: 31.3G hpvc refseq + covid2 from genbank
+        unified: 128G pvf 
+    - Centrifuger:
+        default: 42G hpvc refseq + covid2 from genbank
+        unified: 68G abv
+    - Sourmash:
+        default: 79.43G abvf, 1214995 entries in lineage file
+        unified: 1.8G abvf, 69095 entries in lineage file
+    - Sylph:
+        default: 14G gtdb-r220-c200, 113,104 species representative genomes
+        unified: 8.5G abvf
+
+- Information on building this seems to be included in this other README: `/home/Users/pacbio_bakeoff/data/ref_db/README`
+
+
 
 ## Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files

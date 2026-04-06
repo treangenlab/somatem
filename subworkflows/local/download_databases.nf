@@ -4,8 +4,8 @@ include { HOSTILE_FETCH } from '../../modules/nf-core/hostile/fetch/main.nf'
 include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databasedownload/main'   
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
 include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/main.nf'
-include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../../modules/local/emu/downloaddb/main.nf"
-include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../../modules/local/lemur/databasedownload/main.nf"
+include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../../modules/local/emu/download_db/main.nf"
+include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../../modules/local/lemur/download_db/main.nf"
 
 workflow DOWNLOAD_DBS {
 
@@ -19,12 +19,12 @@ workflow DOWNLOAD_DBS {
 
     main:
     // Initialize empty channels for each database type
-    ch_hostile_db = Channel.empty()
-    ch_emu_db = Channel.empty()
-    ch_lemur_db = Channel.empty()
-    ch_checkm2_db = Channel.empty()
-    ch_bakta_db = Channel.empty()
-    ch_singlem_db = Channel.empty()
+    ch_hostile_db = channel.empty()
+    ch_emu_db = channel.empty()
+    ch_lemur_db = channel.empty()
+    ch_checkm2_db = channel.empty()
+    ch_bakta_db = channel.empty()
+    ch_singlem_db = channel.empty()
 
     // log message: downloading databases for which analysis type
     log.info "Downloading databases for analysis type: ${analysis_type}"
