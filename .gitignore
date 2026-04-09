@@ -25,9 +25,10 @@ testing*
 *.pyc
 .nf-test*
 
-# conda/micromamba env folders
+# conda/micromamba environment directories
 miniforge
 micromamba
 
 # vscode files
-SOMAteM.code-workspace
+somatem.code-workspace
+.vscode/
