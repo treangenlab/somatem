@@ -1,12 +1,13 @@
 # Testing specs 
 
-Run tests using the config file `pilot_params.yml` where you can specify a path and paramers based on the sample sheets below.
+Run tests using the config files `.._params.yml` with the preset parameters for convenience
+Can use : `pilot_params.yml` for testing/iterations: to specify a path and paramers based on the sample sheets below.
 
 Sample sheets list the paths of the files to be used for testing. These `.csv` files are included within the `assets/` directory
-- `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _run with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_
-- `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_. Run log in issue thread 2 / #86 and google drive/test_run_logs/mag_assembly
+- `16S_params.yml` + `16S_sheet.csv` : 16S rRNA gene sequencing data for TAXONOMIC_PROFILING. _runs with `--data_type "16S" and --analysis_type "taxonomic-profiling"`_
+- `mag_params.yml` + `mag_samplesheet.csv` : (_still testing..single file_) Metagenomics sequencing data (hi qual, subsample 100k reads) for ASSEMBLY_MAGS. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_. Run log in issue thread 2 / #86 and google drive/test_run_logs/mag_assembly
 - `mag_big_samplesheet.csv` : agm ran this ; 
-- `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
+- `meta_tax_params.yml` + `meta_tax_samplesheet.csv` : shallow subsampled (10k reads) metagenomics sequencing data of zymo mock for TAXONOMIC_PROFILING. _run with `--data_type "metagenomics" and --analysis_type "taxonomic-profiling"`_
 - `timeseries_samples.csv` : Time series sequencing data. _run with `--data_type "metagenomics" and --analysis_type "assembly"`_
 
 **Archived sample sheets:**.
@@ -27,8 +28,8 @@ zymoM95,assets/examples/data/zymoM95.fastq.gz
 Notes:
 - important mag runtime with tested datasets discussed in issues: [#26, thread 2](https://github.com/treangenlab/Somatem/issues/26#issuecomment-3364217950) and [#66](https://github.com/treangenlab/Somatem/issues/66)
 
-
-# Tool Status
+---
+# Modules: notes, status
 _First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
@@ -230,6 +231,96 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
+# Orchestrating the pipeline
+- Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
+- standardize modules: 
+  1. remove separate directory from `lemur`, `magnet` module outputs ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
+  2. Make all outputs a tuple of `meta, path` except `versions.yml`
+- mags plan: 
+  - a) (_skipping this_) Test `somatem_mags.nf` from it's own entry workflow; 
+  - [x] find example data (`input4mags`?)
+  - [x] Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
+    ```bash
+    --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
+    --bakta_db    /path/to/bakta/db \
+    --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
+    ```
+  - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
+  - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
+  - [ ] Port the ~~entry~~ full mag workflow logic into the ~~main~~ `somatem_mags.nf` script
+  
+  - notes: how to handle the databases? Switched from an entry workflow separate run of `download_dbs` to a subworkflow in the main workflow. This enables the usage of the output channels from download_dbs in the main workflow (better than providing the static path of the databases ; for proper dependancy tracking _says seqera AI_). Will make empty channels that will be filled if a download db module is run (for switching between branches) / alternative is to mix all channels but unmixing becomes ugly. (_not using this for now_) 
+
+  - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
+  - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
+    - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
+
+- DB notes:
+  - `hostile`: switching to `download_dbs` subworkflow for this. How to handle the output channel that has path only to a `referece/` directory? (_not the downloaded file explicityly_) ; Hostile clean and fetch modules might need to be recoded to be compatible with a `storeDir` based workflow?
+
+## Implementation notes
+- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
+  - `Lemur`, `magnet`: 
+  - `flye`: 
+- Best Practices for Optimization of memory (rss) (from Seqera-AI)
+  - Start Conservative: Set memory to ~1.2x the peak_rss observed
+  - Monitor Efficiency: Aim for 60-80% memory utilization
+  - Handle Failures: Use retry logic for memory-related failures (exit codes 137-140)
+  - Consider Input Size: Scale resources based on input file sizes when possible
+  ```groovy
+  process SCALE_BY_INPUT {
+      memory { 4.GB + (input_file.size() / 1000000000).intValue().GB }
+  }
+  ```
+  - Use %cpu to measure efficiency of cpus - aim for 70-90% utilization
+
+**Organization notes** : _Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
+
+
+## nf-core compatibility
+- Created a template using `nf-core pipelines create` with custom settings
+  - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
+  - Still want to keep the nf-core template for composability with nf-core modules and any future forks people might make.
+- Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
+  - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
+
+- `gms_16S`: pipeline is a good example of nf-core style that we can pull parts from.
+  - Input as samplesheet vs dir with reads? _ex: methylseq/older pipelines takes in --input reads dir ; gms_16S takes in --input samplesheet_
+
+- nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
+
+## Report generation
+
+Generate html reports and standardized csv like files for feeding into omi's report generation system and LLM context for follow up chats.
+
+- Nanoplot: _Currently using the `NanoStats.txt` file_
+need to enable this option ([NanoPlot readme](https://github.com/wdecoster/NanoPlot))
+```bash
+--tsv_stats           Output the stats file as a properly formatted TSV.
+```
+
+# Execution 
+
+## github/somatem
+- Initial execution was through `nextflow run main.nf --input_dir <dir> --data_type <type> --analysis_type <type>` 
+- Later execution was through `nextflow run main.nf -params-file assets/16S_params.yml` with various params in the file. 
+  - This is more reproducible (sharing just the params file) and easier to manage than command line arguments.
+- For more convenience and discoverability, Todd wants to put the pipeline on bioconda: 
+   - We should be able to run the pipeline with a simple command like `somatem 16S .._params.yml` : _explicit notation of what's being run rather than a vague main.nf which he doesn't like_
+
+## bioconda/somatem
+
+Initial steps were done by Austin with Bryce's help: 
+- Need to create a bioconda recipe for the pipeline
+- Need to test the recipe locally before submitting to bioconda
+- Need to submit the recipe to bioconda
+
+PK now coming back to verify that things work and make them compatible with the older github execution method as well.
+Follow updates in issue: #109
+
+
+# Documentation
+
 ## metro map: nf-metro
 Update: 
 - Using nf-metro to make a base chart, later edited by hand in Inkscape 
@@ -278,110 +369,16 @@ fastqc_filtered -->|star_salmon,star_rsem| star
 - `metro build`
 - `metro publish`
 
-## Orchestrating the pipeline
-- Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
-- standardize modules: 
-  1. remove separate directory from `lemur`, `magnet` module outputs ; output to `./` or `results/` for easier discovery? (_check other local modules too_)
-  2. Make all outputs a tuple of `meta, path` except `versions.yml`
-- mags plan: 
-  - a) (_skipping this_) Test `somatem_mags.nf` from it's own entry workflow; 
-  - [x] find example data (`input4mags`?)
-  - [x] Make databases for: `checkm2_db`, `bakta_db`, `singlem_metapackage` parameters
-    ```bash
-    --checkm2_db  /path/to/checkm2/uniref100.KO.1.dmnd \
-    --bakta_db    /path/to/bakta/db \
-    --singlem_metapackage /path/to/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb \
-    ```
-  - check if `soma_test.sh` params need to be moved in or omitted (such as `--threads`, by changing `task_high` value etc.)
-  - move params at the head of the workflow and simple + complex config into default location in `nextflow.config`
-  - [ ] Port the ~~entry~~ full mag workflow logic into the ~~main~~ `somatem_mags.nf` script
-  
-  - notes: how to handle the databases? Switched from an entry workflow separate run of `download_dbs` to a subworkflow in the main workflow. This enables the usage of the output channels from download_dbs in the main workflow (better than providing the static path of the databases ; for proper dependancy tracking _says seqera AI_). Will make empty channels that will be filled if a download db module is run (for switching between branches) / alternative is to mix all channels but unmixing becomes ugly. (_not using this for now_) 
 
-  - Check if the custom publishing method can be merged into the nf-core style publish? (`// Publish results to organized directories with safe copying`). Organization might be the useful case here, see how we can do it with the native publish method.
-  - (_future_) : Austin will identify modules from nf-core that have been modified/moved to local eventually and add comments about changes. ([Slack](https://treangenlab.slack.com/archives/D08HP4K72QJ/p1757091054426499), 5/Sep/25) -- Could start from `somatem_mags.nf`'s diff in latest commit
-    - SingleM, TaxBurst: directly in local ; Bakta moved to local ; checkm2_parse: custom made likely in local.
-
-- DB notes:
-  - `hostile`: switching to `download_dbs` subworkflow for this. How to handle the output channel that has path only to a `referece/` directory? (_not the downloaded file explicityly_) ; Hostile clean and fetch modules might need to be recoded to be compatible with a `storeDir` based workflow?
-
-### Implementation notes
-- Need to optimize the high memory and high threads processes : split / check the individual requirements for different processes like Austin did.
-  - `Lemur`, `magnet`: 
-  - `flye`: 
-- Best Practices for Optimization of memory (rss) (from Seqera-AI)
-  - Start Conservative: Set memory to ~1.2x the peak_rss observed
-  - Monitor Efficiency: Aim for 60-80% memory utilization
-  - Handle Failures: Use retry logic for memory-related failures (exit codes 137-140)
-  - Consider Input Size: Scale resources based on input file sizes when possible
-  ```groovy
-  process SCALE_BY_INPUT {
-      memory { 4.GB + (input_file.size() / 1000000000).intValue().GB }
-  }
-  ```
-  - Use %cpu to measure efficiency of cpus - aim for 70-90% utilization
-
-### Organization notes
-_Use this opportunity of moving from `t8` to `owlet3` to make sure that the setup is fully portable and include instructions for micromamba etc. in the readme?!_
-
-
-## nf-core compatibility
-- Created a template using `nf-core pipelines create` with custom settings
-  - _Assuming this is not going on nf-core since Todd would want to keep ownership rather than community owned status_
-  - Still want to keep the nf-core template for composability with nf-core modules and any future forks people might make.
-- Moved all components of the template `nf-core-somatem` dir into current directory and merged any similar dirs/files(`nextflow.config, modules.json, docs/, .nf-core.yml`)
-  - note: extra readme saved in archive for future ideas ; config was mixed with current config for testing (_cacheDir is hardcoded path_) 
-
-- `gms_16S`: pipeline is a good example of nf-core style that we can pull parts from.
-  - Input as samplesheet vs dir with reads? _ex: methylseq/older pipelines takes in --input reads dir ; gms_16S takes in --input samplesheet_
-
-- nf-core styled modules require a tuple input (`tuple val(meta), path(fasta)`). I generate such input using the helper script `subworkflows/local/utils/nf-core-compatibility.nf`. I set meta.id to the file name without the extension and meta.single_end = true for nanopore/long read data.
-
-## Report generation
-
-Generate html reports and standardized csv like files for feeding into omi's report generation system and LLM context for follow up chats.
-
-- Nanoplot: _Currently using the `NanoStats.txt` file_
-need to enable this option ([NanoPlot readme](https://github.com/wdecoster/NanoPlot))
-```bash
---tsv_stats           Output the stats file as a properly formatted TSV.
-```
-
-
-
----
-# Nextflow notes:
-
-## Process to make a local nextflow module
-
-1. Make a nf-core template module using `nf-core modules create`. Or for a barebones version, copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
-2. Check for the tool's conda repo to call in the module-process's conda definition. If the tool itself doesn't exist on conda, then get all it's dependancies in the conda env and
-3. Clone the tool's repo within the `modules/local/{tool_name}` directory as a submodule using `git submodule add <tool_repo_url> modules/local/{tool_name}`
-4. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
-5. Test the module with a testing workflow that gives minimal example data. Copy the template from `test-modules/` directory
-6. If the module fails, try running it in the nextflow generated conda env manually with the `bash .command.sh` in the work/.. directory
-
-If module exists on nf-core,
-- Install the nf-core module using `nf-core modules install ..`
-
-
-## Nextflow tips
-### Input files
-- Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
-   - Need to use Channel.fromPath().simpleName to create meta.id from the file name
-- nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
-  - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
-- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
-
-
-# data/databases downloaded notes
+# Assets / Data / Databases
+**data/databases downloaded notes**
 Recording the source of each example dataset and database in the database folder here + add it to the commit message when adding any new examples? (databases won't be in the version control, maybe need a neat script that pulls them for public google drive/box.com urls)  
 
 
-# Example files (`examples/`)
+## Example files (`examples/`)
 All example files are stored in google drive/[data/examples](https://drive.google.com/drive/u/1/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh). `seqtk` is installed in `utils` micromamba env.
 
-## metagenomic data 
+### metagenomic data 
 - `data/mock9_sub10k.fastq.gz` (has <6 M reads): From zymo mock data with kit 9 (ZymoBIOMICS Gut Microbiome Standard
 , 21 species across kingdoms, cat # : [D6331](https://files.zymoresearch.com/protocols/_d6331_zymobiomics_gut_microbiome_standard.pdf)), subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913200.fastq 10000 | gzip > assets/examples/data/mock9_sub10k.fastq.gz` (_added `gzip` later_)
 - `data/mock20_sub10k.fastq.gz` (has <1.7 M reads) : From zymo mock data, subsampled to 10k reads using `seqtk sample -s100 /home/Users/pacbio_bakeoff/data/ZymoMockD6331/ont/SRR17913199.fastq 10000 | gzip > assets/examples/data/mock20_sub10k.fastq.gz`
@@ -396,7 +393,7 @@ All example files are stored in google drive/[data/examples](https://drive.googl
   seqtk sample -s100 assets/examples/data/temp-mock20_hiq.fastq 50000 | gzip > assets/examples/data/mock20_hiq50k.fastq.gz
   ```
 
-## 16S data
+### 16S data
 - `data/16S/mockm95_sub10k.fastq.gz` (SRR23926885) and `data/16S/mockm91_sub10k.fastq.gz` (SRR23926890): from Zymo gut microbiome, 21 community mock data D6331 from bioproject: [PRJNA804004](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=SRP358686&search=GridIon&o=assay_type_s%3Aa%3Bacc_s%3Aa)
   - Chosen these two files as the smallest and the largest from the dataset used by Eddy for the bakeoff work. Not sure if Eddy used 16S data but the same [paper](https://link.springer.com/article/10.1186/s40168-022-01415-8) and bioproject had these under `Assay Type` = `AMPLICON`. 
 
@@ -433,7 +430,7 @@ Need smaller example files for faster iteration/testing of the assembly workflow
   - _Would be preferable to have metagenome data or a mix with ~5 isolates?_ 
 - explore larger subsamples of the zymo mock data (_known species advantage_) or `abx_depl.fastq.gz` (_many more species.._)?
 
-## Zymo mock communities notes
+### Zymo mock communities notes
 Would be nice to have a [zymobiomics microbial community standards](https://www.zymoresearch.com/collections/zymobiomics-microbial-community-standards) dataset to test the pipeline with ; pick files that take a short time to run (ex: `46_1_sub10k.fastq.gz` takes 45m to run lemur; we want under 5 mins.)
 - Notes: ZymoBIOMICS® Microbial Community Standard contains three easy-to-lyse bacteria, five tough-
 to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymoresearch.com/datasheets/ds1706_zymobiomics_microbial_community_standards_data_sheet.pdf)
@@ -444,7 +441,7 @@ to-lyse bacteria, and two tough-to-lyse yeasts ; [data sheet](https://files.zymo
   - This data is from a more complex mock community: (ZymoBIOMICS Gut Microbiome Standard
 , 21 species across kingdoms, cat # : [D6331](https://files.zymoresearch.com/protocols/_d6331_zymobiomics_gut_microbiome_standard.pdf))
 
-## Setup automatic download script
+### Setup automatic download script
 Need a nice way to download and arrange all the example files (for testing repo). Extension: is there any benefit to making this into a nextflow process? _simplify call / add as a preinstall step_ : COuld put this in `subworkflow/local/utils/example_data_download.nf`
 - Could use `curl` as suggested below or use google drive's cli tool `gdown` : [baeldung link](https://www.baeldung.com/linux/download-large-file-gdrive-cli) 
 _procedure suggested by perplexity_
@@ -473,7 +470,7 @@ _procedure suggested by perplexity_
 
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
-# Database files (`databases/`)
+## Database files (`databases/`)
 
 Older notes: _Question is how do we handle the databases in the config file of the pipeline repo?_
 Should we use shared databases from Todd's group or download our own? (For Emu, Lemur, Magnet, ..?)
@@ -501,7 +498,7 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
 
 
-## Real databases
+### Real databases
 _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
 
 - hostile: using default `human-t2t-hla-argos985-mycob140` using the `hostile/fetch` module, source: [hostile readme](https://github.com/bede/hostile?tab=readme-ov-file#indexes) 
@@ -514,7 +511,7 @@ _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redu
 - singlem_db: (dir: `/home/dbs/singlem_db/`) : Downloaded using `subworkflows/local/download_dbs.nf` from [zenodo](https://zenodo.org/records/15232972)
 - sylph_gtdb: .. 
 
-## Ensemble: Eddy's unified DBs from Bakeoff
+### Ensemble: Eddy's unified DBs from Bakeoff
 _Use local DBs from the location directly instead of copying them_
 Will implement a download module to fetch these databases from the remote location when they are uploaded to Zenodo etc. by Eddy eventually before her publication
 
@@ -555,13 +552,13 @@ _from the above document:_
 
 
 
-## Testing/demo databases
+### Testing/demo databases
 - legionella_cfr_idx`: From centrifuger example files
   - mock2 test database create from example/centrifuger/ files by running `centrifuger-build -r ref.fa --taxonomy-tree nodes.dmp --name-table names.dmp --conversion-table ref_seqid.map -o ../../work/centrifugertest/legionella-cfr_ref_idx`
 - centrifuger: mock database download: [nf-core/centrifuge: minigut_cf](https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/delete_me/minigut_cf.tar.gz) | link derived from [nf-core/centrifuge](https://github.com/nf-core/modules/blob/master/modules/nf-core/centrifuge/centrifuge/tests/main.nf.test#L18C54-L18C150)
 
 
-## archive: future DBs?
+### archive: future DBs?
 - centrifuger (_not downloaded_): GTDB r226 index from [dropbox](https://www.dropbox.com/scl/fo/xjp5r81jxkzxest9ijxul/ADfYFKoxIyl0hrICeEI63QM?rlkey=5lij0ocrbre165pa52mavux5z&e=1&st=4ol28yv2&dl=0) | link derived from [centrifuger repo](https://github.com/mourisl/centrifuger#usage)
 
 _notes from Austin: Aug 9th 2025_
@@ -569,7 +566,7 @@ _notes from Austin: Aug 9th 2025_
 - checkm2 database can be downloaded by running `checkm2 database --download --path /custom/path/`
 - bakta database can be downloaded by running `bakta_db download --output <output-path> --type [light|full]` (this is the best method) but you can download from their zenodo archive.
 
-## Updating databases, best practices
+### Updating databases, best practices
 What makes certain databases automatic install from nextflow and not others?
 - [mapo tofu](https://github.com/ikmb/TOFU-MAaPO)
 > The pipeline can download and install the required databases for GTDBtk, MetaPhlAn and HUMAnN. Refer to the [db management](https://github.com/ikmb/TOFU-MAaPO?tab=readme-ov-file#database-management) section for more details.
@@ -582,4 +579,31 @@ What makes certain databases automatic install from nextflow and not others?
   - Kraken2 (with Braken)
   - Sylph
   - Salmon
+
+
+
+---
+_Notes for development / maintenance_
+# Nextflow notes:
+
+## Process to make a local nextflow module
+
+1. Make a nf-core template module using `nf-core modules create`. Or for a barebones version, copy the module template from `modules/module_template.nf` to `modules/local/{tool_name}/main.nf`
+2. Check for the tool's conda repo to call in the module-process's conda definition. If the tool itself doesn't exist on conda, then get all it's dependancies in the conda env and
+3. Clone the tool's repo within the `modules/local/{tool_name}` directory as a submodule using `git submodule add <tool_repo_url> modules/local/{tool_name}`
+4. For windsurf-AI's help in making the module, copy the tool's main script or readme of how to use it to the `modules/local/{tool_name}` directory as a placeholder file
+5. Test the module with a testing workflow that gives minimal example data. Copy the template from `test-modules/` directory
+6. If the module fails, try running it in the nextflow generated conda env manually with the `bash .command.sh` in the work/.. directory
+
+If module exists on nf-core,
+- Install the nf-core module using `nf-core modules install ..`
+
+
+## Nextflow tips
+### Input files
+- Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
+   - Need to use Channel.fromPath().simpleName to create meta.id from the file name
+- nf-core approach seems to only take in a sample sheet and create the channel from it. If files are batched then this would be useful. 
+  - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
+- To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
