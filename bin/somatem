@@ -66,13 +66,13 @@ resolve_args() {
                 HAS_DATA_TYPE=1
                 RESOLVED_ARGS+=("--data_type" "$1")
                 ;;
-            -params-file|--params-file)
+            -params|--params-file)
                 shift
                 pf="$1"
                 if [[ "$pf" != /* && -f "${PIPELINE_DIR}/${pf}" ]]; then
-                    RESOLVED_ARGS+=("--params-file" "${PIPELINE_DIR}/${pf}")
+                    RESOLVED_ARGS+=("-params-file" "${PIPELINE_DIR}/${pf}")
                 else
-                    RESOLVED_ARGS+=("--params-file" "$pf")
+                    RESOLVED_ARGS+=("-params-file" "$pf")
                 fi
                 ;;
             *)
