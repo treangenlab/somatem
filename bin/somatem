@@ -11,10 +11,10 @@ Usage:
   somatem <command> [nextflow args...]
 
 Commands:
-  16S                    Run 16S taxonomic profiling
   pre_processing         Run the main pipeline with pre-processing analysis
-  mag                    Run the main pipeline with assembly analysis
+  16S                    Run 16S taxonomic profiling (sets data_type to 16S and analysis_type to taxonomic-profiling)
   taxonomic_profiling    Run taxonomic profiling (defaults to metagenomic data)
+  mag                    Run the main pipeline with assembly analysis
   genome_dynamics        Run the main pipeline with genome dynamics analysis
   get_example_data       Download example data
   download_databases     Download required databases
@@ -23,6 +23,8 @@ Commands:
 Common shortcuts:
   -i, --input            Input sample sheet CSV
   -o, --outdir           Output directory
+  -data, --data_type     Data type (16S, isolate or metagenomic)
+  -params, --params-file Parameters file documenting other options used in the pipeline
 
 Examples:
   somatem 16S -i samples.csv -o results
@@ -45,23 +47,15 @@ resolve_args() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -i)
+            -i|--input)
                 shift
                 RESOLVED_ARGS+=("--input" "$1")
                 ;;
-            --input)
-                shift
-                RESOLVED_ARGS+=("--input" "$1")
-                ;;
-            -o)
+            -o|--outdir)
                 shift
                 RESOLVED_ARGS+=("--outdir" "$1")
                 ;;
-            --outdir)
-                shift
-                RESOLVED_ARGS+=("--outdir" "$1")
-                ;;
-            --data_type)
+            -data|--data_type)
                 shift
                 HAS_DATA_TYPE=1
                 RESOLVED_ARGS+=("--data_type" "$1")

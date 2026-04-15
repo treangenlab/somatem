@@ -318,6 +318,37 @@ Initial steps were done by Austin with Bryce's help:
 PK now coming back to verify that things work and make them compatible with the older github execution method as well.
 Follow updates in issue: #109
 
+Simplest test command for bioconda:
+```sh
+# run from ~/micromamba/envs/somatem/ dir
+bin/somatem 16S -params ~/somatem/assets/16S_params.yml
+```
+
+### Notes
+- Where can I find the `results/` dir for this run?
+  - They are in the same place as the github run - See `mock1` and `mock2` below 
+  - _is this because I ran from within this dir?_ using `(somatem) pbk1@owlet03:~/Somatem$ somatem 16S -params ~/somatem/assets/16S_params.yml`
+```log
+(nf_base_env) pbk1@owlet03:~/somatem/results/taxonomy$ ls -lt
+total 20
+drwxr-xr-x 2 pbk1 users 4096 Apr  9 20:13 mock1
+drwxr-xr-x 2 pbk1 users 4096 Apr  9 20:10 mock2
+drwxr-xr-x 2 pbk1 users 4096 Mar  4 13:36 mock9
+drwxr-xr-x 2 pbk1 users 4096 Mar  4 13:36 mock20
+drwxr-xr-x 2 pbk1 users 4096 Feb 26 19:30 zymo
+```
+
+- Both the bioconda and github versions seem to be executed by the same driver process.
+  - Here's what the recent runs from `nextflow log` show :
+```log
+2026-04-06 14:57:51     36.2s           focused_gutenberg               OK      6c033e0449      276bf2ff-34f1-4b36-9b27-340dd37d69f2 nextflow run sylph-test.nf                                                                                                                                                                       
+2026-04-06 15:11:03     23.8s           lonely_fermat                   OK      6c033e0449      96ef10d9-5239-4887-9607-cf8693e2652e nextflow run sylph-test.nf                                                                                                                                                                       
+2026-04-06 15:14:02     19.1s           fabulous_pauling                OK      6c033e0449      c0c1faa9-195f-4b12-bb85-f5cb42da7f09 nextflow run sylph-test.nf                                                                                                                                                                       
+2026-04-09 18:05:57     8.1s            insane_baekeland                ERR     66dfc095de      0a80ad9b-bc52-47c9-988d-461b7d6e5145 nextflow run /home/Users/pbk1/micromamba/envs/somatem/share/somatem-0.7.1/main.nf --data_type 16S --analysis_type taxonomic-profiling -params-file /home/Users/pbk1/somatem/assets/16S_params.yml
+2026-04-09 19:09:12     6m 40s          special_lamport                 ERR     66dfc095de      789b5947-4b97-4775-aeb3-f4c6c5947f3c nextflow run /home/Users/pbk1/micromamba/envs/somatem/share/somatem-0.7.1/main.nf --data_type 16S --analysis_type taxonomic-profiling -params-file /home/Users/pbk1/somatem/assets/16S_params.yml
+2026-04-09 20:05:02     8m 21s          disturbed_payne                 OK      66dfc095de      b71ab30b-29f8-429f-b315-2258964c7deb nextflow run /home/Users/pbk1/micromamba/envs/somatem/share/somatem-0.7.1/main.nf --data_type 16S --analysis_type taxonomic-profiling -params-file /home/Users/pbk1/somatem/assets/16S_params.yml
+```
+
 
 # Documentation
 

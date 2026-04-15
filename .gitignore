@@ -13,9 +13,11 @@ archive/
 work/
 .nextflow/
 
-# Results directories
+# Results directories (default and typical user specified)
 results/
 null/
+test_16s/
+test_results/
 
 # other nf-core template generated dirs/files
 data/
