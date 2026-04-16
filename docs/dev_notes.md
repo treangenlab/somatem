@@ -300,6 +300,12 @@ need to enable this option ([NanoPlot readme](https://github.com/wdecoster/NanoP
 ```
 
 # Execution 
+_Typically execute the pipeline for testing at the end of day in a `screen` terminal to keep it persistant_
+- Tip: Sometimes the screen session freezes and you will need to refresh it using
+```bash
+screen -d -r <session_id>
+```
+
 
 ## github/somatem
 - Initial execution was through `nextflow run main.nf --input_dir <dir> --data_type <type> --analysis_type <type>` 
