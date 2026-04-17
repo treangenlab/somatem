@@ -189,6 +189,30 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
 - Get the standardized DB from Eddy's bakeoff work along with the parameters.
   - Figure out how to serve this DB to other somatem users : OSF ~ like Emu / (_more recent_) Zenodo ~ like lemur
 
+## Species detection subworkflow
+- Implementing the subworkflow for species detection. in progress
+- Recent error, 17/Apr/26, 2:54 PM :
+```sh
+(nf_base_env) pbk1@owlet03:~/Somatem$ nextflow run main.nf -params-file assets/pilot_params.yml
+
+ N E X T F L O W   ~  version 25.10.4
+
+Launching `main.nf` [fervent_goldwasser] DSL2 - revision: 66dfc095de
+
+Downloading databases for analysis type: species_detection
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:RawNanoPlot         -
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:CHOPPER             -
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:FinalNanoPlot       -
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:SYLPH_PROFILE   -
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:GANON_CLASSIFY  -
+[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:KRAKEN2_KRAKEN2 -
+Access to 'TAXONOMIC_PROFILING.out' is undefined since the workflow 'TAXONOMIC_PROFILING' has not been invoked before accessing the output attribute
+
+ -- Check script 'workflows/somatem.nf' at line: 61 or see '.nextflow.log' file for more details
+
+```
+
+
 
 ## Pre-processing
 - Combining : stringing pre-processing modules into a subworkflow. Tested, works.

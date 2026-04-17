@@ -18,7 +18,7 @@ data_type: "metagenomic"
 # 2. assembly = assemble the reads into genomes to yield annotated genome/contigs (.fasta) and circos plot
 # 3. pathogen-detection = detect pathogens in the reads using functional profiling (based on genes/functional sequences of known pathogens)
 # 4. genome-dynamics = genomic variation across multiple samples (time-series or cross-section). Provides a variant abundance over time plot. 
-analysis_type: "taxonomic-profiling"
+analysis_type: "species_detection"
 
 
 

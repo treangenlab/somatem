@@ -27,7 +27,7 @@ workflow UTILS_NFCORE_PIPELINE {
 */
 
 //
-//  Warn if a -profile or Nextflow config has not been provided to run the pipeline
+//  Warn if a -profile (other than the default standard) or Nextflow config has not been provided to run the pipeline
 //
 def checkConfigProvided() {
     def valid_config = true as Boolean

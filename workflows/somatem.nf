@@ -8,6 +8,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_soma
 include { DOWNLOAD_DBS } from '../subworkflows/local/download_databases.nf'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
+include { SPECIES_DETECTION } from '../subworkflows/local/species_detection.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
 
@@ -23,8 +24,8 @@ workflow SOMATEM {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = Channel.empty()
-    ch_key_outputs = Channel.empty()
+    ch_versions = channel.empty()
+    ch_key_outputs = channel.empty()
 
     // -----------------------------------------------------------------
     // Download databases
@@ -36,7 +37,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
-    contam_ref = Channel.value([]) // empty channel for now
+    contam_ref = channel.value([]) // empty channel for now
     PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
     ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
 
@@ -46,6 +47,17 @@ workflow SOMATEM {
     
     if (params.analysis_type == "taxonomic-profiling") {
         TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
+        ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+        
+        ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
+    }
+
+    // -----------------------------------------------------------------
+    // Species detection
+    // -----------------------------------------------------------------
+    
+    if (params.analysis_type == "species_detection") {
+        SPECIES_DETECTION(PREPROCESSING.out.clean_reads)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)

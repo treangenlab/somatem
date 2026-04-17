@@ -31,7 +31,7 @@ workflow PIPELINE_INITIALISATION {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -46,9 +46,10 @@ workflow PIPELINE_INITIALISATION {
     //
     // Check config provided to the pipeline
     //
-    UTILS_NFCORE_PIPELINE (
-        nextflow_cli_args
-    )
+    // Turn off warning about missing config for now. Will change the message to be shorter later
+    // UTILS_NFCORE_PIPELINE (
+    //     nextflow_cli_args
+    // )
 
     //
     // Custom validation for pipeline parameters
@@ -59,7 +60,7 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
 
-    Channel
+    channel
         .fromPath(params.input)
         .splitCsv(header: true, strip: true)
         .map { row ->
