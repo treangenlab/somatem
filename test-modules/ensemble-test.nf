@@ -24,7 +24,7 @@ workflow {
     
     SYLPH_PROFILE(reads_ch, params.sylph_db)
     GANON_CLASSIFY(reads_ch, params.ganon_db)
-    KRAKEN2_KRAKEN2(reads_ch, params.kraken2_db)
+    KRAKEN2_KRAKEN2(reads_ch, params.kraken2_db, true, true)
     
     // LEMUR(reads_ch)
 }
