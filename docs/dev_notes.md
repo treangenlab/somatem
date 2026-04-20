@@ -191,27 +191,17 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
 
 ## Species detection subworkflow
 - Implementing the subworkflow for species detection. in progress
-- Recent error, 17/Apr/26, 2:54 PM :
+
+### topic channel issue 
+read nf-core docs: [Migrating to topic channels](https://nf-co.re/docs/tutorials/migrate_to_topics/update_modules) and [nextflow reference on channels/topic](https://docs.seqera.io/nextflow/reference/channel#topic)
+
+- Recent error in kraken2, 20/Apr/26, 12:00 PM. Is caused by incompatibility of new modules with old validation in `utils_nfcore_pipeline` module. Currently using the channel name `versions_kraken2` instead of `topic: versions` in the `SPECIES_DETECTION` subworkflow. 
 ```sh
-(nf_base_env) pbk1@owlet03:~/Somatem$ nextflow run main.nf -params-file assets/pilot_params.yml
-
- N E X T F L O W   ~  version 25.10.4
-
-Launching `main.nf` [fervent_goldwasser] DSL2 - revision: 66dfc095de
-
-Downloading databases for analysis type: species_detection
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:RawNanoPlot         -
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:CHOPPER             -
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:PREPROCESSING:FinalNanoPlot       -
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:SYLPH_PROFILE   -
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:GANON_CLASSIFY  -
-[-        ] ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:KRAKEN2_KRAKEN2 -
-Access to 'TAXONOMIC_PROFILING.out' is undefined since the workflow 'TAXONOMIC_PROFILING' has not been invoked before accessing the output attribute
-
- -- Check script 'workflows/somatem.nf' at line: 61 or see '.nextflow.log' file for more details
-
+Apr-20 11:52:05.985 [Actor Thread 112] DEBUG nextflow.Session - Session aborted -- Cause: No signature of method: org.yaml.snakeyaml.Yaml.load() is applicable for argument types: (ArrayList) values: [[ORCHESTRATE_SOMATEM:SOMATEM:SPECIES_DETECTION:KRAKEN2_KRAKEN2, kraken2, 2.1.6]]
+Possible solutions: load(java.io.InputStream), load(java.io.Reader), load(java.lang.String), load(java.io.File), load(java.nio.file.Path), load(java.io.File)
 ```
-
+- switching to `versions` as seqera AI suggests gives a different error since this experimental feature is not enabled? but [migration notes](https://docs.seqera.io/nextflow/migrations/25-04) says that topics is out of preview as of 25.04. 
+- Need to update the `utils_nfcore_pipeline` module to support the new `versions` channel format.
 
 
 ## Pre-processing
