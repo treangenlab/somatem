@@ -255,6 +255,54 @@ Access to 'TAXONOMIC_PROFILING.out' is undefined since the workflow 'TAXONOMIC_P
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
 
+## Extra notes on modules 
+_here's a quick analysis of which modules are in local vs nf-core/ directory and their documentation status in README: (from windsurf.AI)_
+
+I'll list the modules in both directories and compare them to the tools in the README.
+
+### Tools in README.md vs Modules
+
+| README Tool | Module Found | Location |
+|-------------|--------------|----------|
+| NanoPlot | [nanoplot](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/nanoplot:0:0-0:0) | nf-core |
+| hostile | [hostile](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/hostile:0:0-0:0) | nf-core |
+| chopper | [chopper](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/chopper:0:0-0:0) | nf-core |
+| Emu | [emu](cci:9://file:///home/Users/pbk1/Somatem/modules/local/emu:0:0-0:0) | local |
+| Lemur | [lemur](cci:9://file:///home/Users/pbk1/Somatem/modules/local/lemur:0:0-0:0) | local |
+| MAGnet | [magnet](cci:9://file:///home/Users/pbk1/Somatem/modules/local/magnet:0:0-0:0) | local |
+| SingleM | [singlem](cci:9://file:///home/Users/pbk1/Somatem/modules/local/singlem:0:0-0:0) | local |
+| Flye | [flye](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/flye:0:0-0:0) | nf-core |
+| minimap2 | [minimap2](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/minimap2:0:0-0:0) | nf-core |
+| samtools | [samtools](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/samtools:0:0-0:0) | nf-core |
+| SemiBin2 | [semibin](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/semibin:0:0-0:0) | nf-core |
+| CheckM2 | [checkm2](cci:9://file:///home/Users/pbk1/Somatem/modules/local/checkm2:0:0-0:0) | both |
+| bakta | [bakta](cci:9://file:///home/Users/pbk1/Somatem/modules/local/bakta:0:0-0:0) | both |
+| rhea | [rhea](cci:9://file:///home/Users/pbk1/Somatem/modules/local/rhea:0:0-0:0) | local |
+| bandage | [bandage](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/bandage:0:0-0:0) | nf-core |
+| taxburst | [taxburst](cci:9://file:///home/Users/pbk1/Somatem/modules/local/taxburst:0:0-0:0) / [taxburst_convert](cci:9://file:///home/Users/pbk1/Somatem/modules/local/taxburst_convert:0:0-0:0) | local |
+| MultiQC | [multiqc](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/multiqc:0:0-0:0) | nf-core |
+
+### Missing in README (modules without documentation)
+
+**Local modules:**
+- [agb](cci:9://file:///home/Users/pbk1/Somatem/modules/local/agb:0:0-0:0) - likely AGB (Assembly Graph Browser)
+- [centrifuger](cci:9://file:///home/Users/pbk1/Somatem/modules/local/centrifuger:0:0-0:0) - taxonomic classification tool
+- [gdown](cci:9://file:///home/Users/pbk1/Somatem/modules/local/gdown:0:0-0:0) - Google Drive downloader utility
+- [pigeon](cci:9://file:///home/Users/pbk1/Somatem/modules/local/pigeon:0:0-0:0) - likely Pigeon (from PacBio)
+- [sylph_profile](cci:9://file:///home/Users/pbk1/Somatem/modules/local/sylph_profile:0:0-0:0) - sylph is a k-mer based profiler
+- [taxburst_convert](cci:9://file:///home/Users/pbk1/Somatem/modules/local/taxburst_convert:0:0-0:0) - converter for taxburst (companion to documented taxburst)
+
+### In README but NO module found
+
+- **SeqScreen** - Listed in README under Functional Annotation but no module exists in either [modules/local](cci:9://file:///home/Users/pbk1/Somatem/modules/local:0:0-0:0) or [modules/nf-core](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core:0:0-0:0)
+
+### Summary
+
+- **17 tools** documented in README have corresponding modules (case variations: `SemiBin2` → [semibin](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/semibin:0:0-0:0), `MAGnet` → [magnet](cci:9://file:///home/Users/pbk1/Somatem/modules/local/magnet:0:0-0:0), `NanoPlot` → [nanoplot](cci:9://file:///home/Users/pbk1/Somatem/modules/nf-core/nanoplot:0:0-0:0))
+- **6 modules** have no README documentation: [agb](cci:9://file:///home/Users/pbk1/Somatem/modules/local/agb:0:0-0:0), [centrifuger](cci:9://file:///home/Users/pbk1/Somatem/modules/local/centrifuger:0:0-0:0), [gdown](cci:9://file:///home/Users/pbk1/Somatem/modules/local/gdown:0:0-0:0), [pigeon](cci:9://file:///home/Users/pbk1/Somatem/modules/local/pigeon:0:0-0:0), [sylph_profile](cci:9://file:///home/Users/pbk1/Somatem/modules/local/sylph_profile:0:0-0:0), [taxburst_convert](cci:9://file:///home/Users/pbk1/Somatem/modules/local/taxburst_convert:0:0-0:0)
+- **1 tool** in README with no module: `SeqScreen`
+
+
 # Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
 - standardize modules: 
