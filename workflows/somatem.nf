@@ -58,9 +58,9 @@ workflow SOMATEM {
     
     if (params.analysis_type == "species_detection") {
         SPECIES_DETECTION(PREPROCESSING.out.clean_reads)
-        ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
+        ch_versions = ch_versions.mix(SPECIES_DETECTION.out.versions)
         
-        ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
+        ch_key_outputs = ch_key_outputs.mix(SPECIES_DETECTION.out.taxonomy_report)
     }
 
     // -----------------------------------------------------------------
