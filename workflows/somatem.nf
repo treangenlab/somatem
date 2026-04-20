@@ -98,10 +98,28 @@ workflow SOMATEM {
     clean_reads    = PREPROCESSING.out.clean_reads
     key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
     
-    // separate key emits for publishing convenience
-    mapping       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bam_sorted : channel.empty()  // channel: [ val(meta), path(*.bam) ]
-    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
-    bin_fasta     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins : channel.empty() // channel: [ path(*.fa.gz) ]
+    // Assembly outputs
+    mapping        = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bam_sorted : channel.empty()  // channel: [ val(meta), path(*.bam) ]
+    bin_tables     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
+    bin_fasta      = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins : channel.empty() // channel: [ path(*.fa.gz) ]
+    assembly       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.assembly : channel.empty() // channel: [ val(meta), path(*.fasta.gz) ]
+    assembly_gfa   = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.assembly_gfa : channel.empty() // channel: [ val(meta), path(*.gfa.gz) ]
+    assembly_log   = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.assembly_log : channel.empty() // channel: [ val(meta), path(*.log) ]
+    coverage       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.coverage : channel.empty() // channel: [ val(meta), path(*.txt) ]
+    checkm2_report = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.checkm2_report : channel.empty() // channel: [ val(meta), path(*.tsv) ]
+    
+    // Annotation outputs (high-quality bins only)
+    bakta_gff      = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bakta_gff : channel.empty() // channel: [ val(meta), path(*.gff) ]
+    bakta_tsv      = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bakta_tsv : channel.empty() // channel: [ val(meta), path(*.tsv) ]
+    bakta_txt      = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bakta_txt : channel.empty() // channel: [ val(meta), path(*.txt) ]
+    
+    // Taxonomic profiling outputs
+    singlem_profile = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.singlem_profile : channel.empty() // channel: [ val(meta), path(*.tsv) ]
+    taxburst_html   = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.taxburst_html : channel.empty() // channel: [ val(meta), path(*.html) ]
+    
+    // Post-hoc analysis
+    pigeon_html     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.pigeon_html : channel.empty() // channel: [ val(meta), path(*.html) ]
+    appraise_summary = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.appraise_summary : channel.empty() // channel: [ val(meta), path(*.tsv) ]
 }
 
 /*

@@ -3,10 +3,8 @@ process FLYE {
     tag "$meta.id"
     label 'process_high'
 
-    // Outputs
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.fasta"
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.gfa"
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.log"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     conda "${moduleDir}/environment.yml"
 
