@@ -30,7 +30,13 @@ Notes:
 
 ---
 # Modules: notes, status
-_First test each module independently with example data from each tool's own repo_
+_Here are some notes on how to make or add modules and the issues I encountered while doing so_
+Note on **new** nf-core modules with versions emitted as **topic:**: 
+- Refer to details in [topic channel issue](#topic-channel-issue)
+- For the long term, update the pipeline using `nf-core pipeline sync` to prevent such module reconfigurations from taking up too much debugging time. 
+- Prerequisite: need to set up the pipeline directory to sync retroactively [here](https://nf-co.re/docs/developing/template-syncs/set-up-pipeline-sync) ; there is some issue with the current setup that prevents this from working smoothly.
+
+_Tips to make modules: First test each module independently with example data from each tool's own repo_
 
 ## Taxonomic profiling
 

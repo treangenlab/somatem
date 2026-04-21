@@ -19,22 +19,17 @@ workflow SPECIES_DETECTION {
     
     main: 
     
-    ch_versions = channel.empty() // collect versions from all modules
     taxonomy_report = channel.empty() // collect taxonomy reports from all tools
 
     SYLPH_PROFILE(clean_reads_ch, params.sylph_db)
-    ch_versions = ch_versions.mix(SYLPH_PROFILE.out.versions)
     taxonomy_report = taxonomy_report.mix(SYLPH_PROFILE.out.profile_out)
 
     GANON_CLASSIFY(clean_reads_ch, params.ganon_db)
-    ch_versions = ch_versions.mix(GANON_CLASSIFY.out.versions)
     taxonomy_report = taxonomy_report.mix(GANON_CLASSIFY.out.report)
 
     KRAKEN2_KRAKEN2(clean_reads_ch, params.kraken2_db, 'true', 'true')
-    ch_versions = ch_versions.mix(KRAKEN2_KRAKEN2.out.versions)
     taxonomy_report = taxonomy_report.mix(KRAKEN2_KRAKEN2.out.report)
     
     emit:
     taxonomy_report = taxonomy_report
-    versions = ch_versions
 }

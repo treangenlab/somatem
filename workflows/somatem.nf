@@ -58,7 +58,8 @@ workflow SOMATEM {
     
     if (params.analysis_type == "species_detection") {
         SPECIES_DETECTION(PREPROCESSING.out.clean_reads)
-        ch_versions = ch_versions.mix(SPECIES_DETECTION.out.versions)
+        // ch_versions = ch_versions.mix(SPECIES_DETECTION.out.versions) 
+        // get versions through topics: instead of collecting versions from all modules
         
         ch_key_outputs = ch_key_outputs.mix(SPECIES_DETECTION.out.taxonomy_report)
     }
@@ -97,7 +98,31 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     // Collate and save software versions
     // -----------------------------------------------------------------
-    softwareVersionsToYAML(ch_versions)
+    
+    // helper functions for topic: versions compatibility
+    // source: https://nf-co.re/docs/tutorials/migrate_to_topics/update_modules#migrate-pipelines
+    def topic_versions = channel.topic("versions")
+        .distinct()
+        .branch { entry ->
+            versions_file: entry instanceof Path
+            versions_tuple: true
+        }
+    def topic_versions_string = topic_versions.versions_tuple
+        .map { process, tool, version ->
+            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique().sort()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+    
+    // collate versions from all sources (old versions.yml and new topic: versions)
+    ch_collated_versions = softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
+        .mix(topic_versions_string)
+    
+    // save to file
+    ch_collated_versions
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
             name:  'somatem_software_'  + 'versions.yml',
@@ -106,7 +131,7 @@ workflow SOMATEM {
         ).set { _ch_collated_versions }
 
     emit:
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+    versions       = ch_collated_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
     key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
     
