@@ -591,17 +591,25 @@ Context: _Moving the repo to owlet3 for space concerns on t8's `/home`_
 - can string together a module that downloads the db and relocates it to the correct location (like runHostile subworkflow) or directly cd into the dir in the sh script (like MetaPhlAn in [mapo tofu](https://github.com/ikmb/TOFU-MAaPO))
 
 
-### DB's plan
+### Automatic DB download
 
-**Consistent config file for db paths:**
+Implemented using `download_databases.nf` subworkflow
+- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
+
+**DB Cache**: to prevent redownload of dbs:
+If the files specific in the `output:` section of the process are already present in the `storeDir` directory, the process will not run again. Example from lemur taken from the `modules.config`:
+```groovy
+withName: 'LEMUR_DATABASEDOWNLOAD' {
+    storeDir = params.lemur_db
+}
+```
+
+(old/ archive) currently including db paths in the `nextflow.config` file) 
+Consistent config file for db paths:
 - Let's make a db_paths config file that stores the paths to the dbs for each tool
 - There will be two versions of this file: 
   - `db_paths_default.yaml`: makes dummy paths for each tool's db
   - `db_paths_treangen.yaml`: stores the paths to the dbs for each tool in the shared dir (`/home/dbs/`)
-
-**Automatic DB download:**
-- Note: If the downloader process outputs files but the using process requires a folder as input, you can use a staging process that inputs files, outputs a folder ; this channel can feed the using process. Look for examples in the `lemur` and `emu` modules .  
-
 
 ### Real databases
 _locate or reuse databases in Todd's shared dir_ `/home/dbs/` (_to minimize redundancy_)
