@@ -1,19 +1,6 @@
-// TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
-//               https://github.com/nf-core/modules/tree/master/modules/nf-core/
-//               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
-//               https://nf-co.re/join
-// TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
-//               All other parameters MUST be provided using the "task.ext" directive, see here:
-//               https://www.nextflow.io/docs/latest/process.html#ext
-//               where "task.ext" is a string.
-//               Any parameters that need to be evaluated in the context of a particular sample
-//               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
-// TODO nf-core: Software that can be piped together SHOULD be added to separate module files
-//               unless there is a run-time, storage advantage in implementing in this way
-//               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
-//                 bwa mem | samtools view -B -T ref.fasta
-// TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
-//               list (`[]`) instead of a file can be used to work around this issue.
+/**
+ * Merge the outputs of Ensemble tools (Sylph, Ganon, Kraken2) into a single TSV file
+ */
 
 process ENSEMBLE_MERGE {
     tag "$meta.id"
@@ -31,15 +18,15 @@ process ENSEMBLE_MERGE {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(bam)
+    tuple val(meta), path(sylph)  // Sylph output
+    tuple val(meta), path(ganon)  // Ganon output
+    tuple val(meta), path(kraken2)  // Kraken2 output
+
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("*.bam"), emit: bam
-    // TODO nf-core: List additional required output channels/values here
+    tuple val(meta), path("*.tsv"), emit: tsv
     // TODO nf-core: Update the command here to obtain the version number of the software used in this module
-    // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
-    //               by copying the line below and replacing the current tool with the extra tool(s)
     tuple val("${task.process}"), val('ensemblemerge'), eval("ensemblemerge --version"), topic: versions, emit: versions_ensemblemerge
 
     when:
@@ -61,8 +48,10 @@ process ENSEMBLE_MERGE {
     ensemblemerge \\
         $args \\
         -@ $task.cpus \\
-        -o ${prefix}.bam \\
-        $bam
+        -o ${prefix}.tsv \\
+        $sylph \\
+        $ganon \\
+        $kraken2
     """
 
     stub:
@@ -78,6 +67,6 @@ process ENSEMBLE_MERGE {
     """
     echo $args
     
-    touch ${prefix}.bam
+    touch ${prefix}.tsv
     """
 }
