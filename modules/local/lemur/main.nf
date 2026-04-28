@@ -34,5 +34,17 @@ process LEMUR {
         lemur: \$(echo \$(lemur --version 2>&1) | sed 's/^.*lemur //; s/Using.*\$//' )
     END_VERSIONS
     """
+
+    stub:
+    def args = task.ext.args ?: ''
+
+    """
+    touch results/relative_abundance.tsv
+    cat <<END_VERSIONS > versions.yml
+    "${task.process}":
+        lemur: \$(echo \$(lemur --version 2>&1) | sed 's/^.*lemur //; s/Using.*\$//' )
+    END_VERSIONS
+    echo "${args}" > args.txt
+    """
 }
 
