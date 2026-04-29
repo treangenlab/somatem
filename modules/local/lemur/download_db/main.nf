@@ -62,6 +62,7 @@ process LEMUR_DATABASEDOWNLOAD {
     stub:
     db_version = 0
     meta       = [id: 'lemur_db', version: db_version]
+    refseq_version_bacteria = 221
     """
     touch gene2len.tsv
     touch reference2genome.tsv

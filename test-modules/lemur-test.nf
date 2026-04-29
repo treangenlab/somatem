@@ -26,5 +26,5 @@ workflow {
     
     LEMUR_STAGE_DB.out.lemur_db.view { x -> "lemur_db: $x"}
     
-    // LEMUR(reads_ch)
+    LEMUR(reads_ch, LEMUR_STAGE_DB.out.lemur_db)
 }

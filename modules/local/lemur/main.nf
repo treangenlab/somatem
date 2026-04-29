@@ -39,6 +39,7 @@ process LEMUR {
     def args = task.ext.args ?: ''
 
     """
+    mkdir results
     touch results/relative_abundance.tsv
     cat <<END_VERSIONS > versions.yml
     "${task.process}":
