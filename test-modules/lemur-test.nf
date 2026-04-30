@@ -24,7 +24,5 @@ workflow {
     LEMUR_DATABASEDOWNLOAD(params.lemur_db_zenodo_id)
     LEMUR_STAGE_DB(LEMUR_DATABASEDOWNLOAD.out.db_files, LEMUR_DATABASEDOWNLOAD.out.refseq_version_bacteria)
     
-    LEMUR_STAGE_DB.out.lemur_db.view { x -> "lemur_db: $x"}
-    
     LEMUR(reads_ch, LEMUR_STAGE_DB.out.lemur_db)
 }

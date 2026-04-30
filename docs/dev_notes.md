@@ -603,7 +603,7 @@ If module exists on nf-core,
 - Install the nf-core module using `nf-core modules install ..`
 
 
-## Nextflow tips
+## Tips on nextflow and other stuff
 ### Input files
 - Need to take in files as glob patterns and create channel with metatada from them. Can use the `subworkflows/nf-core-compatibility.nf` to help with this
    - Need to use Channel.fromPath().simpleName to create meta.id from the file name
@@ -611,3 +611,10 @@ If module exists on nf-core,
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
+## Finding files
+- Use `find` command to search for files in a directory
+- Use `rg` command (ripgrep) to search for files in a directory with regex patterns more efficiently than `grep`
+- to locate the micromamba environment that nextflow installed for a particular executable use this command
+```sh
+find ~/micromamba/nextflow-envs/ -path '*bin/emu'
+```
