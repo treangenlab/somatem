@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "../omi-command-base"
+		},
+		{
+			"path": "../archive/bioconda_testing"
 		}
 	]
 }

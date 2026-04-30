@@ -5,6 +5,7 @@
 */
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_somatem_pipeline'
+include { DOWNLOAD_EXAMPLE_DATASETS } from '../subworkflows/local/download_example_datasets.nf'
 include { DOWNLOAD_DBS } from '../subworkflows/local/download_databases.nf'
 include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
@@ -25,6 +26,18 @@ workflow SOMATEM {
 
     ch_versions = Channel.empty()
     ch_key_outputs = Channel.empty()
+
+    // -----------------------------------------------------------------
+    // Download example datasets
+    // -----------------------------------------------------------------
+    if (params.only_download_example_datasets) {
+        println "Downloading example datasets from: ${params.example_datasets_url}"
+        
+        DOWNLOAD_EXAMPLE_DATASETS(params.example_datasets_url, params.save_dir)
+        
+        return // exit the workflow
+        // the workflow needs to be restarted with any downloaded parameter file to run the example data!
+    }
 
     // -----------------------------------------------------------------
     // Download databases

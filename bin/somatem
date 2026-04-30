@@ -25,6 +25,7 @@ Common shortcuts:
   -o, --outdir           Output directory
   -data, --data_type     Data type (16S, isolate or metagenomic)
   -params, --params-file Parameters file documenting other options used in the pipeline
+  -save_dir, --save-dir  Directory to save downloaded example datasets (default: ${launchDir}/somatem_assets)
 
 Examples:
   somatem 16S -i samples.csv -o results
@@ -71,6 +72,11 @@ resolve_args() {
                 ;;
             *)
                 RESOLVED_ARGS+=("$1")
+                ;;
+            -save_dir|--save-dir)
+                shift
+                save_dir="$1"
+                RESOLVED_ARGS+=("--save_dir" "$save_dir")
                 ;;
         esac
         shift
@@ -120,10 +126,11 @@ case "${cmd}" in
         ;;
     get_example_data|example_data|examples)
         exec nextflow run "${PIPELINE_DIR}/subworkflows/local/get_example_data.nf" \
+            --only_download_example_datasets \
             "${RESOLVED_ARGS[@]}"
         ;;
     download_databases|download-databases|databases|dbs)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/download_databases.nf" \
+        exec nextflow run "${PIPELINE_DIR}/main.nf" \
             "${RESOLVED_ARGS[@]}"
         ;;
     help|-h|--help)

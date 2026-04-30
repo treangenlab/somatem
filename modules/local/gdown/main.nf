@@ -5,10 +5,14 @@ process GDOWN {
 
     conda "${moduleDir}/environment.yml"
 
+    input:
+    val google_drive_url
+    path save_dir
+
     script:
-    base_dir = "${moduleDir}/../../.."
     """
-    gdown --folder https://drive.google.com/drive/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh?usp=sharing -c -O ${base_dir}/assets/
+    echo "Downloading from: ${google_drive_url}"
+    gdown --folder ${google_drive_url} -c -O ${save_dir}
     """
 }
 
