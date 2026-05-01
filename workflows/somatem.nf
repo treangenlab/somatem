@@ -36,7 +36,7 @@ workflow SOMATEM {
         DOWNLOAD_EXAMPLE_DATASETS(params.example_datasets_url, params.save_dir)
         
         return // exit the workflow
-        // the workflow needs to be restarted with any downloaded parameter file to run the example data!
+        // why?: Exiting since the workflow needs to be restarted with any downloaded parameter file to run the example data!
     }
 
     // -----------------------------------------------------------------
@@ -45,6 +45,10 @@ workflow SOMATEM {
     DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
             params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
 
+    if (params.only_download_databases) {
+        println "Databases downloaded successfully"
+        return // exit the workflow
+    }
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads

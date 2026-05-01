@@ -35,6 +35,9 @@ Examples:
   somatem genome-dynamics -i samples.csv -o results
   somatem get_example_data --outdir ./somatem_example_data
 
+Defaults:
+  defaults to --data_type = metagenomic for taxonomic-profiling
+
 Input CSV format:
   sample,fastq_1
   mock1,assets/examples/data/16S/mockm95_sub10k.fastq.gz
@@ -112,6 +115,7 @@ case "${cmd}" in
             exec nextflow run "${PIPELINE_DIR}/main.nf" \
                 --analysis_type taxonomic-profiling \
                 "${RESOLVED_ARGS[@]}"
+        # default to metagenomic data type if not specified
         else
             exec nextflow run "${PIPELINE_DIR}/main.nf" \
                 --data_type metagenomic \
@@ -125,12 +129,13 @@ case "${cmd}" in
             "${RESOLVED_ARGS[@]}"
         ;;
     get_example_data|example_data|examples)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/get_example_data.nf" \
+        exec nextflow run "${PIPELINE_DIR}/main.nf" \
             --only_download_example_datasets \
             "${RESOLVED_ARGS[@]}"
         ;;
     download_databases|download-databases|databases|dbs)
         exec nextflow run "${PIPELINE_DIR}/main.nf" \
+            --only_download_databases \
             "${RESOLVED_ARGS[@]}"
         ;;
     help|-h|--help)
