@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 // include { GDOWN } from "../../modules/local/gdown/main"
 
-process GDOWN2 {
+process GDOWN {
     label 'process_single'
     conda "conda-forge::gdown"
 
@@ -24,5 +24,5 @@ workflow DOWNLOAD_EXAMPLE_DATASETS {
     save_dir
 
     main:
-    GDOWN2(google_drive_url, save_dir)
+    GDOWN(google_drive_url, save_dir)
 }

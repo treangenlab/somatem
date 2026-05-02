@@ -14,6 +14,7 @@
 */
 
 include { SOMATEM  } from './workflows/somatem'
+include { DOWNLOAD_EXAMPLE_DATASETS } from './subworkflows/local/download_example_datasets'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_somatem_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_somatem_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_somatem_pipeline'
@@ -83,6 +84,18 @@ workflow {
         params.outdir,
         params.input
     )
+
+    // -----------------------------------------------------------------
+    // Download example datasets: conditional execution
+    // -----------------------------------------------------------------
+    if (params.only_download_example_datasets) {
+        println "Downloading example datasets from: ${params.example_datasets_url}"
+        println "Pipeline will exit after download"
+        
+        DOWNLOAD_EXAMPLE_DATASETS(params.example_datasets_url, params.save_dir)
+        
+        return // exit the workflow: manually restart with any downloaded parameter file to run the example data!
+    }
 
     //
     // WORKFLOW: Run main workflow
