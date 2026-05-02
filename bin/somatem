@@ -119,7 +119,7 @@ case "${cmd}" in
             "${RESOLVED_ARGS[@]}"
         ;;
     get_example_data|example_data|examples)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/get_example_data.nf" \
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/download_example_datasets.nf" \
             -c "${PIPELINE_DIR}/nextflow.config" \
             "${RESOLVED_ARGS[@]}"
         ;;
