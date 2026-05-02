@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
-// example_datasets_url           = "https://drive.google.com/drive/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh?usp=sharing"
-params.example_datasets_url = params.example_datasets_url ?: "https://drive.google.com/drive/folders/1HRYK6EW9HVThJfeNObvMo_fCo0Dp_gkA?usp=sharing" // dummy url for testing
+params.example_datasets_url           = "https://drive.google.com/drive/folders/11ZRpUCRrhdcJarlYdMSEDlCFl3oIz6Bh?usp=sharing"
 params.save_dir = params.save_dir ?: "${launchDir}/somatem_assets" // default save directory: 
   // currently users can't change this since the config yml files are hardcoded to use this path
 
