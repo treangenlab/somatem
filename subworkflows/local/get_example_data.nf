@@ -17,8 +17,9 @@ process GDOWN2 {
 
     script:
     """
-    # gdown --folder ${google_drive_url} -c -O ${save_dir}
+    gdown --folder ${google_drive_url} -c -O ${save_dir}
     echo "test parameter: save_dir = ${params.save_dir}"
+    echo "launchDir = ${launchDir}"
     """
 }
 

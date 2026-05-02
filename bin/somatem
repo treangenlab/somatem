@@ -120,10 +120,12 @@ case "${cmd}" in
         ;;
     get_example_data|example_data|examples)
         exec nextflow run "${PIPELINE_DIR}/subworkflows/local/get_example_data.nf" \
+            -c "${PIPELINE_DIR}/nextflow.config" \
             "${RESOLVED_ARGS[@]}"
         ;;
     download_databases|download-databases|databases|dbs)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/download_databases.nf" \
+        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/utils/pre_download_databases.nf" \
+            -c "${PIPELINE_DIR}/nextflow.config" \
             "${RESOLVED_ARGS[@]}"
         ;;
     help|-h|--help)
