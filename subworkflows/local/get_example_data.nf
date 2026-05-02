@@ -13,10 +13,11 @@ process GDOWN2 {
 
     input:
     val google_drive_url
-    path save_dir
+    val save_dir
 
     script:
     """
+    # rm -rf ${save_dir} # remove the directory (simlinked due to the `input` mechanism)
     gdown --folder ${google_drive_url} -c -O ${save_dir}
     echo "test parameter: save_dir = ${params.save_dir}"
     echo "launchDir = ${launchDir}"
