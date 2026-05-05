@@ -222,7 +222,8 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
 ## Other tools
-- Rhea: works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
+### Rhea
+- works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
   - made metadata input compatible with nf-core: Using mock metadata with "multiple" as `meta.id`
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
   - visualization: (went with nf-core `bandage` for now) Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
@@ -230,6 +231,14 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
     - bandageNG: has a cli option and is on bioconda: `BandageNG image metaflye/assembly_graph.gfa bandage2.png --color meta2col.csv` ; but the 2 column csv file for colouring is different from Bandage for proper separation between contigs from different samples
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
+
+Downloading test data and follow up scripts from supplementary material of rhea paper
+```sh
+micromamba activate /home/Users/pbk1/micromamba/other-envs/env-62dd2925c222a85f380459b013b190b1 # load osf
+osf --project fvhw8 clone # download all files
+```
+
+
 
 # Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
@@ -556,7 +565,8 @@ Will implement a download module to fetch these databases from the remote locati
 Copies these 3 directories from `/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/` to `assets/databases/`:
 - sylph_abf_030325 : 8.5 GB
 - ganon2_abvf_030325 : 11 GB
-- k2_abfv_030325 : +106 GB 
+- k2_abfv_030325 : +106 GB
+- **Deleting these copies of DBs now to clean up space in** `/home`
 
 For more details: look for Eddy's unified databases (DB) here: 
 ```bash
@@ -644,3 +654,23 @@ If module exists on nf-core,
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
+# owlet03 notes
+- clearing out space by moving unused/old files to `/dodo/pbk1/archive2/`
+- space status now:
+```sh
+~$ du -h -d 1 ./ | sort -hr
+139G    ./
+39G     ./micromamba
+37G     ./.conda # what are these? from the dadasnake pipeline of stadler lab?
+28G     ./NGS
+21G     ./backup
+10G     ./somatem
+1.7G    ./.vscode-server
+1006M   ./.codeium
+830M    ./.cache
+678M    ./.windsurf-server
+646M    ./.etetoolkit
+277M    ./.config
+231M    ./.nextflow
+228M    ./toolsource
+```
