@@ -1,9 +1,9 @@
 # note: replace the ? with the actual values for pilot testing various sub-workflows (TAXONOMIC PROFILING, ASSEMBLY, PATHOGEN DETECTION, GENOME DYNAMICS)
-# usage: nextflow run main.nf -params-file assets/16S_params.yml
+# usage: nextflow run main.nf -params-file assets/user_config/meta_tax_params.yml
 
 # input file path ------------------------------
 
-input: "assets/16S_pilot.csv"
+input: "assets/samplesheets/meta_tax_samples.csv"
 
 # standard options ------------------------------
 
@@ -11,7 +11,7 @@ input: "assets/16S_pilot.csv"
 # 1. 16S = 16S amplicon sequence data from a microbial community
 # 2. isolate = genomic DNA sequence data from a single microbial isolate
 # 3. metagenomic = metagenomic sequence data from a microbial community
-data_type: "16S"
+data_type: "metagenomic"
 
 # describe the type of analysis you want to perform from the options below
 # 1. taxonomic-profiling = Profiling the taxonomic composition (species match and relative abundance)
@@ -24,4 +24,6 @@ analysis_type: "taxonomic-profiling"
 
 # other options --------------------------------
 
-# sample_environment: "human_gut"
+# The environment of the microbiome sample 
+# options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
+sample_environment: "mock"

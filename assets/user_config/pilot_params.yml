@@ -1,9 +1,10 @@
-# note: replace the ? with the actual values for pilot testing various sub-workflows (TAXONOMIC PROFILING, ASSEMBLY, PATHOGEN DETECTION, GENOME DYNAMICS)
-# usage: nextflow run main.nf -params-file assets/pilot_params.yml
+# Feel free to modify this file to suit your needs for pilot testing various sub-workflows (TAXONOMIC PROFILING, ASSEMBLY, PATHOGEN DETECTION, GENOME DYNAMICS)
+
+# usage: nextflow run main.nf -params-file assets/user_config/pilot_params.yml
 
 # input file path ------------------------------
 
-input: "assets/meta_tax_samplesheet.csv"
+input: "assets/samplesheets/meta_tax_samples.csv"
 
 # standard options ------------------------------
 
