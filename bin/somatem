@@ -11,14 +11,15 @@ Usage:
   somatem <command> [nextflow args...]
 
 Commands:
-  pre_processing (preproc)         Run the main pipeline with pre-processing analysis
-  16S                              Run 16S taxonomic profiling (sets data_type to 16S and analysis_type to taxonomic-profiling)
-  taxonomic_profiling (taxprof)    Run taxonomic profiling (defaults to metagenomic data)
-  mag                              Run the main pipeline with assembly analysis
-  genome_dynamics (dynamics)       Run the main pipeline with genome dynamics analysis
+  full_name (short_name)        Description
+  pre_processing                Run the main pipeline with pre-processing analysis
+  16S                           Run 16S taxonomic profiling (sets data_type to 16S and analysis_type to taxonomic-profiling)
+  taxonomic_profiling (tax)     Run taxonomic profiling (defaults to metagenomic data)
+  assembly_mags (mag)           Run the main pipeline with assembly analysis
+  genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
-  help                   Show this help message
+  help                          Show this help message
 
 Common shortcuts:
   -i, --input            Input sample sheet CSV
@@ -28,15 +29,15 @@ Common shortcuts:
 
 Examples:
   somatem 16S -i samples.csv -o results
-  somatem taxonomic-profiling -i samples.csv -o results
-  somatem taxonomic-profiling --data_type 16S -i samples.csv -o results
-  somatem mag -i samples.csv -o results
-  somatem genome-dynamics -i samples.csv -o results
+  somatem taxonomic_profiling -i samples.csv -o results
+  somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
+  somatem assembly_mags -i samples.csv -o results
+  somatem genome_dynamics -i samples.csv -o results
   somatem download_example_data
   somatem pre_download_databases
 
 Defaults:
-  defaults to --data_type = metagenomic for taxonomic-profiling
+  defaults to --data_type = metagenomic for taxonomic_profiling
 
 Input CSV format:
   sample,fastq_1
@@ -101,7 +102,7 @@ case "${cmd}" in
             --analysis_type pre-processing \
             "${RESOLVED_ARGS[@]}"
         ;;
-    mag|assembly_mags|mag_assembly|assembly)
+    assembly_mags|mag_assembly|mag|assembly)
         exec nextflow run "${PIPELINE_DIR}/main.nf" \
             --analysis_type assembly \
             "${RESOLVED_ARGS[@]}"
