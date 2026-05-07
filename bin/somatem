@@ -32,7 +32,8 @@ Examples:
   somatem taxonomic-profiling --data_type 16S -i samples.csv -o results
   somatem mag -i samples.csv -o results
   somatem genome-dynamics -i samples.csv -o results
-  somatem download_example_data --outdir ./somatem_example_data
+  somatem download_example_data
+  somatem pre_download_databases
 
 Defaults:
   defaults to --data_type = metagenomic for taxonomic-profiling
