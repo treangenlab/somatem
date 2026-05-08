@@ -6,7 +6,7 @@ process LEMUR {
     tag "$meta.id"
     label 'process_medium'
     
-    conda "bioconda::lemur" // peg version with bioconda::lemur=1.0.1
+    conda "bioconda::lemur pandas=2.3.2" // peg version with bioconda::lemur=1.0.1
 
     // optional: More reproducible than conda
     container "oras://community.wave.seqera.io/library/lemur:1.0.1--8e0c5d342d286d0b" 
