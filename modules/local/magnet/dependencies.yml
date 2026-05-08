@@ -23,9 +23,9 @@ dependencies:
 
 # notes on the list of packages:
 # PK: scikit-learn and fastani is not mentioned in the magnet README but is required by the code
-#   - scikit-learn: version: 0.23.2 works ; later versions need to replace `affinity` with `metric` in the parameters of `AgglomerativeClustering`
+#   - scikit-learn: updated to latest version; after replacing `AgglomerativeClustering` parameter: from `affinity` to `metric`
 
-# packages mentioned in magnet readme (with version numbers)
+# packages mentioned in magnet readme (with version numbers) that didn't resolve:
     # Python 3.9
     # NCBI Datasets v15.27.1
     # Minimap2 v2.24-r1122
