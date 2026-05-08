@@ -26,6 +26,7 @@ Common shortcuts:
   -o, --outdir           Output directory
   -data, --data_type     Data type (16S, isolate or metagenomic)
   -params, --params-file Parameters file documenting other options used in the pipeline
+  -resume                Resume the last run. Resuming named run with -resume run_name not yet supported
 
 Examples:
   somatem 16S -i samples.csv -o results
