@@ -26,6 +26,7 @@ Common shortcuts:
   -o, --outdir           Output directory
   -data, --data_type     Data type (16S, isolate or metagenomic)
   -params, --params-file Parameters file documenting other options used in the pipeline
+  -resume                Resume the last run. To resume a specific run, use -resume run_name (example: -resume hungry_lorenz)
 
 Examples:
   somatem 16S -i samples.csv -o results
@@ -75,6 +76,15 @@ resolve_args() {
                     RESOLVED_ARGS+=("-params-file" "$pf")
                 fi
                 ;;
+            -resume)
+                if [[ -n "${2:-}" && "${2:-}" != -* ]]; then
+                    RESOLVED_ARGS+=("-resume" "$2") # pass the run name with -resume
+                    shift  # only shift once here; bottom shift handles $1 (-resume)
+                else
+                    RESOLVED_ARGS+=("-resume")
+                    # no shift here; bottom shift handles it
+                fi
+                ;;
             *)
                 RESOLVED_ARGS+=("$1")
                 ;;
@@ -109,6 +119,8 @@ case "${cmd}" in
         ;;
     taxonomic_profiling|taxonomic-profiling|tax|profiling)
         if [[ "${HAS_DATA_TYPE}" -eq 1 ]]; then
+            echo "DEBUG: nextflow run ${PIPELINE_DIR}/main.nf --analysis_type taxonomic-profiling ${RESOLVED_ARGS[@]}"
+
             exec nextflow run "${PIPELINE_DIR}/main.nf" \
                 --analysis_type taxonomic-profiling \
                 "${RESOLVED_ARGS[@]}"
