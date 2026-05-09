@@ -5,12 +5,13 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  # TODO nf-core: List required Conda package(s).
-  #               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
   - python>=3.8
   - numpy
   - pandas
   - networkx>=3.2
   - seaborn
-  - flye
-  - minigraph
+  - flye # TODO: need to use the module and pipe input to rhea
+  - minigraph # TODO: need to use the module and pipe input to rhea
+  - pip
+  - pip:
+    - git+https://github.com/treangenlab/rhea.git@python_package_i8
