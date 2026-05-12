@@ -10,6 +10,7 @@ process METAGENOMESCOPE {
 
     input:
     tuple val(meta), path(graph)
+    tuple val(meta2), path(info)
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
@@ -18,13 +19,14 @@ process METAGENOMESCOPE {
     // TODO nf-core: Update the command here to obtain the version number of the software used in this module
     // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
     //               by copying the line below and replacing the current tool with the extra tool(s)
-    tuple val("${task.process}"), val('metagenomescope'), eval("metagenomescope --version"), topic: versions, emit: versions_metagenomescope
+    tuple val("${task.process}"), val('metagenomescope'), eval("mgsc --version"), topic: versions, emit: versions_metagenomescope
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
+    def info_arg = info.name != 'null' ? "--info ${info}" : ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
@@ -36,11 +38,12 @@ process METAGENOMESCOPE {
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
-    metagenomescope \\
+    mgsc \\
         $args \\
         -@ $task.cpus \\
         -o ${prefix}.html \\
-        $graph
+        -g $graph \\
+        ${info_arg}
     """
 
     stub:
