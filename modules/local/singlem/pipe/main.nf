@@ -2,8 +2,8 @@ process SINGLEM_PIPE {
     tag "${meta.id}_${sample_type}"
     label 'process_medium'
 
-    // Outputs
-    publishDir "${params.output_dir}/taxonomy/${meta.id}", mode: 'copy', pattern: "*.csv"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     conda "${moduleDir}/environment.yml"
 

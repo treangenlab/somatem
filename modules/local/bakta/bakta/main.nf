@@ -6,9 +6,8 @@ process BAKTA_BAKTA {
     tag "$meta.id"
     label 'process_medium'
 
-    
-    // Outputs
-    publishDir "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}", mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     input:
     tuple val(meta), path(fasta)

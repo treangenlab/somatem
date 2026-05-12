@@ -3,8 +3,8 @@ process CHECKM2_PREDICT {
     tag "${meta.id}"
     label 'process_medium'
 
-    // Outputs
-    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.tsv"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     conda "${moduleDir}/environment.yml"
 

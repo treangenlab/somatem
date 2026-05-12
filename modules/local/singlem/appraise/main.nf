@@ -2,10 +2,8 @@ process SINGLEM_APPRAISE {
     tag "$meta.id"
     label 'process_single'
     
-
-    // Outputs
-    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.tsv"
-    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.svg"
+    // Note: Publishing is now handled globally via output blocks in main.nf
+    // This provides centralized control and better organization of outputs
 
     conda "${moduleDir}/environment.yml"
 
