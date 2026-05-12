@@ -1,4 +1,4 @@
-
+// Plot assembly graph. Currently set to flye assembler.
 
 process AGB {
     tag "$meta.id"
@@ -15,10 +15,9 @@ process AGB {
  
 
     output:
-      tuple val(meta), path("agb-output")
+      tuple val(meta), path("agb_output/")
 
     script:
-      // output_dir = "agb-output"
       assembler_name = "flye"
     """
     agb.py -i ${assembly_dir} -a ${assembler_name}
