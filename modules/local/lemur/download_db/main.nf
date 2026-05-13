@@ -52,6 +52,9 @@ process LEMUR_DATABASEDOWNLOAD {
         https://zenodo.org/records/${zenodo_id}/files/${db_file_name}
  
     tar -xzf ${db_file_name}
+
+    # move contents to current directory (take basepath of db_file_name)
+    mv ${db_file_name.replaceAll(/\.tar\.gz$/, '')}/* .
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -38,11 +38,8 @@ _First test each module independently with example data from each tool's own rep
   - Test using `nextflow run subworkflows/local/taxonomic-profiling.nf -profile test --input_dir examples/lemur/example-data/example.fastq`
   - Note: Lemur needs full DB to run 46/B011 files ; Magnet needs > 1 hit to run clustering
 
-
-### Older tools 
-_Need to break these into individual `###` categories at some point for readability!_
-
-- **Lemur**: working with example from repo; takes 45 m to run on 10k reads, full db. 
+### Lemur
+- Working with example from repo; takes 45 m to run on 10k reads, full db. 
   - Tried to run old file with the full lemur database (`Refseq v221 bac..+ fungi`) and it took very long (45m, on 12 cpus, 72 GB memory). Why is the output file `abundance.tsv` so tiny? -- _is it because the reads were not cleaned?_
     ```log
     Completed at: 13-Aug-2025 17:30:31
@@ -53,7 +50,8 @@ _Need to break these into individual `###` categories at some point for readabil
   - Made nf-core compatible (tuple input w meta, `ext.args`, `versions.yml`).
   - (_later?_) Need to include the optional parameters listed in `def parse_args` function [line 79](https://github.com/treangenlab/lemur/blob/main/lemur#L79)
 
-- **Magnet**: Errors with ncbi datasets downloading? Debug with Eddy's Mimic project env.
+### Magnet
+- Errors with ncbi datasets downloading? Debug with Eddy's Mimic project env.
   - (_update: using a later version of ncbi-dataset-cli solved the timeout issue_) Using Eddy's Mimic project env, magnet runs fine ; and there's more time gap between each entry of the downloaded genomes. Look for something that is pacing the number of reqests, some other ncbi tool in conda? / 
     - Output log showing all 15 entries downloaded. _Stuck at the unzip step since no bash commands are found in this env_ ; Fix using `export PATH=$PATH:/usr/bin/`, this might be due to accessing an env not within the user's home directory.
     ```log
@@ -101,7 +99,14 @@ _Need to break these into individual `###` categories at some point for readabil
     File "/home/pbk1/somatem/modules/local/magnet/magnet-repo/magnet.py", line 76, in find_representative_genome
     model = AgglomerativeClustering(affinity='precomputed', n_clusters=None, compute_full_tree=True,
     TypeError: __init__() got an unexpected keyword argument 'affinity' 
-    ``` 
+    ```
+    - fixing this by adding a dummy like to the test file from the lemur repo `assets/data/other_tools_files/lemur/example-output-ref/relative_abundance.tsv`
+    ```csv
+    Target_ID	species	genus	family	order	class	phylum	clade	superkingdom	subspecies	species subgroup	species group	F
+    1639	Listeria monocytogenes	Listeria	Listeriaceae	Bacillales	Bacilli	Bacillota	Terrabacteria group	Bacteria				1.0
+    1640	something interesting	Listeria	Listeriaceae	Bacillales	Bacilli	Bacillota	Terrabacteria group	Bacteria				1.0
+    ```
+ 
   - Issue: fastANI not found. (Add `fastANI` to the yml file)
   - Issue with ete3's `NCBITaxa` class: Error: `unzip: outdir/ncbi_downloads/*.zip -d outdir/ returned non-zero exit status 9.` (tested while adding `versions.yml` to the module)
     - Looks like ncbi datasets are not being downloaded hence the unzip command fails ; but when running alone, the unzip command gives message saying _no zip files have been found.._
@@ -121,6 +126,7 @@ _Need to break these into individual `###` categories at some point for readabil
   - Creating conda env for dependancies ; Fixed conda env issue by channel priority (`conda-forge` before `bioconda`)
   - Using in nextflow with a rigid [conda-lock](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#identical-conda-envs) file; build using `micromamba env export --explicit > spec-file.txt`
 
+### Emu
 - **Emu**: Works with example from repo. Copied full nf-core style from gms_16S (tuple input w meta, `ext.args`)
   - feature integration: `taxburst`: Fails due to duplicate `Actinobacteria` for both class and phylum of Bifidobacteriales (confirmed in emu's db: `taxonomy.tsv`) ; _deleting this column makes taxburst work! : how to fix?_ ~ maybe update emu db with recent changes to phylum names?/ 
     - Not a robust solution but could run with `errorStrategy: 'ignore'` in `taxburst`? [read more](https://www.nextflow.io/docs/latest/reference/process.html#process-error-strategy)
@@ -222,7 +228,8 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
 - [hostile_clean](https://nf-co.re/modules/hostile_clean) | [hostile_fetch](https://nf-co.re/modules/hostile_fetch). works, along with fetch (_optional_)
 
 ## Other tools
-- Rhea: works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
+### Rhea
+- works with example data from repo (but is fasta files) ; tested the subworkflow with mock9 and 20 fastqs). 
   - made metadata input compatible with nf-core: Using mock metadata with "multiple" as `meta.id`
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
   - visualization: (went with nf-core `bandage` for now) Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
@@ -230,6 +237,14 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
     - bandageNG: has a cli option and is on bioconda: `BandageNG image metaflye/assembly_graph.gfa bandage2.png --color meta2col.csv` ; but the 2 column csv file for colouring is different from Bandage for proper separation between contigs from different samples
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
+
+Downloading test data and follow up scripts from supplementary material of rhea paper
+```sh
+micromamba activate /home/Users/pbk1/micromamba/other-envs/env-62dd2925c222a85f380459b013b190b1 # load osf
+osf --project fvhw8 clone # download all files
+```
+
+
 
 # Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
@@ -556,7 +571,8 @@ Will implement a download module to fetch these databases from the remote locati
 Copies these 3 directories from `/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/` to `assets/databases/`:
 - sylph_abf_030325 : 8.5 GB
 - ganon2_abvf_030325 : 11 GB
-- k2_abfv_030325 : +106 GB 
+- k2_abfv_030325 : +106 GB
+- **Deleting these copies of DBs now to clean up space in** `/home`
 
 For more details: look for Eddy's unified databases (DB) here: 
 ```bash
@@ -644,3 +660,23 @@ If module exists on nf-core,
   - Get a demo format of such an samplesheet from nf-core modules. There's the example with only id, fastq1, fastq2 columns in the default template created with `nf-core pipelines create`
 - To maintain flexibility of taking in both glob patterns and sample sheet, we can copy mag's approach from [subworkflows/local/input_check.nf](https://github.com/nf-core/mag/blob/2.3.2/subworkflows/local/input_check.nf)  
 
+# owlet03 notes
+- clearing out space by moving unused/old files to `/dodo/pbk1/archive2/`
+- space status now:
+```sh
+~$ du -h -d 1 ./ | sort -hr
+139G    ./
+39G     ./micromamba
+37G     ./.conda # what are these? from the dadasnake pipeline of stadler lab?
+28G     ./NGS
+21G     ./backup
+10G     ./somatem
+1.7G    ./.vscode-server
+1006M   ./.codeium
+830M    ./.cache
+678M    ./.windsurf-server
+646M    ./.etetoolkit
+277M    ./.config
+231M    ./.nextflow
+228M    ./toolsource
+```
