@@ -15,7 +15,7 @@ process AGB {
  
 
     output:
-      tuple val(meta), path("agb_output/")
+      tuple val(meta), path("agb_output/"), emit: assembly_graph
 
     script:
       assembler_name = "flye"
