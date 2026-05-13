@@ -1,7 +1,0 @@
-name: gdown_env
-
-channels:
-    - conda-forge
-dependencies:
-    - gdown
-    # - pip: 

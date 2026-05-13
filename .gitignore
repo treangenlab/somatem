@@ -3,7 +3,7 @@ assets/secrets/
 
 # databases and example data (large files, fastq, etc.)
 assets/databases/
-assets/examples/
+assets/data/
 
 # other files (for testing/development; temporary)
 archive/

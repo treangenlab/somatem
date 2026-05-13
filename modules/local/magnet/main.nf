@@ -21,7 +21,7 @@ process MAGNET {
     def args = task.ext.args ?: ''
     
     """
-    python ${moduleDir}/magnet-repo/magnet.py \
+    magnet \
       ${args} \
       --threads $task.cpus \
       -i ${reads} \

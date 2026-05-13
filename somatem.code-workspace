@@ -11,6 +11,12 @@
 		},
 		{
 			"path": "../omi-command-base"
+		},
+		{
+			"path": "../toolsource/rhea"
+		},
+		{
+			"path": "../archive/bioconda_testing"
 		}
 	]
 }

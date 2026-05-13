@@ -3,9 +3,9 @@ process RHEA {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-        'biocontainers/YOUR-TOOL-HERE' }"
+    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    //     'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
+    //     'biocontainers/YOUR-TOOL-HERE' }"
 
     input:
     tuple val(meta), path(multi_reads) // list of multiple fastq.gz read files
@@ -31,7 +31,7 @@ process RHEA {
     def args = task.ext.args ?: ''
 
     """
-    python ${moduleDir}/rhea-repo/rhea.py \\
+    rhea \\
         $args \\
         --threads $task.cpus \\
         ${multi_reads.join(' ')}
