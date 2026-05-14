@@ -522,6 +522,13 @@ _procedure suggested by perplexity_
 
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
 
+### Intermediate files 
+_not backed up in google drive yet_ : 14/May/26
+- `assets/data/other_tools_files/more_files/agb/` : contains inputs for agb testing. `flye_yeast_assembly.txt` and `flye_yeast.gv` files. Source: wget commands from agb repo maybe? but `metagenomescope` repo definitely has it referred. 
+- `assets/data/intermediate_files/metaflye_rhea-t0-t1/` : contains the metaflye output for rhea on it's example data t0-t1. Source: ?
+- `assets/data/intermediate_files/agb_rhea_t0_t1/` : contains the agb output for rhea on it's example data t0-t1.
+  - source: `~/somatem/work/7e$ cp -r 5df4d50db8df194c521c63c3e503fe/agb_output/ ../../assets/data/intermediate_files/agb_rhea_t0_t1`
+
 ## Database files (`databases/`)
 
 Older notes: _Question is how do we handle the databases in the config file of the pipeline repo?_
