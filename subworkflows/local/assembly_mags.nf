@@ -51,7 +51,8 @@ workflow ASSEMBLY_MAGS {
     FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
     // visualize assembly graph with agb
-    AGB(FLYE.out.gfa.map { file -> file.getParent() })
+    flye_outdir = FLYE.out.gfa.map { meta, file -> [meta, file.parent] }
+    AGB(flye_outdir)
     AGB.out.assembly_graph.view { meta, _graph -> "✓ Assembly graph visualization completed for ${meta.id}" } // log
 
     // Create minimap2 index
