@@ -233,7 +233,7 @@ Info about [Eddy's unified DBs](## Bakeoff' Eddy's DBs) under # Databases files.
   - made metadata input compatible with nf-core: Using mock metadata with "multiple" as `meta.id`
   - need to add outputs for each [file](https://github.com/treangenlab/rhea?tab=readme-ov-file#output-files) mentioned in the repo
   - visualization: (went with nf-core `bandage` for now) Try [agb](https://github.com/almiheenko/AGB) for CLI visualization. _outputs to html_. Older tools include [bandage](https://github.com/rrwick/Bandage) with [cli](https://github.com/rrwick/Bandage/wiki/Command-line) option; or it's active fork [bandageNG](https://github.com/asl/BandageNG).
-    - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]` ; _agb outputs a html ; I couldn't interpret the graph_
+    - Trying agb in a separate process: `Creating env using micromamba: almiheenko::agb [cache /home/pbk1/micromamba/other-envs/env-3c441e5f6f1f6afbad3674b984213600]` ; _agb outputs a html (agb works by downloading the `agb_output/` dir) ; I couldn't interpret the graph_
     - bandageNG: has a cli option and is on bioconda: `BandageNG image metaflye/assembly_graph.gfa bandage2.png --color meta2col.csv` ; but the 2 column csv file for colouring is different from Bandage for proper separation between contigs from different samples
     - bandage: Is on nf-core; --color options doesn't work though in the `--help` documentation. (_not using color for now_)
     - I am wondering how the intended output looks like as mentioned in rhea [readme](https://github.com/treangenlab/rhea?tab=readme-ov-file#graph-visuals). 
@@ -521,6 +521,13 @@ _procedure suggested by perplexity_
 - **caveats**: Limits: For large Google Drive files (>100MB), you may need additional logic to handle Google’s virus scan/interruption page. For most small files, the above works.
 
 - [ ] Idea: 25/Feb/26 : Let's use box.com instead of google since we can use rclone to upload more easily into it! Then need to look for alternative to gdown that works for users without login/authorization (_making it public directory.._)
+
+### Intermediate files 
+_not backed up in google drive yet_ : 14/May/26
+- `assets/data/other_tools_files/more_files/agb/` : contains inputs for agb testing. `flye_yeast_assembly.txt` and `flye_yeast.gv` files. Source: wget commands from agb repo maybe? but `metagenomescope` repo definitely has it referred. 
+- `assets/data/intermediate_files/metaflye_rhea-t0-t1/` : contains the metaflye output for rhea on it's example data t0-t1. Source: ?
+- `assets/data/intermediate_files/agb_rhea_t0_t1/` : contains the agb output for rhea on it's example data t0-t1.
+  - source: `~/somatem/work/7e$ cp -r 5df4d50db8df194c521c63c3e503fe/agb_output/ ../../assets/data/intermediate_files/agb_rhea_t0_t1`
 
 ## Database files (`databases/`)
 

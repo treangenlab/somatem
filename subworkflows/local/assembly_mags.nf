@@ -18,6 +18,7 @@ include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
 include { PIGEON }                  from '../../modules/local/pigeon/main'
+include { AGB }                     from '../../modules/local/agb/main'
 
 
 workflow ASSEMBLY_MAGS {
@@ -48,6 +49,10 @@ workflow ASSEMBLY_MAGS {
     FLYE(reads, params.flye_mode)
     ch_versions = ch_versions.mix(FLYE.out.versions)
     FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
+
+    // visualize assembly graph with agb
+    AGB(FLYE.out.gfa, FLYE.out.gv, FLYE.out.txt)
+    AGB.out.assembly_graph.view { meta, _graph -> "✓ Assembly graph visualization completed for ${meta.id}" } // log
 
     // Create minimap2 index
     MINIMAP2_INDEX(FLYE.out.fasta)
@@ -246,6 +251,7 @@ workflow ASSEMBLY_MAGS {
     assembly        = FLYE.out.fasta
     assembly_gfa    = FLYE.out.gfa
     assembly_log    = FLYE.out.log
+    assembly_graph  = AGB.out.assembly_graph
     bam_sorted      = SAMTOOLS_SORT.out.bam
     coverage        = SAMTOOLS_COVERAGE.out.coverage
     bins            = SEMIBIN_SINGLEEASYBIN.out.output_fasta

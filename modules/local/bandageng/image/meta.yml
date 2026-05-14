@@ -1,4 +1,4 @@
-name: bandage_image
+name: bandageng_image
 description: Render an assembly graph in GFA 1.0 format to PNG and SVG image
   formats
 keywords:
@@ -9,9 +9,9 @@ keywords:
 tools:
   - bandage:
       description: |
-        Bandage - a Bioinformatics Application for Navigating De novo Assembly Graphs Easily
-      homepage: https://github.com/rrwick/Bandage
-      documentation: https://github.com/rrwick/Bandage
+        BandageNG - a Bioinformatics Application for Navigating De novo Assembly Graphs Easily. Forked from Bandage
+      homepage: https://github.com/asl/BandageNG
+      documentation: https://github.com/asl/BandageNG
       licence: ["GPL-3.0-or-later"]
       identifier: biotools:bandage
 input:
@@ -58,7 +58,7 @@ output:
       - bandage:
           type: string
           description: The name of the tool
-      - 'export QT_QPA_PLATFORM=offscreen; Bandage --version 2>&1| grep Version | sed "s/^Version: //"':
+      - 'export QT_QPA_PLATFORM=offscreen; BandageNG --version 2>&1| grep Version | sed "s/^Version: //"':
           type: eval
           description: The expression to obtain the version of the tool
 
@@ -70,11 +70,11 @@ topics:
       - bandage:
           type: string
           description: The name of the tool
-      - 'export QT_QPA_PLATFORM=offscreen; Bandage --version 2>&1| grep Version | sed "s/^Version: //"':
+      - 'export QT_QPA_PLATFORM=offscreen; BandageNG --version 2>&1| grep Version | sed "s/^Version: //"':
           type: eval
           description: The expression to obtain the version of the tool
 
 authors:
-  - "@heuermh"
+  - "@ppreshant"
 maintainers:
-  - "@heuermh"
+  - "@ppreshant"
