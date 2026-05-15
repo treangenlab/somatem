@@ -8,7 +8,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-
+// include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
+include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
@@ -58,28 +59,19 @@ workflow PIPELINE_INITIALISATION {
     //
     // Create channel from input file provided through params.input
     //
-
-    Channel
-        .fromPath(params.input)
-        .splitCsv(header: true, strip: true)
-        .map { row ->
-            [[id:row.sample], row.fastq_1, row.fastq_2]
+    // Convert samplesheet to channel
+    channel
+        .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+        .map { meta, fastq_1, fastq_2 ->
+            // Add single_end flag based on whether fastq_2 exists
+            def new_meta = meta + [single_end: fastq_2 ? false : true]
+            def fastqs = fastq_2 ? [fastq_1, fastq_2] : [fastq_1]
+            return [new_meta, fastqs]
         }
-        .map {
-            meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ file(fastq_1) ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end:false ], [ file(fastq_1), file(fastq_2) ] ]
-                }
-        }
-        .groupTuple()  // Groups files by meta.id
-        .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
-        }
-        .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
+        .groupTuple(by: 0)  // Group by meta (in case same sample appears multiple times)
+        .map { meta, fastqs_list ->
+            // Flatten the list of fastqs if samples were grouped
+            return [meta, fastqs_list.flatten()]
         }
         .set { ch_samplesheet }
 
