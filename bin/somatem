@@ -25,7 +25,7 @@ Common shortcuts:
   -i, --input            Input sample sheet CSV
   -o, --outdir           Output directory
   -data, --data_type     Data type (16S, isolate or metagenomic)
-  -params, --params-file Parameters file documenting other options used in the pipeline
+  -params, --params_file Parameters file documenting other options used in the pipeline
   -resume                Resume the last run. Resuming named run with -resume run_name not yet supported
 
 Examples:
@@ -66,7 +66,7 @@ resolve_args() {
                 HAS_DATA_TYPE=1
                 RESOLVED_ARGS+=("--data_type" "$1")
                 ;;
-            -params|--params-file)
+            -params|--params_file)
                 shift
                 pf="$1"
                 if [[ "$pf" != /* && -f "${PIPELINE_DIR}/${pf}" ]]; then
