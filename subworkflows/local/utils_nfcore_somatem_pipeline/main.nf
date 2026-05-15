@@ -61,7 +61,7 @@ workflow PIPELINE_INITIALISATION {
     //
     // Convert samplesheet to channel
     channel
-        .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map { meta, fastq_1, fastq_2 ->
             // Add single_end flag based on whether fastq_2 exists
             def new_meta = meta + [single_end: fastq_2 ? false : true]
