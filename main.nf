@@ -72,6 +72,10 @@ workflow ORCHESTRATE_SOMATEM {
 workflow {
 
     main:
+    // Capture outdir early (before onComplete scope)
+    def outdir = params.outdir
+    def reportSuffix = params.trace_report_suffix
+
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
@@ -97,6 +101,11 @@ workflow {
         params.outdir,
         params.monochrome_logs,
     )
+
+    workflow.onComplete {
+        // Backup .nextflow.log with a timestamp
+        file(".nextflow.log").copyTo("${outdir}/pipeline_info/nextflow_${reportSuffix}.log")
+    }
 
     publish:
     mapping         = ORCHESTRATE_SOMATEM.out.mapping
