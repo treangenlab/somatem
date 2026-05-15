@@ -105,6 +105,12 @@ workflow {
     workflow.onComplete {
         // Backup .nextflow.log with a timestamp
         file(".nextflow.log").copyTo("${outdir}/pipeline_info/nextflow_${reportSuffix}.log")
+          
+        // Copy CLI output if exists
+        def cliLog = file("pipeline_output.log")
+        if (cliLog.exists()) {
+            cliLog.copyTo("${outdir}/pipeline_info/cli_output_${reportSuffix}.log")
+        }
     }
 
     publish:

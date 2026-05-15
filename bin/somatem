@@ -47,6 +47,11 @@ Input CSV format:
 EOF
 }
 
+# log to both terminal and file for backup
+run_with_logging() {
+    "$@" -ansi-log 2>&1 | tee pipeline_output.log
+}
+
 resolve_args() {
     RESOLVED_ARGS=()
     HAS_DATA_TYPE=0
@@ -93,13 +98,13 @@ resolve_args "$@"
 
 case "${cmd}" in
     16S|16s)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        run_with_logging nextflow run "${PIPELINE_DIR}/main.nf" \
             --data_type 16S \
             --analysis_type taxonomic-profiling \
             "${RESOLVED_ARGS[@]}"
         ;;
     pre_processing|pre-processing|preprocessing)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        run_with_logging nextflow run "${PIPELINE_DIR}/main.nf" \
             --analysis_type pre-processing \
             "${RESOLVED_ARGS[@]}"
         ;;
