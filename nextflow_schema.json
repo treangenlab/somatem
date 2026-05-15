@@ -1,0 +1,315 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/somatem//nextflow_schema.json",
+    "title": "nf-core/somatem pipeline parameters",
+    "description": "A long-read metagenomics pipeline with support for longitudinal analysis ",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input",
+                "outdir"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
+                    "fa_icon": "fas fa-file-csv",
+                    "default": "/home/Users/pbk1/somatem/assets/samplesheet.csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open",
+                    "default": "results/"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ],
+    "properties": {
+        "db_base_dir": {
+            "type": "string",
+            "default": "/home/dbs"
+        },
+        "unified_db_base_dir": {
+            "type": "string",
+            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025"
+        },
+        "data_type": {
+            "type": "string",
+            "default": "metagenomic"
+        },
+        "analysis_type": {
+            "type": "string",
+            "default": "taxonomic-profiling"
+        },
+        "sample_status": {
+            "type": "string",
+            "default": "cross-section"
+        },
+        "sequencing_technology": {
+            "type": "string",
+            "default": "nanopore"
+        },
+        "genome": {
+            "type": "string"
+        },
+        "igenomes_base": {
+            "type": "string",
+            "default": "s3://ngi-igenomes/igenomes/"
+        },
+        "igenomes_ignore": {
+            "type": "boolean",
+            "default": true
+        },
+        "maxlength": {
+            "type": "integer",
+            "default": 30000
+        },
+        "minlen": {
+            "type": "integer",
+            "default": 250
+        },
+        "minq": {
+            "type": "integer",
+            "default": 10
+        },
+        "contam_ref": {
+            "type": "string"
+        },
+        "hostile_index": {
+            "type": "string",
+            "default": "human-t2t-hla-argos985-mycob140.mmi"
+        },
+        "hostile_db": {
+            "type": "string",
+            "default": "/home/dbs/hostile"
+        },
+        "emu_db": {
+            "type": "string",
+            "default": "/home/dbs/emu_db/emu_db2023/"
+        },
+        "sample_size": {
+            "type": "string"
+        },
+        "seqtype": {
+            "type": "string",
+            "default": "map-ont"
+        },
+        "min_abundance": {
+            "type": "number",
+            "default": 0.0001
+        },
+        "minimap_max_alignments": {
+            "type": "integer",
+            "default": 50
+        },
+        "minibatch_size": {
+            "type": "integer",
+            "default": 500000000
+        },
+        "keep_read_assignments": {
+            "type": "boolean",
+            "default": true
+        },
+        "keep_files": {
+            "type": "boolean"
+        },
+        "output_unclassified": {
+            "type": "boolean",
+            "default": true
+        },
+        "lemur_db": {
+            "type": "string",
+            "default": "/home/dbs/lemur_221_db/"
+        },
+        "lemur_db_zenodo_id": {
+            "type": "integer",
+            "default": 10802546
+        },
+        "lemur_taxonomy": {
+            "type": "string",
+            "default": "/home/dbs/lemur_221_db//taxonomy.tsv"
+        },
+        "rank": {
+            "type": "string",
+            "default": "species"
+        },
+        "ganon_db": {
+            "type": "string",
+            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/ganon2_abvf_030325/"
+        },
+        "kraken2_db": {
+            "type": "string",
+            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/k2_abfv_030325/"
+        },
+        "sylph_db": {
+            "type": "string",
+            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/sylph_abf_030325/database.syldb"
+        },
+        "sylph_prok_db_file": {
+            "type": "string",
+            "default": "/home/dbs/gtdb-r220-c200-dbv1.syldb"
+        },
+        "sylph_prok_db": {
+            "type": "string",
+            "default": "/home/dbs/sylph_prok_db/"
+        },
+        "sylph_vir_db": {
+            "type": "string",
+            "default": "/home/dbs/sylph_vir_db/"
+        },
+        "checkm2_db": {
+            "type": "string",
+            "default": "/home/dbs/checkm2_db/"
+        },
+        "checkm2_db_zenodo_id": {
+            "type": "integer",
+            "default": 14897628
+        },
+        "checkm2_completeness_threshold": {
+            "type": "integer",
+            "default": 80
+        },
+        "bakta_db": {
+            "type": "string",
+            "default": "/home/dbs/bakta_db/"
+        },
+        "singlem_db": {
+            "type": "string",
+            "default": "/home/dbs/singlem_db/"
+        },
+        "flye_mode": {
+            "type": "string",
+            "default": "nano-hq"
+        },
+        "sample_environment": {
+            "type": "string",
+            "default": "human_gut"
+        },
+        "semibin2_random_seed": {
+            "type": "integer",
+            "default": 42
+        },
+        "pigeon_ksize": {
+            "type": "integer",
+            "default": 17
+        },
+        "pigeon_scaled": {
+            "type": "integer",
+            "default": 1000
+        },
+        "pigeon_seed": {
+            "type": "integer",
+            "default": 42
+        },
+        "pigeon_top_bins": {
+            "type": "integer",
+            "default": 20
+        },
+        "pigeon_reads_subsample": {
+            "type": "integer",
+            "default": 0
+        },
+        "pigeon_skip_db": {
+            "type": "boolean"
+        },
+        "run_hostile": {
+            "type": "boolean",
+            "default": true
+        },
+        "outputDir": {
+            "type": "string",
+            "default": "results/"
+        },
+        "output_dir": {
+            "type": "string",
+            "default": "results/"
+        },
+        "publish_dir_mode": {
+            "type": "string",
+            "default": "copy"
+        },
+        "monochrome_logs": {
+            "type": "boolean"
+        },
+        "pipelines_testdata_base_path": {
+            "type": "string",
+            "default": "https://raw.githubusercontent.com/nf-core/test-datasets/"
+        },
+        "config_profile_name": {
+            "type": "string"
+        },
+        "config_profile_description": {
+            "type": "string"
+        },
+        "custom_config_version": {
+            "type": "string",
+            "default": "master"
+        },
+        "custom_config_base": {
+            "type": "string",
+            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+        },
+        "config_profile_contact": {
+            "type": "string"
+        },
+        "config_profile_url": {
+            "type": "string"
+        },
+        "genomes": {
+            "type": "string",
+            "default": "[]"
+        },
+        "fasta": {
+            "type": "string"
+        }
+    }
+}
