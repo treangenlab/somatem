@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/somatem//nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/treangenlab/somatem/main/nextflow_schema.json",
     "title": "nf-core/somatem pipeline parameters",
     "description": "A long-read metagenomics pipeline with support for longitudinal analysis ",
     "type": "object",
