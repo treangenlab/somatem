@@ -61,22 +61,15 @@ workflow PIPELINE_INITIALISATION {
     //
     // Convert samplesheet to channel
     channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map { meta, fastq_1, fastq_2 ->
-            // Add single_end flag based on whether fastq_2 exists
-            def new_meta = meta + [single_end: fastq_2 ? false : true]
-            def fastqs = fastq_2 ? [fastq_1, fastq_2] : [fastq_1]
-            return [new_meta, fastqs]
-        }
-        .groupTuple(by: 0)  // Group by meta (in case same sample appears multiple times)
-        .map { meta, fastqs_list ->
-            // Flatten the list of fastqs if samples were grouped
-            return [meta, fastqs_list.flatten()]
+        .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+        .map { meta, fastq ->
+            def new_meta = meta + [single_end: true]
+            [new_meta, [fastq]]
         }
         .set { ch_samplesheet }
 
-    // Count and display all input files
-    ch_samplesheet.count().view { count -> "Found ${count} samples to process" }
+        // Count and display all input files
+        ch_samplesheet.count().view { count -> "Found ${count} samples to process" }
 
     emit:
     samplesheet = ch_samplesheet
