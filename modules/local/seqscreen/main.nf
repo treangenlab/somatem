@@ -12,12 +12,11 @@ process SEQSCREEN {
     path(db)
 
     output:
-    // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("seqscreen_dir"), emit: seqscreen_dir
-    // TODO nf-core: List additional required output channels/values here
-    // TODO nf-core: Update the command here to obtain the version number of the software used in this module
-    // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
-    //               by copying the line below and replacing the current tool with the extra tool(s)
+    tuple val(meta), path("seqscreen_output"), emit: output_dir
+    tuple val(meta), path("seqscreen_output/report_generation/seqscreen_report.tsv"), emit: report
+    tuple val(meta), path("seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt"), emit: taxonomic_results
+    tuple val(meta), path("seqscreen_output/seqscreen.log"), emit: log
+    
     tuple val("${task.process}"), val('seqscreen'), eval("seqscreen --version"), topic: versions, emit: versions_seqscreen
 
     when:
@@ -35,7 +34,7 @@ process SEQSCREEN {
         --fasta ${fasta} \\
         ${mode} \\
         --databases ${db} \\
-        --working ${prefix}.seqscreen_dir
+        --working seqscreen_output
     """
 
     stub:
@@ -45,6 +44,13 @@ process SEQSCREEN {
     """
     echo $args
     
-    touch ${prefix}.seqscreen_dir
+    mkdir -p seqscreen_output/functional_annotation/functional_assignments
+    mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
+    mkdir -p seqscreen_output/report_generation
+    
+    touch seqscreen_output/report_generation/seqscreen_report.tsv
+    touch seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
+    touch seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
+    touch seqscreen_output/seqscreen.log
     """
 }
