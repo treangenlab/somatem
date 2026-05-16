@@ -4,7 +4,7 @@ process SAMTOOLS_COVERAGE {
     label 'process_single'
 
     // Outputs
-    publishDir "${params.output_dir}/mapping/${meta.id}", mode: 'copy', pattern: "*.txt"
+    publishDir { "${params.output_dir}/mapping/${meta.id}" }, mode: 'copy', pattern: "*.txt"
 
     conda "${moduleDir}/environment.yml"
 

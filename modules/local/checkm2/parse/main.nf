@@ -4,7 +4,7 @@ process CHECKM2_PARSE {
     label 'process_low'
 
     // Outputs
-    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.csv"
+    publishDir { "${params.output_dir}/quality/${meta.id}" }, mode: 'copy', pattern: "*.csv"
 
     conda "conda-forge::python=3.9 conda-forge::pandas=2.0.3"
 

@@ -9,11 +9,18 @@ question: ""
 
 # other options --------------------------------
 
-input: "assets/samplesheets/mag_samples.csv"
+input: "/home/agm/Documents/somatem/assets/samplesheets/mag_samples.csv"
 
 # The environment of the microbiome sample 
 # options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
 sample_environment: "human_gut"
+
+# Optional, off by default: run the bounded Python-controlled iterative binner
+# loop (SemiBin2, MetaBAT2, VAMB -> Pigeon scoring -> optional DAS Tool).
+mag_iterative_binning_enabled: true
+mag_binning_iterations: 5
+mag_iterative_seed_step: 1
+pigeon_residual_rebinning: true
 
 # standard options ------------------------------
 
@@ -50,7 +57,7 @@ sequencing_technology_qualifiers: "R10"
 # running mode: determines what analysis tools can be run
 # 1. laptop = runs on a laptop. Only does taxonomic profiling (default)
 # 2. cluster = runs on a cluster or workstation. Can perform all analysis_types (including assembly)
-running_mode: "cluster"
+running_mode: "laptop"
 
 
 # confidence level of profiling analyses: 

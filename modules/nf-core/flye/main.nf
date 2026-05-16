@@ -4,9 +4,9 @@ process FLYE {
     label 'process_high'
 
     // Outputs
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.fasta"
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.gfa"
-    publishDir "${params.output_dir}/assembly/${meta.id}", mode: 'copy', pattern: "*.log"
+    publishDir { "${params.output_dir}/assembly/${meta.id}" }, mode: 'copy', pattern: "*.fasta"
+    publishDir { "${params.output_dir}/assembly/${meta.id}" }, mode: 'copy', pattern: "*.gfa"
+    publishDir { "${params.output_dir}/assembly/${meta.id}" }, mode: 'copy', pattern: "*.log"
 
     conda "${moduleDir}/environment.yml"
 

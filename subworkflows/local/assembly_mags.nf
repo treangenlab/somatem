@@ -18,6 +18,7 @@ include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
 include { PIGEON }                  from '../../modules/local/pigeon/main'
+include { PIGEON_ITERATIVE_BINNING } from '../../modules/local/pigeon/iterate/main'
 include { AGB }                     from '../../modules/local/agb/main'
 
 
@@ -93,31 +94,59 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
     SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
-    // Binning with SemiBin2
+    // Binning with SemiBin2, or optional Python-controlled iterative binning
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0]) // join by sample ID (meta.id)
-    
-    SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
-    ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
-    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
+
+    ch_bins_for_downstream = channel.empty()
+    ch_bins_csv = channel.empty()
+    ch_bins_tsv = channel.empty()
+    ch_iterative_manifest = channel.empty()
+    ch_iterative_selected = channel.empty()
+    ch_iterative_trajectory = channel.empty()
+    ch_iterative_summary = channel.empty()
+    ch_iterative_command_log = channel.empty()
+
+    if (!params.mag_iterative_binning_enabled) {
+        SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
+        ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
+        SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
+        ch_bins_for_downstream = SEMIBIN_SINGLEEASYBIN.out.output_fasta
+        ch_bins_csv = SEMIBIN_SINGLEEASYBIN.out.csv
+        ch_bins_tsv = SEMIBIN_SINGLEEASYBIN.out.tsv
+    } else {
+        ch_iterative_input = FLYE.out.gfa
+            .join(FLYE.out.fasta, by: [0])
+            .join(SAMTOOLS_SORT.out.bam, by: [0])
+
+        PIGEON_ITERATIVE_BINNING(ch_iterative_input)
+        ch_versions = ch_versions.mix(PIGEON_ITERATIVE_BINNING.out.versions)
+        ch_bins_for_downstream = PIGEON_ITERATIVE_BINNING.out.final_bins
+        ch_iterative_manifest = PIGEON_ITERATIVE_BINNING.out.candidate_manifest
+        ch_iterative_selected = PIGEON_ITERATIVE_BINNING.out.selected_tsv
+        ch_iterative_trajectory = PIGEON_ITERATIVE_BINNING.out.trajectory_tsv
+        ch_iterative_summary = PIGEON_ITERATIVE_BINNING.out.iterative_summary
+        ch_iterative_command_log = PIGEON_ITERATIVE_BINNING.out.command_log
+        PIGEON_ITERATIVE_BINNING.out.iterative_summary.view { meta, _summary -> "✓ Optional iterative binning completed for ${meta.id}" } // log
+    }
 
     // Quality assessment with CheckM2
-    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
+    CHECKM2_PREDICT(ch_bins_for_downstream, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
     CHECKM2_PREDICT.out.checkm2_tsv.view { meta, _tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
     
     // Parse CheckM2 results to get completeness information
-    CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, SEMIBIN_SINGLEEASYBIN.out.output_fasta)
+    CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, ch_bins_for_downstream)
     ch_versions = ch_versions.mix(CHECKM2_PARSE.out.versions)
 
     // Run SingleM pipe on bins - FIXED: Add suffix to avoid filename collision
-    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, 'genome')
+    SINGLEM_PIPE_BINS(ch_bins_for_downstream, ch_singlem_db, 'genome')
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     
     // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
     ch_pigeon_input = FLYE.out.gfa // join gfa, assembly, and bins to prepare pigeon input
         .join(FLYE.out.fasta, by: [0])
-        .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
+        .join(ch_bins_for_downstream, by: [0])
 
     PIGEON(ch_pigeon_input)
     ch_versions = ch_versions.mix(PIGEON.out.versions)
@@ -160,7 +189,7 @@ workflow ASSEMBLY_MAGS {
     SINGLEM_APPRAISE.out.summary.view { meta, _summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
 
     // Completeness-based Bakta annotation
-    ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
+    ch_bins_for_annotation = ch_bins_for_downstream
         .transpose()
         .map { meta, bin ->
             def new_meta = meta.clone()
@@ -254,9 +283,14 @@ workflow ASSEMBLY_MAGS {
     assembly_graph  = AGB.out.assembly_graph
     bam_sorted      = SAMTOOLS_SORT.out.bam
     coverage        = SAMTOOLS_COVERAGE.out.coverage
-    bins            = SEMIBIN_SINGLEEASYBIN.out.output_fasta
-    bins_csv        = SEMIBIN_SINGLEEASYBIN.out.csv
-    bins_tsv        = SEMIBIN_SINGLEEASYBIN.out.tsv
+    bins            = ch_bins_for_downstream
+    bins_csv        = ch_bins_csv
+    bins_tsv        = ch_bins_tsv
+    iterative_manifest = ch_iterative_manifest
+    iterative_selected = ch_iterative_selected
+    iterative_trajectory = ch_iterative_trajectory
+    iterative_summary = ch_iterative_summary
+    iterative_command_log = ch_iterative_command_log
     checkm2_report  = CHECKM2_PREDICT.out.checkm2_tsv
     checkm2_output  = CHECKM2_PREDICT.out.checkm2_output
     completeness_map = CHECKM2_PARSE.out.completeness_map

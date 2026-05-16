@@ -4,8 +4,8 @@ process SINGLEM_APPRAISE {
     
 
     // Outputs
-    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.tsv"
-    publishDir "${params.output_dir}/appraise/${meta.id}", mode: 'copy', pattern: "*.svg"
+    publishDir { "${params.output_dir}/appraise/${meta.id}" }, mode: 'copy', pattern: "*.tsv"
+    publishDir { "${params.output_dir}/appraise/${meta.id}" }, mode: 'copy', pattern: "*.svg"
 
     conda "${moduleDir}/environment.yml"
 

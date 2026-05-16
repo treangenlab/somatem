@@ -100,7 +100,7 @@ workflow SOMATEM {
     
     // separate key emits for publishing convenience
     mapping       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bam_sorted : channel.empty()  // channel: [ val(meta), path(*.bam) ]
-    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
+    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv, ASSEMBLY_MAGS.out.iterative_manifest, ASSEMBLY_MAGS.out.iterative_selected, ASSEMBLY_MAGS.out.iterative_trajectory, ASSEMBLY_MAGS.out.iterative_summary, ASSEMBLY_MAGS.out.iterative_command_log) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
     bin_fasta     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins : channel.empty() // channel: [ path(*.fa.gz) ]
 }
 

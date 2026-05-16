@@ -21,12 +21,13 @@ micromamba activate nf_base_env
 ```
 
 ### Set the cache dir
-Nextflow's cache dir is set to `~/micromamba/other-envs` in the `nextflow.config` file's `conda.cacheDir` parameter. So create a directory at this location the first time.
-_The default cache dir for nextflow created environments is `Somatem/work/..`_; Since I like to delete `work/` frequently to save space, I set this to a different location outside the repo.
+Nextflow's conda cache and downloaded databases default to the Somatem data directory. In a Bioconda or micromamba install this resolves to `$CONDA_PREFIX/var/somatem`, so generated environments and databases stay with the active Somatem environment.
 
 ```sh
-mkdir -p ~/micromamba/other-envs
+mkdir -p "${CONDA_PREFIX}/var/somatem"
 ```
+
+Set `SOMATEM_HOME`, `SOMATEM_DB_DIR`, `SOMATEM_CONDA_CACHE`, or `SOMATEM_UNIFIED_DB_DIR` before launching Somatem to override these defaults.
 
 
 # Development notes

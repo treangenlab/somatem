@@ -1,0 +1,17 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - sourmash
+  - sourmash_plugin_branchwater
+  - biopython
+  - numpy
+  - plotly
+  - gfatools
+  - python-rocksdb
+  - markdown
+  - semibin
+  - metabat2
+  - vamb
+  - das_tool

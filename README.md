@@ -51,13 +51,16 @@ Information on how to run the various subworkflows in somatem can be found in ou
 
 ## Database Configuration
 
-Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively. The first time you run a pipeline requiring a database these will be installe for you and saved at that path for future runs.
+Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively. The first time you run a pipeline requiring a database these will be installed for you and saved at that path for future runs.
 
 * **Storage Requirements:** Some databases (e.g., Bakta, CheckM2, SingleM) require up to 100 GB of free space. Ensure your target drive has adequate capacity.
-* **Directory Setup:** Decide whether you want a local database directory within the `somatem` folder, or a shared, centralized directory (highly recommended for HPC cluster environments).
-* **Configuration:** Update the `/path/to/env/somatem/share/somatem-{version}/nextflow.config` file to point the pipeline to your chosen directory. Locate and modify the following variable:
-    ```groovy
-    db_base_dir = "/home/dbs" // Change this to "./assets/databases" for local storage
+* **Directory Setup:** By default, Somatem stores generated Nextflow conda environments and downloaded databases under the active conda environment at `$CONDA_PREFIX/var/somatem`. If no conda environment is active, it falls back to `~/.somatem`.
+* **Configuration:** To use another location, set one of these environment variables before running Somatem:
+    ```bash
+    export SOMATEM_HOME=/path/to/somatem-data      # sets both databases and conda cache
+    export SOMATEM_DB_DIR=/path/to/databases       # overrides databases only
+    export SOMATEM_CONDA_CACHE=/path/to/nxf-envs   # overrides Nextflow conda environments only
+    export SOMATEM_UNIFIED_DB_DIR=/path/to/unified # overrides ensemble profiling databases
     ```
 
 ---

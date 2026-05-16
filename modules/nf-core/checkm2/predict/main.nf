@@ -4,7 +4,7 @@ process CHECKM2_PREDICT {
     label 'process_medium'
 
     // Outputs
-    publishDir "${params.output_dir}/quality/${meta.id}", mode: 'copy', pattern: "*.tsv"
+    publishDir { "${params.output_dir}/quality/${meta.id}" }, mode: 'copy', pattern: "*.tsv"
 
     conda "${moduleDir}/environment.yml"
 

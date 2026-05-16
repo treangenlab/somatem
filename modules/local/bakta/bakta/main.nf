@@ -8,7 +8,7 @@ process BAKTA_BAKTA {
 
     
     // Outputs
-    publishDir "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}", mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
+    publishDir { "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}" }, mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
 
     input:
     tuple val(meta), path(fasta)
