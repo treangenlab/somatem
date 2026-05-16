@@ -9,7 +9,7 @@ process SEQSCREEN {
 
     input:
     tuple val(meta), path(fasta)
-    tuple val(meta), path(db)
+    path(db)
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
@@ -26,16 +26,16 @@ process SEQSCREEN {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def mode = params.seqscreen_mode ? " --${params.seqscreen_mode}" : ' --ont'
+    def mode = params.seqscreen_mode ? " --${params.seqscreen_mode}" : ' --fast'
 
     """
     seqscreen \\
         $args \\
-        -@ $task.cpus \\
+        --threads $task.cpus \\
         --fasta ${fasta} \\
         ${mode} \\
         --databases ${db} \\
-        -o ${prefix}.seqscreen_dir
+        --working ${prefix}.seqscreen_dir
     """
 
     stub:
