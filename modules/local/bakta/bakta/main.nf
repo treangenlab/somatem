@@ -1,5 +1,5 @@
 // custom module : preferring this to nf-core/bakta/bakta
-// includes: 1. fasta check, 2. visualization with bakta_plot 3. updated bakta version (1.11.4)
+// includes: 1. fasta check, 2. visualization with bakta_plot 3. updated bakta version (1.12.0)
 // Author: Austin Marshall
 // Date: 2025-09-30
 process BAKTA_BAKTA {

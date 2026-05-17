@@ -15,12 +15,13 @@ input: "/home/agm/Documents/somatem/assets/samplesheets/mag_samples.csv"
 # options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
 sample_environment: "human_gut"
 
-# Optional, off by default: run the bounded Python-controlled iterative binner
-# loop (SemiBin2, MetaBAT2, VAMB -> Pigeon scoring -> optional DAS Tool).
+# Optional iterative binning: run bounded full-assembly seed sweeps
+# (SemiBin2, MetaBAT2, VAMB -> Pigeon loss scoring -> optional DAS Tool).
 mag_iterative_binning_enabled: true
 mag_binning_iterations: 5
 mag_iterative_seed_step: 1
-pigeon_residual_rebinning: true
+pigeon_selection_score_mode: "pigeon_loss"
+pigeon_residual_rebinning: false
 
 # standard options ------------------------------
 

@@ -2,6 +2,8 @@ process PIGEON {
     tag "$meta.id"
     label 'process_medium'
 
+    publishDir { "${params.output_dir}/pigeon/${meta.id}" }, mode: 'copy', pattern: "*.{html,json}"
+
     conda "${moduleDir}/environment.yml"
 
     input:

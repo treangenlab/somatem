@@ -2,6 +2,8 @@ process MINIMAP2_INDEX {
     tag "$meta.id"
     label 'process_low'
 
+    publishDir { "${params.output_dir}/mapping/${meta.id}/minimap2_index" }, mode: 'copy', pattern: "*.mmi"
+
     // Note: the versions here need to match the versions used in minimap2/align
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

@@ -94,37 +94,56 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
     SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
-    // Binning with SemiBin2, or optional Python-controlled iterative binning
+    // Binning with Pigeon-controlled iterative binning by default, or plain SemiBin2 when disabled.
+    use_iterative_binning = params.mag_iterative_binning_enabled instanceof Boolean
+        ? params.mag_iterative_binning_enabled
+        : params.mag_iterative_binning_enabled.toString().toBoolean()
+
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0]) // join by sample ID (meta.id)
 
     ch_bins_for_downstream = channel.empty()
     ch_bins_csv = channel.empty()
     ch_bins_tsv = channel.empty()
+    ch_bins_model = channel.empty()
+    ch_iterative_dastool_bins = channel.empty()
+    ch_iterative_selection_summary = channel.empty()
     ch_iterative_manifest = channel.empty()
     ch_iterative_selected = channel.empty()
     ch_iterative_trajectory = channel.empty()
     ch_iterative_summary = channel.empty()
+    ch_iterative_report = channel.empty()
     ch_iterative_command_log = channel.empty()
 
-    if (!params.mag_iterative_binning_enabled) {
+    if (!use_iterative_binning) {
         SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
         ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
         SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
         ch_bins_for_downstream = SEMIBIN_SINGLEEASYBIN.out.output_fasta
         ch_bins_csv = SEMIBIN_SINGLEEASYBIN.out.csv
         ch_bins_tsv = SEMIBIN_SINGLEEASYBIN.out.tsv
+        ch_bins_model = SEMIBIN_SINGLEEASYBIN.out.model
     } else {
         ch_iterative_input = FLYE.out.gfa
-            .join(FLYE.out.fasta, by: [0])
-            .join(SAMTOOLS_SORT.out.bam, by: [0])
+            .join(ch_asm_bam, by: [0])
+            .map { meta, gfa, assembly, bam ->
+                [meta, gfa, assembly, bam]
+            }
 
         PIGEON_ITERATIVE_BINNING(ch_iterative_input)
         ch_versions = ch_versions.mix(PIGEON_ITERATIVE_BINNING.out.versions)
-        ch_bins_for_downstream = PIGEON_ITERATIVE_BINNING.out.final_bins
+
+        // With DAS Tool consensus enabled, send the consensus bins directly to CheckM2.
+        // Otherwise, use final_bins from the selected binner iterations.
+        ch_bins_for_downstream = params.mag_iterative_consensus_tool == "dastool"
+            ? PIGEON_ITERATIVE_BINNING.out.dastool_bins
+            : PIGEON_ITERATIVE_BINNING.out.final_bins
+        ch_iterative_dastool_bins = PIGEON_ITERATIVE_BINNING.out.dastool_bins
+        ch_iterative_selection_summary = PIGEON_ITERATIVE_BINNING.out.selection_summary
         ch_iterative_manifest = PIGEON_ITERATIVE_BINNING.out.candidate_manifest
         ch_iterative_selected = PIGEON_ITERATIVE_BINNING.out.selected_tsv
         ch_iterative_trajectory = PIGEON_ITERATIVE_BINNING.out.trajectory_tsv
         ch_iterative_summary = PIGEON_ITERATIVE_BINNING.out.iterative_summary
+        ch_iterative_report = PIGEON_ITERATIVE_BINNING.out.iterative_report
         ch_iterative_command_log = PIGEON_ITERATIVE_BINNING.out.command_log
         PIGEON_ITERATIVE_BINNING.out.iterative_summary.view { meta, _summary -> "✓ Optional iterative binning completed for ${meta.id}" } // log
     }
@@ -281,15 +300,23 @@ workflow ASSEMBLY_MAGS {
     assembly_gfa    = FLYE.out.gfa
     assembly_log    = FLYE.out.log
     assembly_graph  = AGB.out.assembly_graph
+    minimap_index   = MINIMAP2_INDEX.out.index
+    bam_aligned     = MINIMAP2_ALIGN.out.bam
+    bam_aligned_index = MINIMAP2_ALIGN.out.index
     bam_sorted      = SAMTOOLS_SORT.out.bam
+    bam_sorted_index = SAMTOOLS_SORT.out.bai
     coverage        = SAMTOOLS_COVERAGE.out.coverage
     bins            = ch_bins_for_downstream
     bins_csv        = ch_bins_csv
     bins_tsv        = ch_bins_tsv
+    bins_model      = ch_bins_model
+    iterative_dastool_bins = ch_iterative_dastool_bins
+    iterative_selection_summary = ch_iterative_selection_summary
     iterative_manifest = ch_iterative_manifest
     iterative_selected = ch_iterative_selected
     iterative_trajectory = ch_iterative_trajectory
     iterative_summary = ch_iterative_summary
+    iterative_report = ch_iterative_report
     iterative_command_log = ch_iterative_command_log
     checkm2_report  = CHECKM2_PREDICT.out.checkm2_tsv
     checkm2_output  = CHECKM2_PREDICT.out.checkm2_output
@@ -323,11 +350,11 @@ workflow ASSEMBLY_MAGS {
     
     // SingleM appraise outputs
     appraise_summary = SINGLEM_APPRAISE.out.summary
+    appraise_plot = SINGLEM_APPRAISE.out.plot
     appraise_binned_otu = SINGLEM_APPRAISE.out.binned_otu_table
     appraise_unbinned_otu = SINGLEM_APPRAISE.out.unbinned_otu_table
     appraise_assembled_otu = SINGLEM_APPRAISE.out.assembled_otu_table
     appraise_unaccounted_otu = SINGLEM_APPRAISE.out.unaccounted_otu_table
-    appraise_plot = SINGLEM_APPRAISE.out.plot
     
     versions        = ch_versions
 }

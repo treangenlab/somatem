@@ -2,6 +2,8 @@ process SAMTOOLS_SORT {
     tag "$meta.id"
     label 'process_medium'
 
+    publishDir { "${params.output_dir}/mapping/${meta.id}/samtools_sort" }, mode: 'copy', pattern: "*.{bam,bai,csi,crai,cram,sam}"
+
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0' :

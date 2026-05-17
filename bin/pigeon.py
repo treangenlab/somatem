@@ -38,7 +38,7 @@ Dependencies:
 """
 
 import re
-import os, sys, json, argparse, subprocess, gzip, struct, shutil
+import os, sys, json, argparse, subprocess, gzip, struct, shutil, math
 from pathlib import Path
 from typing import Dict, List, Tuple, Set, Iterable, Optional
 
@@ -54,6 +54,17 @@ try:
     HAVE_ROCKS = True
 except Exception:
     HAVE_ROCKS = False
+
+
+PIGEON_LOSS_MODEL = "adaptive_focus_v1"
+PIGEON_LOSS_COMPONENTS = [
+    "missing_bin_recovery",
+    "unexplained_unitigs",
+    "assembly_bin_discordance",
+    "fragmented_recovery",
+    "support_imbalance",
+    "novelty_partition_distance",
+]
 
 
 # ---------------- I/O helpers ----------------
@@ -85,6 +96,21 @@ def display_name(s: str) -> str:
     # replace either "contig_" or "bin_contig_" with ""
     name = re.sub(r'(?:bin_)?contig_', '', p.name)
     return name
+
+
+def require_path(path: str, label: str) -> Path:
+    p = Path(path)
+    if not p.exists():
+        raise SystemExit(f"{label} does not exist: {p}")
+    return p
+
+
+def fasta_inputs(path: Path) -> List[str]:
+    return [
+        str(f) for f in sorted(path.iterdir())
+        if f.is_file() and any(str(f).endswith(ext) for ext in (".fa", ".fna", ".fasta", ".fa.gz", ".fna.gz", ".fasta.gz"))
+    ]
+
 
 # ---------------- GFA -> unitigs ----------------
 def extract_unitigs_from_gfa(gfa_path: str, out_fa: Path):
@@ -166,6 +192,70 @@ def jaccard(A: Set[int], B: Set[int]) -> float:
     return I / U if U else 0.0
 
 
+def clamp01(value: float) -> float:
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if math.isnan(x) or math.isinf(x):
+        return 0.0
+    return max(0.0, min(1.0, x))
+
+
+def adaptive_focus_loss(components: Dict[str, float]) -> Tuple[float, Dict[str, float], float]:
+    """Return an adaptive bounded loss, focus weights, and temperature.
+
+    This is intentionally not a static weighted sum. Each component is a
+    normalized deficit where 0 is ideal and 1 is poor. The candidate's own
+    deficit spread controls the softmax temperature, and the softmax-derived
+    focus weights make the largest current failure mode lead the objective.
+    """
+    clean = {key: clamp01(value) for key, value in components.items()}
+    if not clean:
+        return 0.0, {}, 0.0
+
+    values = list(clean.values())
+    mean = sum(values) / float(len(values))
+    variance = sum((value - mean) ** 2 for value in values) / float(len(values))
+    temperature = 2.0 + (12.0 * math.sqrt(variance))
+
+    max_value = max(values)
+    scaled = {
+        key: math.exp(temperature * (value - max_value))
+        for key, value in clean.items()
+    }
+    total = sum(scaled.values()) or 1.0
+    focus = {key: value / total for key, value in scaled.items()}
+    loss = sum(focus[key] * clean[key] for key in clean)
+    return clamp01(loss), focus, temperature
+
+
+def dominant_loss_component(components: Dict[str, float], focus: Dict[str, float]) -> str:
+    if not components:
+        return ""
+    return max(
+        components,
+        key=lambda key: (clamp01(components.get(key, 0.0)) * clamp01(focus.get(key, 0.0)), clamp01(components.get(key, 0.0))),
+    )
+
+
+def loss_profile_rows(metrics: Dict) -> List[Dict[str, float]]:
+    components = metrics.get("pigeon_loss_components", {}) or {}
+    focus = metrics.get("pigeon_loss_focus", {}) or {}
+    rows = []
+    for name in PIGEON_LOSS_COMPONENTS:
+        value = clamp01(components.get(name, 0.0))
+        weight = clamp01(focus.get(name, 0.0))
+        rows.append({
+            "component": name,
+            "defect": value,
+            "focus": weight,
+            "contribution": value * weight,
+        })
+    rows.sort(key=lambda row: row["contribution"], reverse=True)
+    return rows
+
+
 # ---------------- RocksDB helpers ----------------
 def to_key(h: int) -> bytes:
     # store as unsigned 64-bit big-endian
@@ -200,6 +290,12 @@ class HashDB:
 def compute_novel_metrics(sets: Dict[str, Set[int]], bin_names: List[str], primary_key: str):
     Uset = sets.get(primary_key, set())          # unitigs
     A     = sets.get("assembly", set())          # assembly contigs
+    if not Uset:
+        raise ValueError(f"Primary signature has no hashes: {primary_key}")
+    if not A:
+        raise ValueError("Assembly signature has no hashes")
+    if not bin_names:
+        raise ValueError("No bin signatures were provided")
     Bunion = set().union(*(sets[n] for n in bin_names)) if bin_names else set()
 
     Uall = A | Bunion
@@ -243,6 +339,22 @@ def compute_novel_metrics(sets: Dict[str, Set[int]], bin_names: List[str], prima
     balance   = 1.0 - abs(frac_U_Aonly - frac_U_Bonly)
     pam = 0.6 * explained + 0.3 * auc_norm + 0.1 * balance
 
+    # Pigeon novelty loss: a bounded adaptive objective for iterative binning.
+    # Lower is better. Components are normalized deficits; the final loss is an
+    # adaptive focus mean, so the dominant current failure mode leads the search
+    # without fixed component weights.
+    novelty_partition_distance = math.sqrt(clamp01(1.0 - math.sqrt(clamp01(frac_U_both))))
+    loss_components = {
+        "missing_bin_recovery": clamp01(1.0 - frac_U_in_B),
+        "unexplained_unitigs": clamp01(frac_U_only),
+        "assembly_bin_discordance": clamp01(frac_U_Aonly + frac_U_Bonly),
+        "fragmented_recovery": clamp01(1.0 - auc_norm),
+        "support_imbalance": clamp01(abs(frac_U_Aonly - frac_U_Bonly)),
+        "novelty_partition_distance": novelty_partition_distance,
+    }
+    pigeon_loss, loss_focus, loss_temperature = adaptive_focus_loss(loss_components)
+    dominant_component = dominant_loss_component(loss_components, loss_focus)
+
     return {
         f"|{primary_key}|": len(Uset), "|A|": len(A), "|B|": len(Bunion), "|U|": len(Uall),
         f"|{primary_key}∩A|": len(UA), f"|{primary_key}∩B|": len(UB),
@@ -263,6 +375,18 @@ def compute_novel_metrics(sets: Dict[str, Set[int]], bin_names: List[str], prima
         "ordered_bins": ordered_bins,
         "auc_norm": auc_norm,
         "pam": pam,
+        "pigeon_loss": pigeon_loss,
+        "pigeon_loss_score": 1.0 - pigeon_loss,
+        "pigeon_loss_components": loss_components,
+        "pigeon_loss_focus": loss_focus,
+        "pigeon_loss_temperature": loss_temperature,
+        "pigeon_loss_model": PIGEON_LOSS_MODEL,
+        "pigeon_loss_component_order": PIGEON_LOSS_COMPONENTS,
+        "pigeon_loss_dominant_component": dominant_component,
+        "pigeon_loss_profile": loss_profile_rows({
+            "pigeon_loss_components": loss_components,
+            "pigeon_loss_focus": loss_focus,
+        }),
     }
 
 
@@ -360,7 +484,7 @@ def make_report(outdir: Path,
         f"|{title_primary}| (hashes)", "|A|", "|B| (union)",
         f"{title_primary} in A (frac)", f"{title_primary} in B (frac)", "Unexplained (frac)",
         "A only (frac)", "B only (frac)", "A not B (frac)",
-        "AUC (cum curve)", "PAM score"
+        "AUC (cum curve)", "PAM score", "Pigeon loss", "Loss score"
     ]
     vals = [
         str(novel_metrics.get(f"|{primary_key}|", 0)),
@@ -374,6 +498,8 @@ def make_report(outdir: Path,
         f"{novel_metrics.get(f'frac_{primary_key}_both', 0.0):.3f}",
         f"{novel_metrics.get('auc_norm', 0.0):.3f}",
         f"{novel_metrics.get('pam', 0.0):.3f}",
+        f"{novel_metrics.get('pigeon_loss', 0.0):.3f}",
+        f"{novel_metrics.get('pigeon_loss_score', 1.0):.3f}",
     ]
     fig.add_trace(go.Table(header=dict(values=["Metric", "Value"]),
                            cells=dict(values=[rows, vals])), row=2, col=3)
@@ -460,6 +586,26 @@ def make_report(outdir: Path,
         f.write(html_with_summary)
 
 
+def write_loss_profile(outdir: Path, metrics: Dict):
+    rows = loss_profile_rows(metrics)
+    with open(outdir / "loss_profile.tsv", "w") as handle:
+        handle.write("component\tdefect\tfocus\tcontribution\n")
+        for row in rows:
+            handle.write(
+                f"{row['component']}\t{row['defect']:.8f}\t{row['focus']:.8f}\t{row['contribution']:.8f}\n"
+            )
+    with open(outdir / "loss_profile.json", "w") as handle:
+        json.dump({
+            "schema_version": "pigeon.loss_profile.v1",
+            "model": metrics.get("pigeon_loss_model", PIGEON_LOSS_MODEL),
+            "loss": metrics.get("pigeon_loss"),
+            "loss_score": metrics.get("pigeon_loss_score"),
+            "dominant_component": metrics.get("pigeon_loss_dominant_component"),
+            "temperature": metrics.get("pigeon_loss_temperature"),
+            "components": rows,
+        }, handle, indent=2)
+
+
 # ---------------- Main ----------------
 def main():
     ap = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -485,6 +631,21 @@ def main():
                     help="number of bins to show in plots")
 
     args = ap.parse_args()
+    if args.ksize <= 0:
+        raise SystemExit("--ksize must be a positive integer")
+    if args.scaled <= 0:
+        raise SystemExit("--scaled must be a positive integer")
+    if args.top_bins <= 0:
+        raise SystemExit("--top-bins must be a positive integer")
+    require_path(args.assembly, "--assembly")
+    if args.gfa:
+        require_path(args.gfa, "--gfa")
+    if args.unitigs_fa:
+        require_path(args.unitigs_fa, "--unitigs-fa")
+    if args.unitigs_sig:
+        require_path(args.unitigs_sig, "--unitigs-sig")
+    require_path(args.bins_dir, "--bins_dir")
+
     outdir = Path(args.outdir); ensure_dir(outdir)
     sigdir = outdir / "sigs"; ensure_dir(sigdir)
     tmpdir = outdir / "tmp"; ensure_dir(tmpdir)
@@ -527,12 +688,9 @@ def main():
         bins_sig = Path(args.bins_dir)
     else:
         print("[sketch] bins")
-        bin_files = []
-        for f in sorted(Path(args.bins_dir).iterdir()):
-            if f.is_file() and any(str(f).endswith(ext) for ext in (".fa",".fna",".fasta",".fa.gz",".fna.gz",".fasta.gz")):
-                bin_files.append(str(f))
+        bin_files = fasta_inputs(Path(args.bins_dir))
         if not bin_files:
-            print("No bin FASTAs found in --bins_dir"); sys.exit(1)
+            raise SystemExit(f"No bin FASTAs found in --bins_dir: {args.bins_dir}")
         sketch_many(bin_files, [args.ksize], args.scaled, args.seed, bins_sig)
 
     # Load signatures -> sets
@@ -541,14 +699,22 @@ def main():
     sets: Dict[str, Set[int]] = {}
     sizes: Dict[str, int] = {}
 
-    sig_unitigs = load_sig_zip(str(unitig_sig), ksize=args.ksize)[0]
+    unitig_sigs = load_sig_zip(str(unitig_sig), ksize=args.ksize)
+    if not unitig_sigs:
+        raise SystemExit(f"No unitig signatures found for k={args.ksize}: {unitig_sig}")
+    sig_unitigs = unitig_sigs[0]
     sets[primary_key] = get_hash_set(sig_unitigs); sizes[primary_key] = len(sets[primary_key])
 
-    sig_asm = load_sig_zip(str(asm_sig), ksize=args.ksize)[0]
+    asm_sigs = load_sig_zip(str(asm_sig), ksize=args.ksize)
+    if not asm_sigs:
+        raise SystemExit(f"No assembly signatures found for k={args.ksize}: {asm_sig}")
+    sig_asm = asm_sigs[0]
     sets["assembly"] = get_hash_set(sig_asm); sizes["assembly"] = len(sets["assembly"])
 
     # Load signatures for bins
     bin_sigs = load_sig_zip(str(bins_sig), ksize=args.ksize)
+    if not bin_sigs:
+        raise SystemExit(f"No bin signatures found for k={args.ksize}: {bins_sig}")
     bin_names: List[str] = []
     for sig in bin_sigs:
         nm = sig.name or sig.filename or "bin"
@@ -583,6 +749,7 @@ def main():
     M = compute_novel_metrics(sets, bin_names, primary_key=primary_key)
     with open(outdir / "novel_metrics.json", "w") as w:
         json.dump(M, w, indent=2)
+    write_loss_profile(outdir, M)
 
     print("[report] building report.html")
     make_report(outdir, [primary_key,"assembly"] + bin_names, sets, sizes,
@@ -591,6 +758,7 @@ def main():
     print("\nDone.")
     print(f" - {outdir/'report.html'}")
     print(f" - {outdir/'novel_metrics.json'}")
+    print(f" - {outdir/'loss_profile.tsv'}")
     if HAVE_ROCKS and not args.skip_db:
         print(f" - {outdir} / hashdb (RocksDB with unions: {primary_key}, assembly, bins_union)")
 
