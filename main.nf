@@ -55,6 +55,7 @@ workflow ORCHESTRATE_SOMATEM {
     emit:
     versions       = SOMATEM.out.versions                 // channel: [ path(versions.yml) ]
     clean_reads    = SOMATEM.out.clean_reads
+    summary_reports = SOMATEM.out.summary_reports
     key_outputs    = SOMATEM.out.key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
 
     // separate key emits for publishing convenience

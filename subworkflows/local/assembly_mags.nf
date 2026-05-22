@@ -20,6 +20,7 @@ include { TAXBURST }                from '../../modules/local/taxburst/main'
 include { PIGEON }                  from '../../modules/local/pigeon/main'
 include { PIGEON_ITERATIVE_BINNING } from '../../modules/local/pigeon/iterate/main'
 include { AGB }                     from '../../modules/local/agb/main'
+include { SOMATEM_SUMMARY_REPORT as ASSEMBLY_MAGS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 
 workflow ASSEMBLY_MAGS {
@@ -293,6 +294,51 @@ workflow ASSEMBLY_MAGS {
         .count()
         .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
 
+    ch_versions_for_report = ch_versions
+    ch_assembly_report_files = FLYE.out.txt
+        .mix(
+            FLYE.out.log,
+            AGB.out.assembly_graph,
+            SAMTOOLS_COVERAGE.out.coverage,
+            ch_bins_csv,
+            ch_bins_tsv,
+            ch_iterative_manifest,
+            ch_iterative_selected,
+            ch_iterative_trajectory,
+            ch_iterative_summary,
+            ch_iterative_report,
+            CHECKM2_PREDICT.out.checkm2_tsv,
+            CHECKM2_PARSE.out.completeness_map,
+            SINGLEM_PIPE.out.taxonomic_profile,
+            SINGLEM_PIPE_BINS.out.otu_table,
+            TAXBURST.out.html,
+            PIGEON.out.report,
+            PIGEON.out.metrics,
+            SINGLEM_APPRAISE.out.summary,
+            SINGLEM_APPRAISE.out.plot,
+            BAKTA_BAKTA.out.tsv,
+            BAKTA_BAKTA.out.json,
+            BAKTA_BAKTA.out.png,
+            ch_versions_for_report
+        )
+
+    ASSEMBLY_MAGS_SUMMARY_REPORT(
+        'assembly_mags',
+        'Assembly and MAG recovery',
+        Channel.fromPath(params.input),
+        ch_assembly_report_files.flatMap { item ->
+            def report_file = item
+            if (item instanceof Collection && item.size() >= 2) {
+                report_file = item[1]
+            }
+            if (report_file instanceof Collection) {
+                return report_file
+            }
+            return [report_file]
+        }.collect()
+    )
+    ch_versions = ch_versions.mix(ASSEMBLY_MAGS_SUMMARY_REPORT.out.versions)
+
 
     emit:
     // Original outputs
@@ -356,5 +402,6 @@ workflow ASSEMBLY_MAGS {
     appraise_assembled_otu = SINGLEM_APPRAISE.out.assembled_otu_table
     appraise_unaccounted_otu = SINGLEM_APPRAISE.out.unaccounted_otu_table
     
+    summary_report  = ASSEMBLY_MAGS_SUMMARY_REPORT.out.html
     versions        = ch_versions
 }

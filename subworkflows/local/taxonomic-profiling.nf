@@ -5,6 +5,7 @@ include { LEMUR } from '../../modules/local/lemur/main.nf'
 include { MAGNET } from '../../modules/local/magnet/main.nf'
 include { TAXBURST_CONVERT } from '../../modules/local/taxburst_convert/main.nf'
 include { TAXBURST } from '../../modules/local/taxburst/main.nf'
+include { SOMATEM_SUMMARY_REPORT as TAXONOMY_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 // -------------------------
 // Parameters
@@ -27,6 +28,8 @@ workflow TAXONOMIC_PROFILING {
     main:
 
     ch_versions = channel.empty() // collect versions from all modules
+    taxonomy_report_slug = params.data_type == "16S" ? "16S" : "taxonomic_profiling"
+    taxonomy_report_label = params.data_type == "16S" ? "16S taxonomic profiling" : "Metagenomic taxonomic profiling"
 
     // 16S amplicon reads
     if (params.data_type == "16S") {
@@ -65,7 +68,27 @@ workflow TAXONOMIC_PROFILING {
 
     }
 
+    ch_versions_for_report = ch_versions
+    ch_taxonomy_report_files = taxonomy_report.mix(TAXBURST.out.html, ch_versions_for_report)
+    TAXONOMY_SUMMARY_REPORT(
+        taxonomy_report_slug,
+        taxonomy_report_label,
+        Channel.fromPath(params.input),
+        ch_taxonomy_report_files.flatMap { item ->
+            def report_file = item
+            if (item instanceof Collection && item.size() >= 2) {
+                report_file = item[1]
+            }
+            if (report_file instanceof Collection) {
+                return report_file
+            }
+            return [report_file]
+        }.collect()
+    )
+    ch_versions = ch_versions.mix(TAXONOMY_SUMMARY_REPORT.out.versions)
+
     emit:
     taxonomy_report
+    summary_report      = TAXONOMY_SUMMARY_REPORT.out.html
     versions           = ch_versions                        // channel: [ path(versions.yml) ]
 }

@@ -1,0 +1,8 @@
+---
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - btyper3=3.4.0
+  - blast>=2.9.0
+  - fastani

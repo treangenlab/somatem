@@ -6,9 +6,14 @@ process BAKTA_BAKTA {
     tag "$meta.id"
     label 'process_medium'
 
+    conda "${moduleDir}/environment.yml"
     
     // Outputs
-    publishDir { "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}" }, mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
+    publishDir {
+        params.analysis_type == "isolate-analysis"
+            ? "${params.output_dir}/isolate_analysis/${meta.id}/annotation/bakta"
+            : "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}"
+    }, mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
 
     input:
     tuple val(meta), path(fasta)

@@ -70,10 +70,12 @@ workflow DOWNLOAD_DBS {
     // ------------------------------------------------
     // assembly databases 
     // ------------------------------------------------
-    if (analysis_type == "assembly") {
+    if (analysis_type == "assembly" || analysis_type == "isolate-analysis") {
         // download checkm2 database 
-        CHECKM2_DATABASEDOWNLOAD(checkm2_db_zenodo_id)
-        ch_checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
+        if (analysis_type == "assembly") {
+            CHECKM2_DATABASEDOWNLOAD(checkm2_db_zenodo_id)
+            ch_checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
+        }
     
         // download bakta db
         BAKTA_BAKTADBDOWNLOAD()
@@ -81,8 +83,10 @@ workflow DOWNLOAD_DBS {
         ch_bakta_db = BAKTA_BAKTADBDOWNLOAD.out.db
 
         // download singlem db
-        SINGLEM_DOWNLOAD_DB()
-        ch_singlem_db = SINGLEM_DOWNLOAD_DB.out.singlem_db
+        if (analysis_type == "assembly") {
+            SINGLEM_DOWNLOAD_DB()
+            ch_singlem_db = SINGLEM_DOWNLOAD_DB.out.singlem_db
+        }
     }
 
     emit: // emit empty channels if not downloaded
