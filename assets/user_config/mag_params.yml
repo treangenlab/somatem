@@ -9,7 +9,7 @@ question: ""
 
 # other options --------------------------------
 
-input: "/home/agm/Documents/somatem/assets/samplesheets/mag_samples.csv"
+input: "assets/samplesheets/mag_samples.csv"
 
 # The environment of the microbiome sample 
 # options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
@@ -54,12 +54,6 @@ sequencing_technology: "nanopore"
 # for pacbio: CLR, HiFi
 sequencing_technology_qualifiers: "R10"
 # workflow will currently not use this information
-
-# running mode: determines what analysis tools can be run
-# 1. laptop = runs on a laptop. Only does taxonomic profiling (default)
-# 2. cluster = runs on a cluster or workstation. Can perform all analysis_types (including assembly)
-running_mode: "laptop"
-
 
 # confidence level of profiling analyses: 
 # 1. high = uses both assembled contigs and reads to yield a more accurate profile (default)
