@@ -272,8 +272,19 @@ Downloading test data and follow up scripts from supplementary material of rhea 
 micromamba activate /home/Users/pbk1/micromamba/other-envs/env-62dd2925c222a85f380459b013b190b1 # load osf
 osf --project fvhw8 clone # download all files
 ```
+### SeqScreen
+- Using DB: `home/dbs/SeqScreenDB_23.4/`
+- Test with example data from repo: example.fasta
+- RAM requirements 
+> Memory: A minimum of 32 GB RAM is needed to run SeqScreen ont mode. A minimum of 64 GB RAM is needed to run SeqScreen sensitive mode without BLASTN (not dependent upon size of input sequence file). Approximately 128 to 256 GB RAM is needed to run SeqScreen sensitive mode with BLASTN, as well as fast mode
+- Mode notes:
+> Since sensitive mode takes longer to process large datasets, why would anyone want to run it?
 
-
+> BLAST in sensitive mode has lower default memory requirements than DIAMOND in fast mode
+> BLASTN will classify non-coding sequences, which is not possible in fast mode with DIAMOND
+> BLAST outlier detection is only run with BLASTN in sensitive mode
+> BLASTN is more sensitive than BLASTX or DIAMOND in identifying synthetic constructs within sequences
+> Additional information is provided in intermediate files in sensitive mode, which may be helpful in some use cases or research studies. Additional information includes more detailed protein family information (HMMER + pfam database), identification restriction enzyme sites (MUMmer + REBASE database), published and hand-curated resistance sequences for antimicrobial drugs, as well as metal and biocide resistance determinants (BLASTN + MEGARES database) 
 
 # Orchestrating the pipeline
 - Connected pre-processing, taxonomic profiling into the main workflow `somatemtem.nf`
@@ -554,6 +565,7 @@ _procedure suggested by perplexity_
 ### Intermediate files 
 _not backed up in google drive yet_ : 14/May/26
 - `assets/data/other_tools_files/more_files/agb/` : contains inputs for agb testing. `flye_yeast_assembly.txt` and `flye_yeast.gv` files. Source: wget commands from agb repo maybe? but `metagenomescope` repo definitely has it referred. 
+- `assets/data/other_tools_files/more_files/seqscreen/` : contains simple input for seqscreen testing. `example.fasta` file. Source: wget command from seqscreen repo. `wget https://gitlab.com/treangenlab/seqscreen/-/blob/85409660c776e2844fec7c2af16a572efed0c58c/example_data/example.fasta`
 - `assets/data/intermediate_files/metaflye_rhea-t0-t1/` : contains the metaflye output for rhea on it's example data t0-t1. Source: ?
 - `assets/data/intermediate_files/agb_rhea_t0_t1/` : contains the agb output for rhea on it's example data t0-t1.
   - source: `~/somatem/work/7e$ cp -r 5df4d50db8df194c521c63c3e503fe/agb_output/ ../../assets/data/intermediate_files/agb_rhea_t0_t1`
