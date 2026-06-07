@@ -2,6 +2,8 @@ process MINIMAP2_ALIGN {
     tag "$meta.id"
     label 'process_high'
 
+    publishDir { "${params.output_dir}/mapping/${meta.id}/minimap2_align" }, mode: 'copy', pattern: "*.{bam,bai,paf}"
+
     // Note: the versions here need to match the versions used in the mulled container below and minimap2/index
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

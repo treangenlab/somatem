@@ -19,7 +19,7 @@ process SINGLEM_DOWNLOAD_DB {
 
     script:
     def args = task.ext.args ?: ''
-    singlem_db_local = "singlem_db/"
+    singlem_db_local = "./"
 
     """
     
@@ -48,7 +48,8 @@ process SINGLEM_DOWNLOAD_DB {
     """
     echo $args
 
-    mkdir -p $singlem_db_local
+    mkdir -p stub.smpkg.zb
+    touch stub.smpkg.zb/CONTENTS.json
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

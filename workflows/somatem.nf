@@ -10,6 +10,7 @@ include { PREPROCESSING } from '../subworkflows/local/pre-processing.nf'
 include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.nf'
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
+include { ISOLATE_ANALYSIS } from '../subworkflows/local/isolate_analysis.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,6 +40,7 @@ workflow SOMATEM {
     contam_ref = Channel.value([]) // empty channel for now
     PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
     ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
+    ch_summary_reports = PREPROCESSING.out.summary_report
 
     // -----------------------------------------------------------------
     // Taxonomic profiling
@@ -49,6 +51,7 @@ workflow SOMATEM {
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
+        ch_summary_reports = ch_summary_reports.mix(TAXONOMIC_PROFILING.out.summary_report)
     }
 
     // -----------------------------------------------------------------
@@ -67,9 +70,33 @@ workflow SOMATEM {
                 ch_singlem_db
         )
         ch_versions = ch_versions.mix(ASSEMBLY_MAGS.out.versions)
+        ch_summary_reports = ch_summary_reports.mix(ASSEMBLY_MAGS.out.summary_report)
 
         // collect key outputs: not using right now ; have separate emits below
 
+    }
+
+    // -----------------------------------------------------------------
+    // isolate analysis
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "isolate-analysis") {
+
+        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
+        ch_kraken2_db = Channel.value(file(params.kraken2_db))
+
+        ISOLATE_ANALYSIS(
+            PREPROCESSING.out.clean_reads,
+            ch_bakta_db,
+            ch_kraken2_db
+        )
+        ch_versions = ch_versions.mix(ISOLATE_ANALYSIS.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(
+            ISOLATE_ANALYSIS.out.assembly,
+            ISOLATE_ANALYSIS.out.kraken2_report,
+            ISOLATE_ANALYSIS.out.bakta_tsv
+        )
+        ch_key_outputs = ch_key_outputs.mix(ISOLATE_ANALYSIS.out.btyper3_outdir)
+        ch_summary_reports = ch_summary_reports.mix(ISOLATE_ANALYSIS.out.summary_report)
     }
 
     // -----------------------------------------------------------------
@@ -79,6 +106,7 @@ workflow SOMATEM {
         GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
         ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
         ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
+        ch_summary_reports = ch_summary_reports.mix(GENOME_DYNAMICS.out.summary_report)
     }
 
 
@@ -96,11 +124,12 @@ workflow SOMATEM {
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
     clean_reads    = PREPROCESSING.out.clean_reads
+    summary_reports = ch_summary_reports
     key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
     
     // separate key emits for publishing convenience
     mapping       = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bam_sorted : channel.empty()  // channel: [ val(meta), path(*.bam) ]
-    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
+    bin_tables    = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins_csv.mix(ASSEMBLY_MAGS.out.bins_tsv, ASSEMBLY_MAGS.out.iterative_manifest, ASSEMBLY_MAGS.out.iterative_selected, ASSEMBLY_MAGS.out.iterative_trajectory, ASSEMBLY_MAGS.out.iterative_summary, ASSEMBLY_MAGS.out.iterative_command_log) : channel.empty() // channel: [ path(*.csv) | path(*.tsv) ]
     bin_fasta     = params.analysis_type == "assembly" ? ASSEMBLY_MAGS.out.bins : channel.empty() // channel: [ path(*.fa.gz) ]
 }
 

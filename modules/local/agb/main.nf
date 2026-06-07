@@ -4,6 +4,8 @@ process AGB {
     tag "$meta.id"
     label 'process_low'
 
+    publishDir { "${params.output_dir}/assembly_graph/${meta.id}" }, mode: 'copy', pattern: "agb_output/**"
+
     conda "almiheenko::agb" // peg version with bioconda::name=version
     
 

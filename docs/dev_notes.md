@@ -1,3 +1,32 @@
+# Development notes
+_This is relevant if you are modifying the pipeline/repo. Using VSCode or other IDEs based on it_
+
+## Nextflow-setup
+Create the micromamba environment for nextflow (and nf-core) installation : `nf_base_env`. This installs the latest version of nextflow and nf-core from the `bioconda` channel.
+
+```sh
+micromamba create -f nf_base_env.yml
+```
+- Make sure to activate the environment before running nextflow: (each time you login)
+
+```sh
+micromamba activate nf_base_env
+```
+
+See [docs/dev_notes.md](dev_notes.md) for editor setup, cloning notes, and testing-specific guidance.
+
+
+## VSCode-setup
+- Install the nextflow extension for VSCode.
+  - Since we are using micromamba, set the Nextflow `java.home` path in the plugin settings (`@ext:nextflow.nextflow`) to the absolute path for your `nf_base_env` JDK, for example `/home/Users/pbk1/micromamba/envs/nf_base_env/lib/jvm`.
+- Install other plugins that would be useful: Rainbow CSV, etc.
+
+## Cloning the repo
+- Use `git clone --recurse-submodules ...` to clone the repo including its submodules.
+- If already cloned the repo without submodules, use `git submodule update --init` to populate them.
+
+---
+
 # Testing specs 
 
 Run tests using the config files `.._params.yml` with the preset parameters for convenience

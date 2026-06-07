@@ -15,6 +15,14 @@ input: "assets/samplesheets/mag_samples.csv"
 # options: human_gut/dog_gut/ocean/soil/cat_gut/human_oral/mouse_gut/pig_gut/built_environment/wastewater/chicken_caecum/global
 sample_environment: "human_gut"
 
+# Optional iterative binning: run bounded full-assembly seed sweeps
+# (SemiBin2, MetaBAT2, VAMB -> Pigeon loss scoring -> optional DAS Tool).
+mag_iterative_binning_enabled: true
+mag_binning_iterations: 5
+mag_iterative_seed_step: 1
+pigeon_selection_score_mode: "pigeon_loss"
+pigeon_residual_rebinning: false
+
 # standard options ------------------------------
 
 
@@ -46,12 +54,6 @@ sequencing_technology: "nanopore"
 # for pacbio: CLR, HiFi
 sequencing_technology_qualifiers: "R10"
 # workflow will currently not use this information
-
-# running mode: determines what analysis tools can be run
-# 1. laptop = runs on a laptop. Only does taxonomic profiling (default)
-# 2. cluster = runs on a cluster or workstation. Can perform all analysis_types (including assembly)
-running_mode: "cluster"
-
 
 # confidence level of profiling analyses: 
 # 1. high = uses both assembled contigs and reads to yield a more accurate profile (default)

@@ -24,6 +24,7 @@ process HOSTILE_CLEAN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reads_cmd = meta.single_end ? "--fastq1 ${[reads].flatten()[0]}" : "--fastq1 ${reads.sort()[0]} --fastq2 ${reads.sort()[1]}"
+    def reference_index = [reference_dir].flatten().find { it.name.endsWith(".mmi") } ?: [reference_dir].flatten()[0]
     """
     # export HOSTILE_CACHE_DIR=${reference_dir}
 
@@ -34,7 +35,7 @@ process HOSTILE_CLEAN {
         ${args} \\
         --threads ${task.cpus} \\
         ${reads_cmd} \\
-        --index ${reference_dir} \\
+        --index ${reference_index} \\
         --output . \\
         --reorder \\
         --airplane \\
@@ -50,6 +51,7 @@ process HOSTILE_CLEAN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reads_cmd = meta.single_end ? "--fastq1 ${reads}" : "--fastq1 ${reads.sort()[0]} --fastq2 ${reads.sort()[1]}"
+    def reference_index = [reference_dir].flatten().find { it.name.endsWith(".mmi") } ?: [reference_dir].flatten()[0]
     def fake_read2 = !meta.single_end ? "echo '' | gzip -c > ${prefix}.clean_2.fastq.gz" : ""
     """
     # export HOSTILE_CACHE_DIR=${reference_dir}
@@ -59,7 +61,7 @@ process HOSTILE_CLEAN {
         ${args} \\
         --threads ${task.cpus} \\
         ${reads_cmd} \\
-        --index ${reference_name} \\
+        --index ${reference_index} \\
         --output . \\
         --reorder \\
         --airplane \\

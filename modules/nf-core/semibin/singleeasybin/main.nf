@@ -2,6 +2,8 @@ process SEMIBIN_SINGLEEASYBIN {
     tag "$meta.id"
     label 'process_medium'
 
+    publishDir { "${params.output_dir}/binning/semibin2/${meta.id}" }, mode: 'copy', pattern: "*/**"
+
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/semibin:2.2.0--pyhdfd78af_0':

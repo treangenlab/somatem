@@ -3,6 +3,7 @@
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 
 dependencies:
   # renovate: datasource=conda depName=bioconda/hostile

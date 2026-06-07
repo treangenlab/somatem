@@ -40,13 +40,8 @@ process HOSTILE_FETCH {
     mkdir reference/
     export HOSTILE_CACHE_DIR=./reference
 
-    touch reference/human-t2t-hla.1.bt2
-    touch reference/human-t2t-hla.2.bt2
-    touch reference/human-t2t-hla.3.bt2
-    touch reference/human-t2t-hla.4.bt2
-    touch reference/human-t2t-hla.rev.1.bt2
-    touch reference/human-t2t-hla.rev.2.bt2
-    touch reference/human-t2t-hla.mmi
+    touch reference/${index_name}.fa.gz
+    touch reference/${index_name}.mmi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

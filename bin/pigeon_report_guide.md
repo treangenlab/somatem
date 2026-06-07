@@ -27,8 +27,13 @@
 
 ## Key Metrics Table
 
-- **What it shows:** Summary statistics including unitig/assembly/bin set sizes, overlap fractions, AUC (area under cumulative curve), and PAM score.
-- **What to look for:** High "frac_unitigs_in_A" and "frac_unitigs_in_B" indicate good recovery; PAM score near 1.0 means excellent overall quality and balance.
+- **What it shows:** Summary statistics including unitig/assembly/bin set sizes, overlap fractions, AUC (area under cumulative curve), PAM score, Pigeon loss, and loss score.
+- **What to look for:** High "frac_unitigs_in_A" and "frac_unitigs_in_B" indicate good recovery; PAM score near 1.0 means excellent overall quality and balance. Low Pigeon loss means the adaptive objective found fewer graph-recovery defects.
+
+## Pigeon Loss Profile
+
+- **What it shows:** The adaptive novelty objective used by iterative binning. Each component is a bounded defect term; the focus value is learned from the candidate's own defect profile by a softmax, so the largest current failure mode drives the loss.
+- **What to look for:** The dominant component explains why a candidate was penalized. For example, high fragmented_recovery means unitig recovery is spread across too many bins; high missing_bin_recovery means bins are failing to recover graph-supported sequence.
 
 ## Sankey Diagram
 
@@ -51,4 +56,6 @@
 
 **PAM (Pigeon Appraisal Metric):** A composite score (0-1) combining explained fraction (60%), AUC (30%), and balance between A-only vs B-only (10%). Higher PAM indicates better assembly-binning concordance.
 
-**Ideal Results:** High overlap in both assembly and bins, minimal unexplained fraction, steep cumulative curve, and PAM > 0.8.
+**Pigeon Loss:** A bounded adaptive loss (0-1) over graph-recovery defects. Lower is better. The companion loss score is 1 - loss, so higher is better for iterative optimization.
+
+**Ideal Results:** High overlap in both assembly and bins, minimal unexplained fraction, steep cumulative curve, PAM > 0.8, and low Pigeon loss.

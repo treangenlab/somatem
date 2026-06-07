@@ -1,7 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NEXTFLOW_BIN="nextflow"
+if [[ -x "${SCRIPT_DIR}/nextflow" ]]; then
+    NEXTFLOW_BIN="${SCRIPT_DIR}/nextflow"
+fi
+export PATH="${SCRIPT_DIR}:${PATH}"
+
 PIPELINE_DIR="@@PIPELINE_DIR@@"
+PIPELINE_DIR_PLACEHOLDER="@""@PIPELINE_DIR@""@"
+if [[ "${PIPELINE_DIR}" == "${PIPELINE_DIR_PLACEHOLDER}" ]]; then
+    PIPELINE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
+
+run_nextflow() {
+    local script="$1"
+    shift
+
+    if [[ ! -f "${script}" ]]; then
+        echo "Error: cannot find Nextflow script: ${script}" >&2
+        exit 1
+    fi
+
+    exec "${NEXTFLOW_BIN}" run "${script}" "$@"
+}
+
+require_main_nextflow() {
+    local version major minor
+
+    version="$(${NEXTFLOW_BIN} -version 2>/dev/null | awk '/version/ { print $2; exit }')"
+    major="${version%%.*}"
+    minor="${version#*.}"
+    minor="${minor%%.*}"
+
+    if [[ -z "${version}" || -z "${major}" || -z "${minor}" ]]; then
+        echo "Error: could not determine Nextflow version." >&2
+        exit 1
+    fi
+
+    if (( major < 25 || ( major == 25 && minor < 10 ) )); then
+        cat >&2 <<EOF
+Error: this Somatem main workflow requires Nextflow >=25.10.2, but found ${version}.
+
+Utility commands such as 'download_example_data' can still run with older Nextflow.
+Update Nextflow, then re-run this command.
+EOF
+        exit 1
+    fi
+}
 
 show_help() {
     cat <<EOF
@@ -16,6 +63,7 @@ Commands:
   16S                           Run 16S taxonomic profiling (sets data_type to 16S and analysis_type to taxonomic-profiling)
   taxonomic_profiling (tax)     Run taxonomic profiling (defaults to metagenomic data)
   assembly_mags (mag)           Run the main pipeline with assembly analysis
+  isolate_analysis (isolate)    Run isolate assembly, classification, annotation, and typing
   genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
@@ -33,8 +81,9 @@ Examples:
   somatem taxonomic_profiling -i samples.csv -o results
   somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
   somatem assembly_mags -i samples.csv -o results
+  somatem isolate_analysis -i samples.csv -o results
   somatem genome_dynamics -i samples.csv -o results
-  somatem download_example_data
+  somatem download_example_data --outdir ./assets/data
   somatem pre_download_databases
 
 Defaults:
@@ -93,45 +142,57 @@ resolve_args "$@"
 
 case "${cmd}" in
     16S|16s)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
             --data_type 16S \
             --analysis_type taxonomic-profiling \
             "${RESOLVED_ARGS[@]}"
         ;;
     pre_processing|pre-processing|preprocessing)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type pre-processing \
             "${RESOLVED_ARGS[@]}"
         ;;
     assembly_mags|mag_assembly|mag|assembly)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type assembly \
             "${RESOLVED_ARGS[@]}"
         ;;
+    isolate_analysis|isolate-analysis|isolate)
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
+            --data_type isolate \
+            --analysis_type isolate-analysis \
+            "${RESOLVED_ARGS[@]}"
+        ;;
     taxonomic_profiling|taxonomic-profiling|tax|profiling)
+        require_main_nextflow
         if [[ "${HAS_DATA_TYPE}" -eq 1 ]]; then
-            exec nextflow run "${PIPELINE_DIR}/main.nf" \
+            run_nextflow "${PIPELINE_DIR}/main.nf" \
                 --analysis_type taxonomic-profiling \
                 "${RESOLVED_ARGS[@]}"
         else
-            exec nextflow run "${PIPELINE_DIR}/main.nf" \
+            run_nextflow "${PIPELINE_DIR}/main.nf" \
                 --data_type metagenomic \
                 --analysis_type taxonomic-profiling \
                 "${RESOLVED_ARGS[@]}"
         fi
         ;;
     genome_dynamics|genome-dynamics|dynamics)
-        exec nextflow run "${PIPELINE_DIR}/main.nf" \
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type genome-dynamics \
             "${RESOLVED_ARGS[@]}"
         ;;
-    download_example_data|get_example_data|examples)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/download_example_datasets.nf" \
+    download_example_data|download-example-data|get_example_data|get-example-data|example_data|examples)
+        run_nextflow "${PIPELINE_DIR}/subworkflows/local/download_example_datasets.nf" \
             -c "${PIPELINE_DIR}/nextflow.config" \
             "${RESOLVED_ARGS[@]}"
         ;;
-    pre_download_databases|pre-download-databases|databases|dbs)
-        exec nextflow run "${PIPELINE_DIR}/subworkflows/local/utils/pre_download_databases.nf" \
+    pre_download_databases|pre-download-databases|download_databases|download-databases|databases|dbs)
+        run_nextflow "${PIPELINE_DIR}/subworkflows/local/utils/pre_download_databases.nf" \
             -c "${PIPELINE_DIR}/nextflow.config" \
             "${RESOLVED_ARGS[@]}"
         ;;

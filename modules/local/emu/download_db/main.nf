@@ -16,10 +16,13 @@ process EMU_DOWNLOAD_DB {
     """
     osf \\
         $args \\
-        --project 56uf7 \\
-        fetch osfstorage/emu-prebuilt/emu.tar
+        --project 32sh5 \\
+        fetch osfstorage/species_taxid.fasta
 
-    tar -xvf emu.tar
+    osf \\
+        $args \\
+        --project 32sh5 \\
+        fetch osfstorage/taxonomy.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

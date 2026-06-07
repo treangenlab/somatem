@@ -34,3 +34,5 @@ micromamba
 # vscode files
 somatem.code-workspace
 .vscode/
+.agents/
+.codex/

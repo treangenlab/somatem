@@ -18,7 +18,9 @@ include { SINGLEM_PIPE as SINGLEM_PIPE_BINS } from '../../modules/local/singlem/
 include { SINGLEM_APPRAISE }        from '../../modules/local/singlem/appraise/main'
 include { TAXBURST }                from '../../modules/local/taxburst/main'
 include { PIGEON }                  from '../../modules/local/pigeon/main'
+include { PIGEON_ITERATIVE_BINNING } from '../../modules/local/pigeon/iterate/main'
 include { AGB }                     from '../../modules/local/agb/main'
+include { SOMATEM_SUMMARY_REPORT as ASSEMBLY_MAGS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 
 workflow ASSEMBLY_MAGS {
@@ -93,31 +95,78 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
     SAMTOOLS_COVERAGE.out.coverage.view { meta, _coverage -> "✓ Coverage calculated for ${meta.id}" } // log
 
-    // Binning with SemiBin2
+    // Binning with Pigeon-controlled iterative binning by default, or plain SemiBin2 when disabled.
+    use_iterative_binning = params.mag_iterative_binning_enabled instanceof Boolean
+        ? params.mag_iterative_binning_enabled
+        : params.mag_iterative_binning_enabled.toString().toBoolean()
+
     ch_asm_bam = FLYE.out.fasta.join(SAMTOOLS_SORT.out.bam, by: [0]) // join by sample ID (meta.id)
-    
-    SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
-    ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
-    SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
+
+    ch_bins_for_downstream = channel.empty()
+    ch_bins_csv = channel.empty()
+    ch_bins_tsv = channel.empty()
+    ch_bins_model = channel.empty()
+    ch_iterative_dastool_bins = channel.empty()
+    ch_iterative_selection_summary = channel.empty()
+    ch_iterative_manifest = channel.empty()
+    ch_iterative_selected = channel.empty()
+    ch_iterative_trajectory = channel.empty()
+    ch_iterative_summary = channel.empty()
+    ch_iterative_report = channel.empty()
+    ch_iterative_command_log = channel.empty()
+
+    if (!use_iterative_binning) {
+        SEMIBIN_SINGLEEASYBIN(ch_asm_bam)
+        ch_versions = ch_versions.mix(SEMIBIN_SINGLEEASYBIN.out.versions)
+        SEMIBIN_SINGLEEASYBIN.out.csv.view { meta, _csv -> "✓ Binning completed for ${meta.id}" } // log
+        ch_bins_for_downstream = SEMIBIN_SINGLEEASYBIN.out.output_fasta
+        ch_bins_csv = SEMIBIN_SINGLEEASYBIN.out.csv
+        ch_bins_tsv = SEMIBIN_SINGLEEASYBIN.out.tsv
+        ch_bins_model = SEMIBIN_SINGLEEASYBIN.out.model
+    } else {
+        ch_iterative_input = FLYE.out.gfa
+            .join(ch_asm_bam, by: [0])
+            .map { meta, gfa, assembly, bam ->
+                [meta, gfa, assembly, bam]
+            }
+
+        PIGEON_ITERATIVE_BINNING(ch_iterative_input)
+        ch_versions = ch_versions.mix(PIGEON_ITERATIVE_BINNING.out.versions)
+
+        // With DAS Tool consensus enabled, send the consensus bins directly to CheckM2.
+        // Otherwise, use final_bins from the selected binner iterations.
+        ch_bins_for_downstream = params.mag_iterative_consensus_tool == "dastool"
+            ? PIGEON_ITERATIVE_BINNING.out.dastool_bins
+            : PIGEON_ITERATIVE_BINNING.out.final_bins
+        ch_iterative_dastool_bins = PIGEON_ITERATIVE_BINNING.out.dastool_bins
+        ch_iterative_selection_summary = PIGEON_ITERATIVE_BINNING.out.selection_summary
+        ch_iterative_manifest = PIGEON_ITERATIVE_BINNING.out.candidate_manifest
+        ch_iterative_selected = PIGEON_ITERATIVE_BINNING.out.selected_tsv
+        ch_iterative_trajectory = PIGEON_ITERATIVE_BINNING.out.trajectory_tsv
+        ch_iterative_summary = PIGEON_ITERATIVE_BINNING.out.iterative_summary
+        ch_iterative_report = PIGEON_ITERATIVE_BINNING.out.iterative_report
+        ch_iterative_command_log = PIGEON_ITERATIVE_BINNING.out.command_log
+        PIGEON_ITERATIVE_BINNING.out.iterative_summary.view { meta, _summary -> "✓ Optional iterative binning completed for ${meta.id}" } // log
+    }
 
     // Quality assessment with CheckM2
-    CHECKM2_PREDICT(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_checkm2_db)
+    CHECKM2_PREDICT(ch_bins_for_downstream, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
     CHECKM2_PREDICT.out.checkm2_tsv.view { meta, _tsv -> "✓ Quality assessment completed for ${meta.id}" } // log
     
     // Parse CheckM2 results to get completeness information
-    CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, SEMIBIN_SINGLEEASYBIN.out.output_fasta)
+    CHECKM2_PARSE(CHECKM2_PREDICT.out.checkm2_tsv, ch_bins_for_downstream)
     ch_versions = ch_versions.mix(CHECKM2_PARSE.out.versions)
 
     // Run SingleM pipe on bins - FIXED: Add suffix to avoid filename collision
-    SINGLEM_PIPE_BINS(SEMIBIN_SINGLEEASYBIN.out.output_fasta, ch_singlem_db, 'genome')
+    SINGLEM_PIPE_BINS(ch_bins_for_downstream, ch_singlem_db, 'genome')
     ch_versions = ch_versions.mix(SINGLEM_PIPE_BINS.out.versions)
 
     
     // PIGEON ANALYSIS: compare k-mer composition from unitigs, contigs and bins
     ch_pigeon_input = FLYE.out.gfa // join gfa, assembly, and bins to prepare pigeon input
         .join(FLYE.out.fasta, by: [0])
-        .join(SEMIBIN_SINGLEEASYBIN.out.output_fasta, by: [0])
+        .join(ch_bins_for_downstream, by: [0])
 
     PIGEON(ch_pigeon_input)
     ch_versions = ch_versions.mix(PIGEON.out.versions)
@@ -160,7 +209,7 @@ workflow ASSEMBLY_MAGS {
     SINGLEM_APPRAISE.out.summary.view { meta, _summary -> "✓ SingleM appraise analysis completed for ${meta.id}" } // log
 
     // Completeness-based Bakta annotation
-    ch_bins_for_annotation = SEMIBIN_SINGLEEASYBIN.out.output_fasta
+    ch_bins_for_annotation = ch_bins_for_downstream
         .transpose()
         .map { meta, bin ->
             def new_meta = meta.clone()
@@ -245,6 +294,51 @@ workflow ASSEMBLY_MAGS {
         .count()
         .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
 
+    ch_versions_for_report = ch_versions
+    ch_assembly_report_files = FLYE.out.txt
+        .mix(
+            FLYE.out.log,
+            AGB.out.assembly_graph,
+            SAMTOOLS_COVERAGE.out.coverage,
+            ch_bins_csv,
+            ch_bins_tsv,
+            ch_iterative_manifest,
+            ch_iterative_selected,
+            ch_iterative_trajectory,
+            ch_iterative_summary,
+            ch_iterative_report,
+            CHECKM2_PREDICT.out.checkm2_tsv,
+            CHECKM2_PARSE.out.completeness_map,
+            SINGLEM_PIPE.out.taxonomic_profile,
+            SINGLEM_PIPE_BINS.out.otu_table,
+            TAXBURST.out.html,
+            PIGEON.out.report,
+            PIGEON.out.metrics,
+            SINGLEM_APPRAISE.out.summary,
+            SINGLEM_APPRAISE.out.plot,
+            BAKTA_BAKTA.out.tsv,
+            BAKTA_BAKTA.out.json,
+            BAKTA_BAKTA.out.png,
+            ch_versions_for_report
+        )
+
+    ASSEMBLY_MAGS_SUMMARY_REPORT(
+        'assembly_mags',
+        'Assembly and MAG recovery',
+        Channel.fromPath(params.input),
+        ch_assembly_report_files.flatMap { item ->
+            def report_file = item
+            if (item instanceof Collection && item.size() >= 2) {
+                report_file = item[1]
+            }
+            if (report_file instanceof Collection) {
+                return report_file
+            }
+            return [report_file]
+        }.collect()
+    )
+    ch_versions = ch_versions.mix(ASSEMBLY_MAGS_SUMMARY_REPORT.out.versions)
+
 
     emit:
     // Original outputs
@@ -252,11 +346,24 @@ workflow ASSEMBLY_MAGS {
     assembly_gfa    = FLYE.out.gfa
     assembly_log    = FLYE.out.log
     assembly_graph  = AGB.out.assembly_graph
+    minimap_index   = MINIMAP2_INDEX.out.index
+    bam_aligned     = MINIMAP2_ALIGN.out.bam
+    bam_aligned_index = MINIMAP2_ALIGN.out.index
     bam_sorted      = SAMTOOLS_SORT.out.bam
+    bam_sorted_index = SAMTOOLS_SORT.out.bai
     coverage        = SAMTOOLS_COVERAGE.out.coverage
-    bins            = SEMIBIN_SINGLEEASYBIN.out.output_fasta
-    bins_csv        = SEMIBIN_SINGLEEASYBIN.out.csv
-    bins_tsv        = SEMIBIN_SINGLEEASYBIN.out.tsv
+    bins            = ch_bins_for_downstream
+    bins_csv        = ch_bins_csv
+    bins_tsv        = ch_bins_tsv
+    bins_model      = ch_bins_model
+    iterative_dastool_bins = ch_iterative_dastool_bins
+    iterative_selection_summary = ch_iterative_selection_summary
+    iterative_manifest = ch_iterative_manifest
+    iterative_selected = ch_iterative_selected
+    iterative_trajectory = ch_iterative_trajectory
+    iterative_summary = ch_iterative_summary
+    iterative_report = ch_iterative_report
+    iterative_command_log = ch_iterative_command_log
     checkm2_report  = CHECKM2_PREDICT.out.checkm2_tsv
     checkm2_output  = CHECKM2_PREDICT.out.checkm2_output
     completeness_map = CHECKM2_PARSE.out.completeness_map
@@ -289,11 +396,12 @@ workflow ASSEMBLY_MAGS {
     
     // SingleM appraise outputs
     appraise_summary = SINGLEM_APPRAISE.out.summary
+    appraise_plot = SINGLEM_APPRAISE.out.plot
     appraise_binned_otu = SINGLEM_APPRAISE.out.binned_otu_table
     appraise_unbinned_otu = SINGLEM_APPRAISE.out.unbinned_otu_table
     appraise_assembled_otu = SINGLEM_APPRAISE.out.assembled_otu_table
     appraise_unaccounted_otu = SINGLEM_APPRAISE.out.unaccounted_otu_table
-    appraise_plot = SINGLEM_APPRAISE.out.plot
     
+    summary_report  = ASSEMBLY_MAGS_SUMMARY_REPORT.out.html
     versions        = ch_versions
 }
