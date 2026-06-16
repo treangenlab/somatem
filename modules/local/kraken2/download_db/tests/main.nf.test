@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process KRAKEN2_STANDARD8_DOWNLOAD_DB"
+    script "../main.nf"
+    process "KRAKEN2_STANDARD8_DOWNLOAD_DB"
+
+    tag "modules"
+    tag "kraken2"
+    tag "kraken2/download_db"
+
+    test("Kraken2 standard-8 database download - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.db.get(0)).exists() },
+                { assert path(process.out.db.get(0).toString() + "/hash.k2d").exists() },
+                { assert path(process.out.db.get(0).toString() + "/opts.k2d").exists() },
+                { assert path(process.out.db.get(0).toString() + "/taxo.k2d").exists() },
+                { assert path(process.out.versions.get(0)).exists() }
+            )
+        }
+    }
+}

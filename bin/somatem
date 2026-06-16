@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
 NEXTFLOW_BIN="nextflow"
 if [[ -x "${SCRIPT_DIR}/nextflow" ]]; then
     NEXTFLOW_BIN="${SCRIPT_DIR}/nextflow"

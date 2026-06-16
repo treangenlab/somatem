@@ -13,7 +13,7 @@ process BAKTA_BAKTA {
         params.analysis_type == "isolate-analysis"
             ? "${params.output_dir}/isolate_analysis/${meta.id}/annotation/bakta"
             : "${params.output_dir}/annotation/${meta.sample_id}/${meta.id}"
-    }, mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,tsv,txt,json,png,svg}"
+    }, mode: 'copy', pattern: "*.{embl,faa,ffn,fna,gbff,gff,gff3,tsv,txt,json,png,svg}"
 
     input:
     tuple val(meta), path(fasta)
@@ -27,7 +27,7 @@ process BAKTA_BAKTA {
     tuple val(meta), path("*.ffn")            , emit: ffn
     tuple val(meta), path("*.fna")            , emit: fna
     tuple val(meta), path("*.gbff")           , emit: gbff
-    tuple val(meta), path("*.gff")            , emit: gff
+    tuple val(meta), path("*.gff3")           , emit: gff
     tuple val(meta), path("*.hypotheticals.tsv"), emit: hypotheticals_tsv
     tuple val(meta), path("*.hypotheticals.faa"), emit: hypotheticals_faa
     tuple val(meta), path("*.tsv")            , emit: tsv
@@ -48,6 +48,9 @@ process BAKTA_BAKTA {
     def prefix = fasta_name.replaceAll(/\.(fa|fasta|fna)(\.gz)?$/, '')
     
     """
+    mkdir -p .matplotlib
+    export MPLCONFIGDIR="\${PWD}/.matplotlib"
+
     # Check if FASTA file is valid and not empty
     if [ ! -s "${fasta}" ]; then
         echo "ERROR: Input FASTA file is empty or does not exist"
@@ -87,7 +90,7 @@ process BAKTA_BAKTA {
         "${prefix}.ffn"
         "${prefix}.fna"
         "${prefix}.gbff"
-        "${prefix}.gff"
+        "${prefix}.gff3"
         "${prefix}.hypotheticals.tsv"
         "${prefix}.hypotheticals.faa"
         "${prefix}.tsv"
@@ -136,7 +139,7 @@ process BAKTA_BAKTA {
     fi
     
     # Final check - ensure all output files exist
-    all_outputs="${prefix}.embl ${prefix}.faa ${prefix}.ffn ${prefix}.fna ${prefix}.gbff ${prefix}.gff ${prefix}.hypotheticals.tsv ${prefix}.hypotheticals.faa ${prefix}.tsv ${prefix}.txt ${prefix}.inference.tsv ${prefix}.png ${prefix}.svg ${prefix}.json"
+    all_outputs="${prefix}.embl ${prefix}.faa ${prefix}.ffn ${prefix}.fna ${prefix}.gbff ${prefix}.gff3 ${prefix}.hypotheticals.tsv ${prefix}.hypotheticals.faa ${prefix}.tsv ${prefix}.txt ${prefix}.inference.tsv ${prefix}.png ${prefix}.svg ${prefix}.json"
     
     for file in \$all_outputs; do
         if [ ! -f "\$file" ]; then
@@ -160,7 +163,7 @@ process BAKTA_BAKTA {
     touch ${prefix}.ffn
     touch ${prefix}.fna
     touch ${prefix}.gbff
-    touch ${prefix}.gff
+    touch ${prefix}.gff3
     touch ${prefix}.hypotheticals.tsv
     touch ${prefix}.hypotheticals.faa
     touch ${prefix}.tsv

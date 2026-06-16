@@ -190,6 +190,10 @@
             "type": "string",
             "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/k2_abfv_030325/"
         },
+        "kraken2_standard8_db": {
+            "type": "string",
+            "default": "/home/dbs/kraken2_standard8_db/"
+        },
         "sylph_db": {
             "type": "string",
             "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/sylph_abf_030325/database.syldb"
@@ -221,6 +225,13 @@
         "bakta_db": {
             "type": "string",
             "default": "/home/dbs/bakta_db/"
+        },
+        "bakta_skip_sorf": {
+            "type": "boolean"
+        },
+        "bakta_args": {
+            "type": "string",
+            "default": ""
         },
         "singlem_db": {
             "type": "string",

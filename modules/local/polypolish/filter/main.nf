@@ -6,13 +6,13 @@ process POLYPOLISH_FILTER {
 
     publishDir { "${params.outdir}/isolate_analysis/${meta.id}/polishing/polypolish" },
         mode: params.publish_dir_mode,
-        pattern: "*.{sam,fasta}"
+        pattern: "*.sam"
 
     input:
-    tuple val(meta), path(assembly), path(alignments_1), path(alignments_2)
+    tuple val(meta), path(alignments_1), path(alignments_2)
 
     output:
-    tuple val(meta), path("*.for_polypolish.fasta"), path("*.filtered_1.sam"), path("*.filtered_2.sam"), emit: alignments
+    tuple val(meta), path("*.filtered_1.sam"), path("*.filtered_2.sam"), emit: alignments
     path "versions.yml", emit: versions
 
     when:
@@ -28,8 +28,6 @@ process POLYPOLISH_FILTER {
         --out1 ${prefix}.filtered_1.sam \\
         --out2 ${prefix}.filtered_2.sam \\
         ${filter_args}
-
-    cp ${assembly} ${prefix}.for_polypolish.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

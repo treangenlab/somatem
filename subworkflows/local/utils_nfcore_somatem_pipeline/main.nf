@@ -60,13 +60,48 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
     // Convert samplesheet to channel
-    channel
-        .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-        .map { meta, fastq ->
-            def new_meta = meta + [single_end: true]
-            [new_meta, [fastq]]
-        }
-        .set { ch_samplesheet }
+    if (params.analysis_type == "isolate-analysis") {
+        channel
+            .fromPath(params.input, checkIfExists: true)
+            .splitCsv(header: true)
+            .map { row ->
+                def sample = row.sample?.toString()?.trim()
+                def long_reads = row.long_reads?.toString()?.trim()
+                def short_reads_1 = row.short_reads_1?.toString()?.trim()
+                def short_reads_2 = row.short_reads_2?.toString()?.trim()
+                def expected_genome_size = row.expected_genome_size?.toString()?.trim() ?: ''
+                def species = row.species?.toString()?.trim() ?: ''
+
+                if (!sample) {
+                    error("Isolate samplesheet row is missing required field: sample")
+                }
+                if (!long_reads) {
+                    error("Isolate samplesheet row for sample '${sample}' is missing required field: long_reads")
+                }
+                if ((short_reads_1 && !short_reads_2) || (!short_reads_1 && short_reads_2)) {
+                    error("Isolate samplesheet row for sample '${sample}' must provide both short_reads_1 and short_reads_2, or neither")
+                }
+
+                def meta = [id: sample, single_end: true]
+                tuple(
+                    meta,
+                    file(long_reads, checkIfExists: true),
+                    short_reads_1 ? file(short_reads_1, checkIfExists: true) : '',
+                    short_reads_2 ? file(short_reads_2, checkIfExists: true) : '',
+                    expected_genome_size,
+                    species
+                )
+            }
+            .set { ch_samplesheet }
+    } else {
+        channel
+            .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+            .map { meta, fastq ->
+                def new_meta = meta + [single_end: true]
+                [new_meta, [fastq]]
+            }
+            .set { ch_samplesheet }
+    }
 
         // Count and display all input files
         ch_samplesheet.count().view { count -> "Found ${count} samples to process" }

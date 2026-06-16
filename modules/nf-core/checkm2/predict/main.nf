@@ -4,8 +4,16 @@ process CHECKM2_PREDICT {
     label 'process_medium'
 
     // Outputs
-    publishDir { "${params.output_dir}/quality/${meta.id}" }, mode: 'copy', pattern: "*.tsv"
-    publishDir { "${params.output_dir}/quality/${meta.id}/checkm2_output" }, mode: 'copy', pattern: "*/**"
+    publishDir {
+        params.analysis_type == "isolate-analysis"
+            ? "${params.output_dir}/isolate_analysis/${meta.id}/quality/checkm2"
+            : "${params.output_dir}/quality/${meta.id}"
+    }, mode: 'copy', pattern: "*.tsv"
+    publishDir {
+        params.analysis_type == "isolate-analysis"
+            ? "${params.output_dir}/isolate_analysis/${meta.id}/quality/checkm2/checkm2_output"
+            : "${params.output_dir}/quality/${meta.id}/checkm2_output"
+    }, mode: 'copy', pattern: "*/**"
 
     conda "${moduleDir}/environment.yml"
 

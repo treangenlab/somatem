@@ -38,16 +38,22 @@ workflow SOMATEM {
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
-    ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
-    ch_summary_reports = PREPROCESSING.out.summary_report
+    if (params.analysis_type == "isolate-analysis") {
+        ch_clean_reads = ch_samplesheet
+        ch_summary_reports = Channel.empty()
+    } else {
+        PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
+        ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
+        ch_clean_reads = PREPROCESSING.out.clean_reads
+        ch_summary_reports = PREPROCESSING.out.summary_report
+    }
 
     // -----------------------------------------------------------------
     // Taxonomic profiling
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(PREPROCESSING.out.clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
+        TAXONOMIC_PROFILING(ch_clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
@@ -64,7 +70,7 @@ workflow SOMATEM {
         ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
         ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
 
-        ASSEMBLY_MAGS(PREPROCESSING.out.clean_reads, 
+        ASSEMBLY_MAGS(ch_clean_reads, 
                 ch_checkm2_db,
                 ch_bakta_db,
                 ch_singlem_db
@@ -82,20 +88,23 @@ workflow SOMATEM {
     if (params.analysis_type == "isolate-analysis") {
 
         ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
-        ch_kraken2_db = Channel.value(file(params.kraken2_db))
+        ch_kraken2_db = DOWNLOAD_DBS.out.ch_kraken2_db
+        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.map { _meta, db -> db }
 
         ISOLATE_ANALYSIS(
-            PREPROCESSING.out.clean_reads,
+            ch_clean_reads,
             ch_bakta_db,
-            ch_kraken2_db
+            ch_kraken2_db,
+            ch_checkm2_db
         )
         ch_versions = ch_versions.mix(ISOLATE_ANALYSIS.out.versions)
         ch_key_outputs = ch_key_outputs.mix(
             ISOLATE_ANALYSIS.out.assembly,
             ISOLATE_ANALYSIS.out.kraken2_report,
-            ISOLATE_ANALYSIS.out.bakta_tsv
+            ISOLATE_ANALYSIS.out.bakta_tsv,
+            ISOLATE_ANALYSIS.out.checkm2_tsv
         )
-        ch_key_outputs = ch_key_outputs.mix(ISOLATE_ANALYSIS.out.btyper3_outdir)
+        ch_key_outputs = ch_key_outputs.mix(ISOLATE_ANALYSIS.out.btyper3_results)
         ch_summary_reports = ch_summary_reports.mix(ISOLATE_ANALYSIS.out.summary_report)
     }
 
@@ -103,7 +112,7 @@ workflow SOMATEM {
     // genome dynamics : Longitudinal analysis
     // -----------------------------------------------------------------
     if (params.analysis_type == "genome-dynamics") {
-        GENOME_DYNAMICS(PREPROCESSING.out.clean_reads)
+        GENOME_DYNAMICS(ch_clean_reads)
         ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
         ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
         ch_summary_reports = ch_summary_reports.mix(GENOME_DYNAMICS.out.summary_report)
@@ -123,7 +132,7 @@ workflow SOMATEM {
 
     emit:
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
-    clean_reads    = PREPROCESSING.out.clean_reads
+    clean_reads    = ch_clean_reads
     summary_reports = ch_summary_reports
     key_outputs    = ch_key_outputs              // channel: [ path(taxonomy_report.tsv) | path(assembly_graph.gfa), path(bandage_image.png) ]
     

@@ -3,6 +3,7 @@
 include { HOSTILE_FETCH } from '../../modules/nf-core/hostile/fetch/main.nf'
 include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databasedownload/main'   
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
+include { KRAKEN2_STANDARD8_DOWNLOAD_DB } from '../../modules/local/kraken2/download_db/main.nf'
 include { SINGLEM_DOWNLOAD_DB } from '../../modules/local/singlem/download_db/main.nf'
 include { EMU_DOWNLOAD_DB ; EMU_STAGE_DB } from "../../modules/local/emu/download_db/main.nf"
 include { LEMUR_DATABASEDOWNLOAD ; LEMUR_STAGE_DB } from "../../modules/local/lemur/download_db/main.nf"
@@ -24,6 +25,7 @@ workflow DOWNLOAD_DBS {
     ch_lemur_db = channel.empty()
     ch_checkm2_db = channel.empty()
     ch_bakta_db = channel.empty()
+    ch_kraken2_db = channel.empty()
     ch_singlem_db = channel.empty()
 
     // log message: downloading databases for which analysis type
@@ -34,7 +36,7 @@ workflow DOWNLOAD_DBS {
     // pre-processing databases 
     // ------------------------------------------------
 
-    if (params.run_hostile) {
+    if (params.run_hostile && analysis_type != "isolate-analysis") {
         db_name_without_extension = hostile_index.replaceAll('\\.mmi$', '')
 
         // TODO: move this log message to the process itself
@@ -72,9 +74,15 @@ workflow DOWNLOAD_DBS {
     // ------------------------------------------------
     if (analysis_type == "assembly" || analysis_type == "isolate-analysis") {
         // download checkm2 database 
-        if (analysis_type == "assembly") {
+        if (analysis_type == "assembly" || analysis_type == "isolate-analysis") {
             CHECKM2_DATABASEDOWNLOAD(checkm2_db_zenodo_id)
             ch_checkm2_db = CHECKM2_DATABASEDOWNLOAD.out.database
+        }
+
+        // download Kraken2 standard-8 database for isolate read classification
+        if (analysis_type == "isolate-analysis") {
+            KRAKEN2_STANDARD8_DOWNLOAD_DB()
+            ch_kraken2_db = KRAKEN2_STANDARD8_DOWNLOAD_DB.out.db
         }
     
         // download bakta db
@@ -99,5 +107,6 @@ workflow DOWNLOAD_DBS {
     // assembly databases
     ch_checkm2_db = ch_checkm2_db
     ch_bakta_db = ch_bakta_db
+    ch_kraken2_db = ch_kraken2_db
     ch_singlem_db = ch_singlem_db
 }
