@@ -93,6 +93,27 @@ workflow PIPELINE_INITIALISATION {
                 )
             }
             .set { ch_samplesheet }
+    } else if (params.analysis_type == "seqscreen") {
+        channel
+            .fromPath(params.input, checkIfExists: true)
+            .splitCsv(header: true)
+            .map { row ->
+                def sample = row.sample?.toString()?.trim()
+                def fasta = row.fasta?.toString()?.trim()
+
+                if (!sample) {
+                    error("SeqScreen samplesheet row is missing required field: sample")
+                }
+                if (!fasta) {
+                    error("SeqScreen samplesheet row for sample '${sample}' is missing required field: fasta")
+                }
+
+                tuple(
+                    [id: sample, single_end: true],
+                    file(fasta, checkIfExists: true)
+                )
+            }
+            .set { ch_samplesheet }
     } else {
         channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))

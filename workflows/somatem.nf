@@ -11,6 +11,7 @@ include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
 include { ISOLATE_ANALYSIS } from '../subworkflows/local/isolate_analysis.nf'
+include { SEQSCREEN_DSL2 } from '../subworkflows/local/seqscreen.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +39,7 @@ workflow SOMATEM {
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    if (params.analysis_type == "isolate-analysis") {
+    if (params.analysis_type == "isolate-analysis" || params.analysis_type == "seqscreen") {
         ch_clean_reads = ch_samplesheet
         ch_summary_reports = Channel.empty()
     } else {
@@ -106,6 +107,29 @@ workflow SOMATEM {
         )
         ch_key_outputs = ch_key_outputs.mix(ISOLATE_ANALYSIS.out.btyper3_results)
         ch_summary_reports = ch_summary_reports.mix(ISOLATE_ANALYSIS.out.summary_report)
+    }
+
+    // -----------------------------------------------------------------
+    // SeqScreen pathogen detection
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "seqscreen") {
+
+        if (!params.seqscreen_db) {
+            error("SeqScreen analysis requires --seqscreen_db to point at a SeqScreen database directory.")
+        }
+
+        ch_seqscreen_db = Channel.value(file(params.seqscreen_db, checkIfExists: true))
+
+        SEQSCREEN_DSL2(
+            ch_clean_reads,
+            ch_seqscreen_db
+        )
+        ch_versions = ch_versions.mix(SEQSCREEN_DSL2.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(
+            SEQSCREEN_DSL2.out.report,
+            SEQSCREEN_DSL2.out.taxonomic_results,
+            SEQSCREEN_DSL2.out.functional_results
+        )
     }
 
     // -----------------------------------------------------------------

@@ -1,0 +1,69 @@
+.bg-success,
+.badge-success {
+  background: #b4f7ad !important;
+}
+.bg-info,
+.badge-info {
+  background: #aef9e9 !important;
+}
+.bg-warning,
+.badge-warning {
+  background: #ffff99 !important;
+}
+.bg-danger,
+.badge-danger {
+  background: #ff99a1 !important;
+}
+.badge-danger,
+.badge-warning,
+.badge-info,
+.badge-success {
+  color: black;
+  border-color: #343a40 !important;
+}
+.badge-danger:hover,
+.badge-warning:hover,
+.badge-info:hover,
+.badge-success:hover,
+.badge-light:hover {
+  color: #878686;
+}
+.sideways {
+  display:flex;
+  align-items:center;
+  writing-mode: vertical-rl;
+  writing-mode: bt-rl;
+  text-orientation: sideways;
+  height:140px;
+  width:80px;
+}
+.wrap {
+  overflow-wrap: break-word;
+}
+
+.sortTag {
+  writing-mode: horizontal-tb;
+  text-align: center;
+}
+.clickablePointer {
+  height: 25px;
+}
+#sidewayTh {
+  vertical-align: top;
+}
+.table>thead>tr>th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height:150px;
+  }
+#icon{
+  height:4px;
+  padding:0;color: #fff;
+    background-color: #343a40;
+    border-color:#343a40;
+}
+.warning{
+  color: red;
+  font-size: 12px;
+}

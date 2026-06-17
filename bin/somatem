@@ -40,9 +40,9 @@ require_main_nextflow() {
         exit 1
     fi
 
-    if (( major < 25 || ( major == 25 && minor < 10 ) )); then
+    if (( major < 26 )); then
         cat >&2 <<EOF
-Error: this Somatem main workflow requires Nextflow >=25.10.2, but found ${version}.
+Error: this Somatem main workflow requires Nextflow >=26.0.0, but found ${version}.
 
 Utility commands such as 'download_example_data' can still run with older Nextflow.
 Update Nextflow, then re-run this command.
@@ -65,6 +65,7 @@ Commands:
   taxonomic_profiling (tax)     Run taxonomic profiling (defaults to metagenomic data)
   assembly_mags (mag)           Run the main pipeline with assembly analysis
   isolate_analysis (isolate)    Run isolate assembly, classification, annotation, and typing
+  seqscreen                     Run SeqScreen pathogen detection from FASTA inputs
   genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
@@ -83,6 +84,7 @@ Examples:
   somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
   somatem assembly_mags -i samples.csv -o results
   somatem isolate_analysis -i samples.csv -o results
+  somatem seqscreen -i seqscreen_samples.csv -o results --seqscreen_db /path/to/SeqScreenDB_23.4
   somatem genome_dynamics -i samples.csv -o results
   somatem download_example_data --outdir ./assets/data
   somatem pre_download_databases
@@ -94,6 +96,10 @@ Input CSV format:
   sample,fastq_1
   mock1,assets/examples/data/16S/mockm95_sub10k.fastq.gz
   mock2,assets/examples/data/16S/mockm91_sub10k.fastq.gz
+
+SeqScreen input CSV format:
+  sample,fasta
+  sample1,assets/examples/data/seqscreen/example.fasta
 EOF
 }
 
@@ -166,6 +172,12 @@ case "${cmd}" in
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --data_type isolate \
             --analysis_type isolate-analysis \
+            "${RESOLVED_ARGS[@]}"
+        ;;
+    seqscreen|pathogen_detection|pathogen-detection)
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
+            --analysis_type seqscreen \
             "${RESOLVED_ARGS[@]}"
         ;;
     taxonomic_profiling|taxonomic-profiling|tax|profiling)

@@ -88,7 +88,14 @@
         },
         "analysis_type": {
             "type": "string",
-            "default": "taxonomic-profiling"
+            "default": "taxonomic-profiling",
+            "enum": [
+                "taxonomic-profiling",
+                "assembly",
+                "isolate-analysis",
+                "genome-dynamics",
+                "seqscreen"
+            ]
         },
         "sample_status": {
             "type": "string",
@@ -209,6 +216,88 @@
         "sylph_vir_db": {
             "type": "string",
             "default": "/home/dbs/sylph_vir_db/"
+        },
+        "seqscreen_db": {
+            "type": "string",
+            "format": "directory-path",
+            "description": "Path to the SeqScreen database directory.",
+            "default": "/home/dbs/SeqScreenDB_23.4/"
+        },
+        "seqscreen_mode": {
+            "type": "string",
+            "description": "SeqScreen mode to run in the DSL2 subworkflow.",
+            "default": "fast",
+            "enum": [
+                "fast",
+                "sensitive"
+            ]
+        },
+        "seqscreen_evalue": {
+            "type": [
+                "number",
+                "string",
+                "null"
+            ],
+            "description": "Optional E-value cutoff for SeqScreen BLAST/DIAMOND steps."
+        },
+        "seqscreen_taxlimit": {
+            "type": "integer",
+            "default": 25
+        },
+        "seqscreen_window": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_window_length": {
+            "type": "integer",
+            "default": 200
+        },
+        "seqscreen_window_overlap": {
+            "type": "integer",
+            "default": 100
+        },
+        "seqscreen_hmmscan": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_ancestral": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_includecc": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_bitscore": {
+            "type": [
+                "number",
+                "integer"
+            ],
+            "default": 5
+        },
+        "seqscreen_report_prefix": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_online": {
+            "type": "boolean",
+            "default": false
+        },
+        "seqscreen_format": {
+            "type": "integer",
+            "default": 1
+        },
+        "seqscreen_taxonomy_confidence_threshold": {
+            "type": "number",
+            "default": 0
+        },
+        "seqscreen_filter_taxon": {
+            "type": "string",
+            "default": "\"\""
+        },
+        "seqscreen_keep_taxon": {
+            "type": "string",
+            "default": "\"\""
         },
         "checkm2_db": {
             "type": "string",

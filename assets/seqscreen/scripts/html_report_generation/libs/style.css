@@ -1,0 +1,282 @@
+.alert {
+  padding: 3px 3px 3px 3px;
+  font-size: 20px;
+}
+.word-break {
+  word-break: break-all;
+}
+.left {
+  float: left;
+}
+.right {
+  float: right;
+}
+.full-width {
+  table-layout: fixed;
+  width: 100%;
+}
+.inner_panel {
+  margin: 20px;
+}
+.info {
+  cursor: default;
+}
+.iconAnchor {
+  display: block;
+  align-content: center;
+}
+.theaderAnchor {
+  float: center;
+}
+.hiddenRow {
+  padding: 0 !important;
+}
+.verticalPointer {
+  float: right;
+}
+.clickablePointer {
+  cursor: pointer;
+}
+.form-check.form-check-inline {
+  padding: 2px;
+  border-radius: 5px;
+  margin-right: 0.4rem;
+}
+.faArrowIcon {
+  position: relative;
+  float: right;
+}
+.faArrowIcon.collapsed::before {
+  font-family: 'Font Awesome 5 Free';
+  top: 0;
+  left: -5px;
+  padding-right: 10px;
+  font-weight: 900;
+  content: '\f0d7';
+}
+.faArrowIcon::before {
+  font-family: 'Font Awesome 5 Free';
+  top: 0;
+  left: -5px;
+  padding-right: 10px;
+  font-weight: 900;
+  content: '\f0d8';
+}
+.btn-light,
+.badge-light {
+  border: 1px solid;
+  border-color: #343a40 !important;
+}
+.A {
+  color: #47ff19;
+}
+.T {
+  color: #4192ff;
+}
+.G {
+  color: #f09000;
+}
+.C {
+  color: #ff4641;
+}
+.bg-black {
+  background-color: #212529;
+  color: white;
+}
+#modalButton {
+  margin: 10px 10px 10px 0px;
+  display: block;
+}
+#clearAll {
+  display: block;
+}
+#filterList {
+  display: inline-block;
+}
+#modalClear {
+  left: 1rem;
+}
+.btn-xs{
+  font-size: .75rem;
+  line-height: 1.5;
+  border-radius: .2rem;
+  padding: 0 0.25rem 0 0.25rem;
+}
+.btn-light:focus{
+  box-shadow: none;
+}
+ol{
+  padding-left: 1em;
+  margin-bottom:0
+}
+#cover-spin {
+  position:fixed;
+  width:100%;
+  left:0;right:0;top:0;bottom:0;
+  background-color: rgba(255,255,255,0.7);
+  z-index:9999;
+  visibility: hidden;
+}
+@-webkit-keyframes spin {
+	from {-webkit-transform:rotate(0deg);}
+	to {-webkit-transform:rotate(360deg);}
+}
+
+@keyframes spin {
+	from {transform:rotate(0deg);}
+	to {transform:rotate(360deg);}
+}
+
+#cover-spin::after {
+    content:'';
+    position:absolute;
+    left:48%;top:40%;
+    width:40px;height:40px;
+    border-style:solid;
+    border-color:black;
+    border-top-color:transparent;
+    border-width: 4px;
+    border-radius:50%;
+    -webkit-animation: spin .8s linear infinite;
+    animation: spin .8s linear infinite;
+}
+.pgination-container{
+    border: 1px solid rgba(0, 0, 0, 0);
+    width: 550px;
+    display: block;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+.btn {
+    margin: 2px;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+#loader {
+  border: 12px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 12px solid #444444;
+  width: 70px;
+  height: 70px;
+  animation: spin 1s linear infinite;
+
+}
+
+@keyframes spin {
+  100% {
+      transform: rotate(360deg);
+  }
+}
+.center {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+.help-tip{
+	position: relative;
+	top: 90%;
+	left: 10%;
+	transform: translate(-50%, -50%);
+	margin: auto;
+	text-align: center;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	width: 20px;
+	height: 20px;
+        font-size: 12px;
+	cursor: default;
+}
+
+.help-tip:before{
+    content:'?';
+    font-family: sans-serif;
+    font-weight: normal;
+    color:#fff;
+}
+
+.help-tip:hover p{
+    display:block;
+    transform-origin: 100% 0%;
+    -webkit-animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.3s ease;
+}
+/* The tooltip */
+.help-tip p {    
+	display: none;
+	font-family: sans-serif;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	text-align: left;
+	background-color: #FFFFFF;
+	padding: 12px 16px;
+	width: 178px;
+	height: auto;
+	position: absolute;
+	left: 50%;
+	transform: translate(-50%, 5%);
+	border-radius: 3px;
+/* 	border: 1px solid #E0E0E0; */
+	box-shadow: 0 0px 20px 0 rgba(0,0,0,0.1);
+	color: #37393D;
+	font-size: 12px;
+	line-height: 18px;
+	z-index: 99;
+}
+
+
+
+/* The pointer of the tooltip */
+.help-tip p:before { 
+	position: absolute;
+	content: '';
+	width: 0;
+	height: 0;
+	border: 10px solid transparent;
+	border-bottom-color:#FFFFFF;
+	top: -9px;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+ /* Prevents the tooltip from being hidden */
+.help-tip p:after {
+	width: 10px;
+	height: 40px;
+	content:'';
+	position: absolute;
+	top: -40px;
+	left: 0;
+}
+/* CSS animation */
+@-webkit-keyframes fadeIn {
+    0% { opacity:0; }
+    100% { opacity:100%; }
+}
+
+@keyframes fadeIn {
+    0% { opacity:0; }
+    100% { opacity:100%; }
+}
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+#modalApply:disabled{
+  background: grey;
+}
+#modalClear:disabled{
+  background: grey;
+}

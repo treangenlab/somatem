@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+
+"""
+-------------------------------------------------------------------------------
+This script generates relavant top BLAST hits, which we refer as outlier hits,
+for each query sequence. 
+Written by N. R. Shah [nidhi@cs.umd.edu] for WABI/AMB submission 2017. This is
+also now part of s2fast pipeline, developed and maintained by Dan Nasko, and 
+others (2018).
+-------------------------------------------------------------------------------
+"""
+import math
+import argparse
+from scipy import special
+from itertools import groupby
+import numpy as np
+
+def fasta_iter(fasta_name):
+    queries = {}
+    with open(fasta_name, 'r') as fasta_file:
+        faiter = (x[1] for x in groupby(fasta_file, lambda line: line[0] == ">"))
+        for header in faiter:
+            header = next(header)[1:].strip()
+            hsplit = header.split(" ")
+            seq = "".join(sequence.strip() for sequence in next(faiter))
+            queries[hsplit[0]] = seq
+    return queries
+
+def calc_entropy(c_values, ctotal):
+    if ctotal ==0:
+        return 0
+    prob_list = [float(a)/ctotal for a in c_values]
+    entropy = 0
+    for j in range(0, len(prob_list)):
+        if prob_list[j] == 0.0:
+            continue
+        entropy += (-1)*prob_list[j]*math.log(prob_list[j],4)
+    return entropy
+
+def calc_col_score(partial_cumulative_sum, total_cumulative_sum, gamma_half_values, gamma_values):
+    col_score = [gamma_half_values[x] for x in partial_cumulative_sum]
+    col_score_sub = [gamma_half_values[0] for x in partial_cumulative_sum]
+    return sum(col_score) - sum(col_score_sub) - gamma_values[total_cumulative_sum]
+
+def execute(listofseqs, width, raiseto, gamma_half_values, gamma_values):
+    entropylist = []
+    wholescore = 0
+    a_list = np.cumsum([[1 if x == 'A' else 0 for x in row ] for row in listofseqs], axis = 0)
+    c_list = np.cumsum([[1 if x == 'C' else 0 for x in row] for row in listofseqs], axis = 0)
+    t_list = np.cumsum([[1 if x == 'T' else 0 for x in row] for row in listofseqs], axis = 0)
+    g_list = np.cumsum([[1 if x == 'G' else 0 for x in row] for row in listofseqs], axis = 0)
+    # To count all the characters in each column - just check the final row in the cumulative sum array
+    c_total = a_list[-1, :] + c_list[-1, :] + t_list[-1, :] + g_list[-1, :] 
+    entropy_list = [calc_entropy([a_list[-1, i], c_list[-1, i], t_list[-1, i], g_list[-1, i]],c_total[i]) for i in range(0, width)]
+    colscore_new = [0 if ctotal_i == 0 else (entropy_list[i]**(raiseto))*calc_col_score([a_list[-1, i], c_list[-1, i], t_list[-1, i], g_list[-1, i]], ctotal_i, gamma_half_values, gamma_values) for i, ctotal_i in enumerate(c_total)]
+    wholescore = sum(colscore_new)
+    scorearray = []
+    scorearray.append(wholescore)
+    for k in range(1,len(listofseqs)):
+        ya_sum = a_list[-1, :] - a_list[k-1, :]
+        yc_sum = c_list[-1, :] - c_list[k-1, :]
+        yt_sum = t_list[-1, :] - t_list[k-1, :]
+        yg_sum = g_list[-1, :] - g_list[k-1, :]
+        c_total_x = a_list[k-1, :] + c_list[k-1, :] + t_list[k-1, :] + g_list[k-1, :]
+        c_total_y = c_total - c_total_x
+        colscore_x = sum([0 if ctotal_i == 0 else (entropy_list[i]**(raiseto))*calc_col_score([a_list[k-1, i], c_list[k-1, i], t_list[k-1, i], g_list[k-1, i]], ctotal_i, gamma_half_values, gamma_values) for i, ctotal_i in enumerate(c_total_x)])
+        colscore_y = sum([0 if ctotal_i == 0 else (entropy_list[i]**(raiseto))*calc_col_score([ya_sum[i] , yc_sum[i], yt_sum[i], yg_sum[i]], ctotal_i, gamma_half_values, gamma_values) for i, ctotal_i in enumerate(c_total_y)])
+        score = colscore_x + colscore_y - wholescore
+        scorearray.append(score)
+        #This can even tell when query is sufficiently different than the rest i.e. when the peak in the scorearray is observed at index 1
+        if len(scorearray) >= 2:
+            if scorearray[-2] > scorearray[-1] and scorearray[-2] > scorearray[-3] and scorearray[-2] > 0:
+            # This returns index in the scorearray with maximum score and the score array itself
+                return len(scorearray)-2, scorearray
+    return -1, scorearray
+
+def write_summary(tuplescore, listofnames, output_file, fblast, blast_lines):
+    index, scorearray = tuplescore
+    if index == 1:
+        output_file.write(''.join(['\t'.join([listofnames[0], 'NA', listofnames[0], str(scorearray[index])]),'\n']))
+        return
+    if index == -1:
+        output_file.write(''.join(['\t'.join([listofnames[0], 'NA', 'NA', 'NA']),'\n']))
+        return
+    outliers = listofnames[1:index]
+    output_file.write(''.join(['\t'.join([listofnames[0], ';'.join(outliers), 'NA', str(scorearray[index])]),'\n']))
+    fblast.write('\n'.join(blast_lines[0:len(outliers)]))
+    return
+
+def main():
+    parser = argparse.ArgumentParser(description="A tool to decide which of the top BLAST hits are related to the query sequence")
+    parser.add_argument("-q","--query_file",help="A fasta file of query sequences",required=True)
+    parser.add_argument("-b","--blast_file", help="BLAST output file with output format: -outfmt \" 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq \"",required=True)
+    parser.add_argument("-a","--raiseto",help="A hyperparameter to control weight given to conserved coloumns in the multiple sequence alignment step (default value = 2.7)",default=2.7,required=False)
+    parser.add_argument("-out","--output_file", help="output file name (default - outlier.txt)",default="outlier.txt",required=False)
+    parser.add_argument("-blast","--blast_op", help="output file name for subsetting BLAST hits (default - subset_blast.txt)",default="subset_blast.txt",required=False)
+    parser.add_argument("-max","--max_blast_hits", help="Maximum number of BLAST hits per query (default = 300)",default=300,required=False)
+    args = parser.parse_args()
+    raiseto = float(args.raiseto)
+
+    #Pre-computes gamma values 
+    max_blast_hits = int(args.max_blast_hits)
+    gamma_half_values = [special.gammaln(i+0.5) for i in range(0,max_blast_hits+5)]
+    gamma_values = [special.gammaln(i+2) for i in range(0,max_blast_hits+5)]
+
+    #Open file handles for summary and subset blast output
+    output_file = open(str(args.output_file),'w')
+    output_file.write('#query_sequence\tcandidate_DB_seqs(outliers)\tquery_unrelated2DB\tscore_of_cut\n')
+    fblast = open(str(args.blast_op), 'w')
+
+    #Read BLAST file
+    queries = fasta_iter(str(args.query_file))
+
+    listofseqs = []
+    listofnames = []
+    blast_lines = []
+    current = 'None'
+    with open(str(args.blast_file)) as f:
+        for line in f:
+            val = line.strip().split('\t') 
+            if current == 'None':
+                current = val[0]
+                query = queries[val[0]]
+                ## New code
+                listofseqs = []
+                listofnames = []
+                blast_lines = []
+                listofseqs.append(list(query.upper()))
+                listofnames.append(val[0])
+                counter = 0
+            if val[0] != current:
+
+                tuplescore = execute(listofseqs, len(query), raiseto, gamma_half_values, gamma_values)
+                write_summary(tuplescore, listofnames, output_file, fblast, blast_lines)
+                current = val[0]
+                query = queries[val[0]]
+                listofseqs = []
+                listofnames = []
+                blast_lines = []
+                listofseqs.append(list(query.upper()))
+                listofnames.append(val[0])
+                counter = 0
+            if val[0] == current and counter <= max_blast_hits:
+                seqlen = abs(int(val[7])-int(val[6]))+1
+
+                #Checking whether the BLAST hit at least covers 90% of the query length 
+                #if seqlen < 0.9*len(query):
+                #    continue
+
+                qseq = val[12]
+                sseq = val[13]
+                #print(val[1],seqlen,qseq,sseq)
+                scopy = [i for num, i in enumerate(sseq) if qseq[num] != '-']
+                head_spaces = int(val[6])-1
+                trail_spaces = len(query) - int(val[7])
+                scopy_new = ['-']*head_spaces
+                scopy_new.extend(scopy)
+                scopy_new.extend(['-']*trail_spaces)
+                listofseqs.append(scopy_new)
+                listofnames.append(val[1])
+                blast_lines.append(line.strip())
+                counter += 1 
+
+        if len(listofseqs) > 0:
+            #This is to take care of last query hits when the file ends
+            #print(len(listofseqs))
+            tuplescore = execute(listofseqs, len(query), raiseto, gamma_half_values, gamma_values)
+            #print(listofnames,len(listofnames))
+            #print(len(tuplescore[1]))
+            #print(len(blast_lines))
+            write_summary(tuplescore, listofnames, output_file, fblast, blast_lines)
+
+    output_file.close()
+    fblast.close()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
