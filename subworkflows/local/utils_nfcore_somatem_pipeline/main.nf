@@ -93,6 +93,25 @@ workflow PIPELINE_INITIALISATION {
                 )
             }
             .set { ch_samplesheet }
+    } else if (params.analysis_type == "snp-phylogeny") {
+        channel
+            .fromPath(params.input, checkIfExists: true)
+            .splitCsv(header: true)
+            .map { row ->
+                def sample = row.sample?.toString()?.trim()
+                def genome = row.genome?.toString()?.trim()
+
+                if (!sample) {
+                    error("SNP phylogeny samplesheet row is missing required field: sample")
+                }
+                if (!genome) {
+                    error("SNP phylogeny samplesheet row for sample '${sample}' is missing required field: genome")
+                }
+
+                def meta = [id: sample, single_end: true]
+                tuple(meta, file(genome, checkIfExists: true))
+            }
+            .set { ch_samplesheet }
     } else {
         channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))

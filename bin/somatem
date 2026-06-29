@@ -66,6 +66,7 @@ Commands:
   assembly_mags (mag)           Run the main pipeline with assembly analysis
   isolate_analysis (isolate)    Run isolate assembly, classification, annotation, and typing
   genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
+  snp_phylogeny (snp)            Run reference-based whole-genome SNP phylogeny
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
   help                          Show this help message
@@ -84,6 +85,7 @@ Examples:
   somatem assembly_mags -i samples.csv -o results
   somatem isolate_analysis -i samples.csv -o results
   somatem genome_dynamics -i samples.csv -o results
+  somatem snp_phylogeny -i genomes.csv --reference reference.fasta -o results
   somatem download_example_data --outdir ./assets/data
   somatem pre_download_databases
 
@@ -185,6 +187,13 @@ case "${cmd}" in
         require_main_nextflow
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type genome-dynamics \
+            "${RESOLVED_ARGS[@]}"
+        ;;
+    snp_phylogeny|snp-phylogeny|snp_phylo|snp-phylo|snp)
+        require_main_nextflow
+        run_nextflow "${PIPELINE_DIR}/main.nf" \
+            --data_type isolate \
+            --analysis_type snp-phylogeny \
             "${RESOLVED_ARGS[@]}"
         ;;
     download_example_data|download-example-data|get_example_data|get-example-data|example_data|examples)

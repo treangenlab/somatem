@@ -7,6 +7,7 @@ The pipeline is divided into key subworkflows, allowing users to run the exact a
 * **Pre-processing:** Quality control and read filtering.
 * **Taxonomic Profiling:** Taxonomic classification and relative abundance estimation.
 * **Assembly & MAG Analysis:** *De novo* metagenomic assembly, binning, quality assessment, and functional annotation.
+* **SNP Phylogeny:** Reference-based whole-genome SNP comparison and tree inference for isolate assemblies.
 * **Genome Dynamics:** Structural variant and horizontal gene transfer detection for temporal samples.
 
 ---
@@ -66,6 +67,24 @@ Note: if you are actively developing the pipeline, check out docs/dev-notes.md(d
 
 Information on how to run the various subworkflows in somatem can be found in our [wiki pages](https://github.com/treangenlab/somatem/wiki)!
 
+### SNP Phylogeny
+
+The `snp_phylogeny` launcher runs a Nextflow-native reference SNP workflow for assembled genomes. The input samplesheet contains one genome FASTA per row:
+
+```csv
+sample,genome
+sample1,assets/examples/genomes/sample1.fasta
+sample2,assets/examples/genomes/sample2.fasta
+```
+
+Run it with a reference genome FASTA:
+
+```bash
+somatem snp_phylogeny -i assets/samplesheets/snp_phylogeny_samples.csv --reference assets/examples/genomes/reference.fasta -o results
+```
+
+Primary outputs are written under `snp_phylogeny/` and include minibwa PAF alignments, Parsnp core SNP alignment/signature outputs, Parsnp XMFA and Gingr archive outputs, the Parsnp guide tree, and a RAxML-NG maximum-likelihood tree.
+
 ## Database Configuration
 
 Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively. The first time you run a pipeline requiring a database these will be installed for you and saved at that path for future runs.
@@ -117,6 +136,12 @@ Handles *de novo* assembly, genome binning, and functional annotation.
 Investigates structural variations over time.
 * **[Rhea](https://github.com/treangenlab/rhea):** Detects structural variants and horizontal gene transfer events in temporally evolving microbial samples.
 * **[Bandage](https://github.com/rrwick/Bandage):** Interactive visualization tool for assembly graphs, highly useful for reviewing Rhea outputs.
+
+### SNP Phylogeny
+Builds reference-based SNP matrices and trees for whole-genome assemblies.
+* **[minibwa](https://github.com/lh3/minibwa):** Aligns assemblies to the reference genome and emits PAF alignments with sequence-difference tags.
+* **[Parsnp / Harvest](https://github.com/marbl/parsnp):** Builds microbial core-genome alignments and SNP signatures from whole-genome assemblies.
+* **[RAxML-NG](https://github.com/amkozlov/raxml-ng):** Infers maximum-likelihood trees from the core SNP alignment.
 
 ### Functional Annotation
 Screens for targets of clinical and functional interest.

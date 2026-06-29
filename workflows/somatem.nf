@@ -11,6 +11,7 @@ include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
 include { ISOLATE_ANALYSIS } from '../subworkflows/local/isolate_analysis.nf'
+include { SNP_PHYLOGENY } from '../subworkflows/local/snp_phylogeny.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +39,7 @@ workflow SOMATEM {
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
     contam_ref = Channel.value([]) // empty channel for now
-    if (params.analysis_type == "isolate-analysis") {
+    if (params.analysis_type == "isolate-analysis" || params.analysis_type == "snp-phylogeny") {
         ch_clean_reads = ch_samplesheet
         ch_summary_reports = Channel.empty()
     } else {
@@ -116,6 +117,25 @@ workflow SOMATEM {
         ch_versions = ch_versions.mix(GENOME_DYNAMICS.out.versions)
         ch_key_outputs = ch_key_outputs.mix(GENOME_DYNAMICS.out.assembly_graph)
         ch_summary_reports = ch_summary_reports.mix(GENOME_DYNAMICS.out.summary_report)
+    }
+
+    // -----------------------------------------------------------------
+    // SNP phylogeny : reference-based whole-genome SNP comparison
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "snp-phylogeny") {
+        SNP_PHYLOGENY(ch_clean_reads)
+        ch_versions = ch_versions.mix(SNP_PHYLOGENY.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(
+            SNP_PHYLOGENY.out.alignments,
+            SNP_PHYLOGENY.out.parsnp_outdir,
+            SNP_PHYLOGENY.out.parsnp_ggr,
+            SNP_PHYLOGENY.out.parsnp_xmfa,
+            SNP_PHYLOGENY.out.parsnp_tree,
+            SNP_PHYLOGENY.out.core_snps_fasta,
+            SNP_PHYLOGENY.out.tree,
+            SNP_PHYLOGENY.out.raxmlng_dir
+        )
+        ch_summary_reports = ch_summary_reports.mix(SNP_PHYLOGENY.out.summary_report)
     }
 
 

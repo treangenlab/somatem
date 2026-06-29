@@ -1,0 +1,6 @@
+---
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - "bioconda::minibwa=0.3"

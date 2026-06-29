@@ -36,7 +36,7 @@ workflow DOWNLOAD_DBS {
     // pre-processing databases 
     // ------------------------------------------------
 
-    if (params.run_hostile && analysis_type != "isolate-analysis") {
+    if (params.run_hostile && ['pre-processing', 'taxonomic-profiling', 'assembly', 'genome-dynamics'].contains(analysis_type)) {
         db_name_without_extension = hostile_index.replaceAll('\\.mmi$', '')
 
         // TODO: move this log message to the process itself

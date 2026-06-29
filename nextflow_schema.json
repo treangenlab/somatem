@@ -90,6 +90,26 @@
             "type": "string",
             "default": "taxonomic-profiling"
         },
+        "reference": {
+            "type": "string",
+            "format": "file-path",
+            "description": "Reference genome FASTA used by the SNP phylogeny workflow."
+        },
+        "parsnp_args": {
+            "type": "string",
+            "default": ""
+        },
+        "snp_phylo_raxmlng_model": {
+            "type": "string",
+            "default": "GTR+G+ASC_LEWIS"
+        },
+        "snp_phylo_raxmlng_parsimony_trees": {
+            "type": "integer",
+            "default": 10
+        },
+        "snp_phylo_raxmlng_bootstrap": {
+            "type": "integer"
+        },
         "sample_status": {
             "type": "string",
             "default": "cross-section"
