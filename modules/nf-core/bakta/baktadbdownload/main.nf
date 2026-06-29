@@ -17,9 +17,11 @@ process BAKTA_BAKTADBDOWNLOAD {
 
     script:
     def args = task.ext.args ?: ''
+    def db_type = (args =~ /(^|\s)--type(\s|=|$)/).find() ? '' : '--type light'
     """
     bakta_db \\
         download \\
+        $db_type \\
         $args
 
     cat <<-END_VERSIONS > versions.yml
@@ -30,9 +32,11 @@ process BAKTA_BAKTADBDOWNLOAD {
 
     stub:
     def args = task.ext.args ?: ''
+    def db_type = (args =~ /(^|\s)--type(\s|=|$)/).find() ? '' : '--type light'
     """
     echo "bakta_db \\
         download \\
+        $db_type \\
         $args"
 
     mkdir db

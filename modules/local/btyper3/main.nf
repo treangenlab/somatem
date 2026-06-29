@@ -6,13 +6,14 @@ process BTYPER3 {
 
     publishDir { "${params.outdir}/isolate_analysis/${meta.id}/typing/btyper3" },
         mode: params.publish_dir_mode,
-        pattern: "btyper3_out/**"
+        pattern: "*.txt"
 
     input:
     tuple val(meta), path(fasta)
 
     output:
     tuple val(meta), path("btyper3_out"), emit: outdir
+    tuple val(meta), path("*.txt")     , emit: results
     path "versions.yml"                , emit: versions
 
     when:
@@ -26,6 +27,8 @@ process BTYPER3 {
         -o btyper3_out \\
         ${args}
 
+    find btyper3_out/btyper3_final_results -type f -name "*.txt" -exec cp {} . \\;
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         btyper3: \$(btyper3 --version 2>&1 | sed 's/^.*BTyper3 //; s/^btyper3 //; s/ .*\$//')
@@ -36,6 +39,7 @@ process BTYPER3 {
     """
     mkdir -p btyper3_out
     touch btyper3_out/btyper3_stub_results.txt
+    touch btyper3_stub_results.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

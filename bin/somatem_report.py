@@ -92,6 +92,21 @@ WORKFLOW_COPY = {
         ],
         "accent": "#be123c",
     },
+    "isolate_analysis": {
+        "title": "Isolate analysis",
+        "summary": (
+            "This report summarizes long-read-first bacterial isolate assembly, optional hybrid polishing, "
+            "read classification, assembly quality assessment, genome annotation, and optional B. cereus "
+            "typing outputs."
+        ),
+        "methods": [
+            "Long reads were classified with Kraken2 against the configured standard-8 database.",
+            "Long-read assemblies were generated with Autocycler and Flye, then polished with short reads when hybrid assembly was enabled.",
+            "Final isolate assemblies were evaluated with CheckM2 to estimate completeness and contamination.",
+            "Assemblies were annotated with Bakta, and optional BTyper3 typing was run from the Bakta genome FASTA output.",
+        ],
+        "accent": "#2563eb",
+    },
 }
 
 
@@ -101,7 +116,7 @@ TYPE_LABELS = [
     ("assembly", "Assembly files", lambda p: p.name.endswith((".fasta", ".fasta.gz", ".fa", ".fa.gz", ".fna", ".fna.gz", ".gfa", ".gfa.gz"))),
     ("mapping", "Mapping and coverage", lambda p: p.name.endswith((".bam", ".bai", ".coverage.txt")) or "coverage" in p.name.lower()),
     ("binning", "Binning outputs", lambda p: any(x in p.name.lower() for x in ["bin", "semibin", "dastool", "iterative", "checkm2", "completeness"])),
-    ("annotation", "Annotation outputs", lambda p: p.name.endswith((".gff", ".gbff", ".embl", ".faa", ".ffn")) or "bakta" in p.name.lower()),
+    ("annotation", "Annotation outputs", lambda p: p.name.endswith((".gff", ".gff3", ".gbff", ".embl", ".faa", ".ffn")) or "bakta" in p.name.lower()),
     ("visual", "Visual reports and images", lambda p: p.name.endswith((".html", ".png", ".svg"))),
     ("versions", "Software version files", lambda p: p.name == "versions.yml" or p.name.endswith("_versions.yml")),
 ]
@@ -632,8 +647,11 @@ def checkm2_rows(files: list[Path]) -> list[dict[str, str]]:
 
 
 def mag_quality_section(files: list[Path], workflow: str) -> str:
-    if workflow != "assembly_mags":
+    if workflow not in {"assembly_mags", "isolate_analysis"}:
         return ""
+    is_isolate = workflow == "isolate_analysis"
+    entity_label = "assembly" if is_isolate else "bin"
+    entity_label_title = "Assembly" if is_isolate else "Bin"
     rows = checkm2_rows(files)
     body = ""
     contig_lengths = []
@@ -697,11 +715,13 @@ def mag_quality_section(files: list[Path], workflow: str) -> str:
                 quality_label,
             ])
         body += (
-            "<p>MAG quality summaries use CheckM2 completeness and contamination estimates. "
-            f"This run staged {len(rows)} evaluated bins, including {high_quality} high-quality "
-            f"bins (at least 90% complete and at most 5% contamination), {medium_quality} "
-            "medium-quality bins (at least 50% complete and at most 10% contamination), and "
-            f"{low_quality} lower-quality bins.</p>"
+            "<p>Quality summaries use CheckM2 completeness and contamination estimates. "
+            f"This run staged {len(rows)} evaluated {entity_label}{'' if len(rows) == 1 else 's'}, including "
+            f"{high_quality} high-quality {entity_label}{'' if high_quality == 1 else 's'} "
+            f"(at least 90% complete and at most 5% contamination), {medium_quality} "
+            f"medium-quality {entity_label}{'' if medium_quality == 1 else 's'} "
+            "(at least 50% complete and at most 10% contamination), and "
+            f"{low_quality} lower-quality {entity_label}{'' if low_quality == 1 else 's'}.</p>"
         )
         body += horizontal_bar_svg(
             [
@@ -709,18 +729,18 @@ def mag_quality_section(files: list[Path], workflow: str) -> str:
                 ("Medium-quality", medium_quality),
                 ("Lower-quality", low_quality),
             ],
-            "MAG quality class counts",
+            f"{entity_label_title} quality class counts",
         )
-        body += horizontal_bar_svg(sorted(chart_values, key=lambda item: item[1], reverse=True), "MAG completeness estimates", value_suffix="%")
+        body += horizontal_bar_svg(sorted(chart_values, key=lambda item: item[1], reverse=True), f"{entity_label_title} completeness estimates", value_suffix="%")
         body += histogram_svg([value for _name, value in chart_values], "Completeness distribution", value_suffix="%")
         if contamination_values:
             body += horizontal_bar_svg(
                 sorted(contamination_values, key=lambda item: item[1], reverse=True),
-                "MAG contamination estimates",
+                f"{entity_label_title} contamination estimates",
                 value_suffix="%",
             )
             body += scatter_svg(scatter_points, "Completeness versus contamination", "Completeness (%)", "Contamination (%)")
-        body += table_html(["Bin", "Completeness", "Contamination", "Quality class"], table_rows[:20], max_cols=4)
+        body += table_html([entity_label_title, "Completeness", "Contamination", "Quality class"], table_rows[:20], max_cols=4)
     coverage_values = list(contig_coverages)
     for path in files:
         if "coverage" not in path.name.lower() or path.suffix.lower() not in {".txt", ".tsv", ".csv"}:
@@ -853,7 +873,8 @@ def image_previews(files: list[Path]) -> list[tuple[str, str]]:
     for path in files:
         if path.suffix.lower() not in {".png", ".svg"}:
             continue
-        if file_size(path) > 800_000:
+        size_limit = 5_000_000 if path.suffix.lower() == ".png" else 800_000
+        if file_size(path) > size_limit:
             continue
         mime = mimetypes.guess_type(path.name)[0] or "image/png"
         try:
@@ -996,7 +1017,8 @@ def main() -> int:
 
     mag_figures = mag_quality_section(files, args.workflow)
     if mag_figures:
-        sections.append(section("MAG Quality And Coverage Overview", mag_figures))
+        quality_title = "Assembly Quality Overview" if args.workflow == "isolate_analysis" else "MAG Quality And Coverage Overview"
+        sections.append(section(quality_title, mag_figures))
 
     preview_blocks = []
     for path, preview, stats in table_previews(files):

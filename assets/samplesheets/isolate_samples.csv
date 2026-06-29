@@ -1,0 +1,2 @@
+sample,long_reads,short_reads_1,short_reads_2,expected_genome_size,species
+FFI_BCgr,/home/agm/Documents/somatem/assets/data/isolate/SRR24519620.fastq.gz,/home/agm/Documents/somatem/assets/data/isolate/SRR24519621_1.fastq.gz,/home/agm/Documents/somatem/assets/data/isolate/SRR24519621_2.fastq.gz,5.4m,Bacillus_cereus

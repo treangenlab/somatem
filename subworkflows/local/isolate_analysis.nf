@@ -44,6 +44,7 @@ include { FASTA_FINALIZE }         from '../../modules/local/fasta/finalize/main
 include { KRAKEN2_KRAKEN2 }        from '../../modules/nf-core/kraken2/kraken2/main'
 include { BAKTA_BAKTA }            from '../../modules/local/bakta/bakta/main'
 include { BTYPER3 }                from '../../modules/local/btyper3/main'
+include { CHECKM2_PREDICT }        from '../../modules/nf-core/checkm2/predict/main'
 include { SOMATEM_SUMMARY_REPORT as ISOLATE_ANALYSIS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 workflow ISOLATE_ANALYSIS {
@@ -52,6 +53,7 @@ workflow ISOLATE_ANALYSIS {
     ch_reads
     ch_bakta_db
     ch_kraken2_db
+    ch_checkm2_db
     // tuple val(meta), path(long_reads), path(short_reads_1), path(short_reads_2),
     //       val(expected_genome_size), val(species)
 
@@ -167,10 +169,28 @@ workflow ISOLATE_ANALYSIS {
         BWA_MEM_FOR_POLYPOLISH(ch_autocycler_with_short_reads)
         ch_versions = ch_versions.mix(BWA_MEM_FOR_POLYPOLISH.out.versions)
 
-        POLYPOLISH_FILTER(BWA_MEM_FOR_POLYPOLISH.out.alignments)
+        ch_polypolish_filter_input = BWA_MEM_FOR_POLYPOLISH.out.alignments.map { meta, assembly, alignments_1, alignments_2 ->
+            tuple(meta, alignments_1, alignments_2)
+        }
+
+        POLYPOLISH_FILTER(ch_polypolish_filter_input)
         ch_versions = ch_versions.mix(POLYPOLISH_FILTER.out.versions)
 
-        POLYPOLISH_POLISH(POLYPOLISH_FILTER.out.alignments)
+        ch_polypolish_assembly = BWA_MEM_FOR_POLYPOLISH.out.alignments.map { meta, assembly, alignments_1, alignments_2 ->
+            tuple(meta.id, meta, assembly)
+        }
+
+        ch_polypolish_filtered_alignments = POLYPOLISH_FILTER.out.alignments.map { meta, filtered_1, filtered_2 ->
+            tuple(meta.id, meta, filtered_1, filtered_2)
+        }
+
+        ch_polypolish_polish_input = ch_polypolish_assembly
+            .join(ch_polypolish_filtered_alignments, by: 0)
+            .map { sample_id, meta, assembly, filter_meta, filtered_1, filtered_2 ->
+                tuple(meta, assembly, filtered_1, filtered_2)
+            }
+
+        POLYPOLISH_POLISH(ch_polypolish_polish_input)
         ch_versions = ch_versions.mix(POLYPOLISH_POLISH.out.versions)
         ch_polished_assembly = POLYPOLISH_POLISH.out.assembly
     }
@@ -209,6 +229,9 @@ workflow ISOLATE_ANALYSIS {
     FASTA_FINALIZE(ch_final_candidate_assembly)
     ch_versions = ch_versions.mix(FASTA_FINALIZE.out.versions)
 
+    CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
+    ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
+
     ch_bakta_input = FASTA_FINALIZE.out.assembly.map { meta, assembly ->
         def bakta_meta = meta.sample_id == null ? meta + [sample_id: meta.id] : meta
         tuple(bakta_meta, assembly)
@@ -220,9 +243,9 @@ workflow ISOLATE_ANALYSIS {
     if (run_btyper3) {
         BTYPER3(BAKTA_BAKTA.out.fna)
         ch_versions = ch_versions.mix(BTYPER3.out.versions)
-        ch_btyper3_outdir = BTYPER3.out.outdir
+        ch_btyper3_results = BTYPER3.out.results
     } else {
-        ch_btyper3_outdir = channel.empty()
+        ch_btyper3_results = channel.empty()
     }
 
     ch_versions_for_report = ch_versions
@@ -234,7 +257,8 @@ workflow ISOLATE_ANALYSIS {
             BAKTA_BAKTA.out.tsv,
             BAKTA_BAKTA.out.json,
             BAKTA_BAKTA.out.png,
-            ch_btyper3_outdir,
+            CHECKM2_PREDICT.out.checkm2_tsv,
+            ch_btyper3_results,
             ch_versions_for_report
         )
 
@@ -264,7 +288,8 @@ workflow ISOLATE_ANALYSIS {
     bakta_tsv            = BAKTA_BAKTA.out.tsv
     bakta_json           = BAKTA_BAKTA.out.json
     bakta_gff            = BAKTA_BAKTA.out.gff
-    btyper3_outdir       = ch_btyper3_outdir
+    checkm2_tsv          = CHECKM2_PREDICT.out.checkm2_tsv
+    btyper3_results      = ch_btyper3_results
     summary_report       = ISOLATE_ANALYSIS_SUMMARY_REPORT.out.html
     versions             = ch_versions
 }
