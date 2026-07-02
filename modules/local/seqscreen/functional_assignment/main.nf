@@ -2,7 +2,7 @@ process SEQSCREEN_FUNCTIONAL_ASSIGNMENT {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/functional_assignment/environment.yml"
 
     input:
     tuple val(meta), path(fasta), path(blastx_btab)

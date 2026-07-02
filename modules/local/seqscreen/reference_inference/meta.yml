@@ -1,0 +1,33 @@
+name: "seqscreen_reference_inference"
+description: Infer references from SeqScreen report output
+keywords:
+  - seqscreen
+  - reference inference
+  - reporting
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - report:
+      type: file
+      description: SeqScreen TSV report
+output:
+  - outdir:
+      type: directory
+      description: Reference inference output directory
+      pattern: "reference_inference"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

@@ -2,7 +2,7 @@ process SEQSCREEN_REPORT_HTML {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/report_html/environment.yml"
 
     input:
     tuple val(meta), path(fasta), path(report), path(blastx_xml)
@@ -20,15 +20,21 @@ process SEQSCREEN_REPORT_HTML {
 
     script:
     """
-    ${assets}/modules/html_report_generation.sh \\
-        --report=${report} \\
-        --fasta=${fasta} \\
-        --blastx=${blastx_xml} \\
-        --version=4.4 \\
-        --mode=${mode} \\
-        --rflag=${rflag} \\
-        --gonetwork=${db}/go/go_network.txt \\
-        --out=seqscreen_html_report/
+    python3 ${assets}/scripts/html_report_generation/generateHtmlReport.py \\
+        -f ${fasta} \\
+        -r ${report} \\
+        -b ${blastx_xml} \\
+        -o seqscreen_html_report/ \\
+        --rflag ${rflag} \\
+        --version 4.4 \\
+        -d ${assets}/scripts/html_report_generation/libs/ \\
+        -t ${assets}/scripts/html_report_generation/data/template.html \\
+        -g ${assets}/scripts/html_report_generation/data/go_names.txt \\
+        -n ${db}/go/go_network.txt \\
+        --funsocs ${assets}/scripts/html_report_generation/data/funsocs_description.txt \\
+        --mode ${mode} \\
+        --go_template ${assets}/scripts/html_report_generation/data/go_template.html \\
+        > html_report_generation.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

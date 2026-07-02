@@ -2,7 +2,7 @@ process SEQSCREEN_FORMAT_REPORT {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/format_report/environment.yml"
 
     publishDir { "${params.outdir}/seqscreen/${meta.id}" },
         mode: params.publish_dir_mode,

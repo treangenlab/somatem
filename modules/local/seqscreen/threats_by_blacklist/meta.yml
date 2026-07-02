@@ -1,0 +1,33 @@
+name: "seqscreen_threats_by_blacklist"
+description: Summarize SeqScreen blacklist threats from Bowtie2 and RAPSearch2 outputs
+keywords:
+  - seqscreen
+  - blacklist
+  - threats
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - sam:
+      type: file
+      description: Bowtie2 SAM alignments
+  - m8:
+      type: file
+      description: RAPSearch2 m8 output
+output:
+  - threats:
+      type: file
+      description: Threat summary for the selected blacklist
+      pattern: "threats_by_*.txt"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

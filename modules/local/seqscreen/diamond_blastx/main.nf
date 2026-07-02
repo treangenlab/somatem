@@ -2,12 +2,11 @@ process SEQSCREEN_DIAMOND_BLASTX {
     tag "$meta.id"
     label 'process_high'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/diamond_blastx/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
 
     output:
     tuple val(meta), path("${meta.id}.ur100.btab") , emit: btab
@@ -38,10 +37,17 @@ process SEQSCREEN_DIAMOND_BLASTX {
         --top 5 \\
         -f 100
 
-    perl ${assets}/scripts/blast_formatter_fast.pl \\
+    diamond view \\
         -a ${prefix}.daa \\
-        -o ${prefix}.ur100 \\
-        -f 5,"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore ppos qframe score salltitles"
+        --top 5 \\
+        --out ${prefix}.ur100.xml \\
+        --outfmt 5
+
+    diamond view \\
+        -a ${prefix}.daa \\
+        --top 5 \\
+        --out ${prefix}.ur100.btab \\
+        --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore ppos qframe score salltitles
 
     ln -s ${prefix}.ur100.btab functional_link.ur100.btab
     ln -s ${prefix}.ur100.xml functional_link.ur100.xml

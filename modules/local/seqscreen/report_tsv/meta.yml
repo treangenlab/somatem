@@ -1,0 +1,36 @@
+name: "seqscreen_report_tsv"
+description: Generate the SeqScreen TSV report from taxonomy, function, and blacklist outputs
+keywords:
+  - seqscreen
+  - tsv
+  - report
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - taxonomy:
+      type: file
+      description: Taxonomic assignment results
+  - functional:
+      type: file
+      description: Functional assignment results
+output:
+  - report:
+      type: file
+      description: SeqScreen TSV report
+      pattern: "*seqscreen_report.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

@@ -81,10 +81,10 @@ workflow SEQSCREEN_DSL2 {
     /*
      * Seq mapper: BSAT/VFDB bowtie2 and rapsearch2 scans.
      */
-    SEQSCREEN_BOWTIE2_BSAT(ch_seqscreen_fasta, ch_db, ch_assets, 'bsat')
-    SEQSCREEN_BOWTIE2_VFDB(ch_seqscreen_fasta, ch_db, ch_assets, 'vfdb')
-    SEQSCREEN_RAPSEARCH2_BSAT(ch_seqscreen_fasta, ch_db, ch_assets, 'bsat')
-    SEQSCREEN_RAPSEARCH2_VFDB(ch_seqscreen_fasta, ch_db, ch_assets, 'vfdb')
+    SEQSCREEN_BOWTIE2_BSAT(ch_seqscreen_fasta, ch_db, 'bsat')
+    SEQSCREEN_BOWTIE2_VFDB(ch_seqscreen_fasta, ch_db, 'vfdb')
+    SEQSCREEN_RAPSEARCH2_BSAT(ch_seqscreen_fasta, ch_db, 'bsat')
+    SEQSCREEN_RAPSEARCH2_VFDB(ch_seqscreen_fasta, ch_db, 'vfdb')
     ch_versions = ch_versions.mix(
         SEQSCREEN_BOWTIE2_BSAT.out.versions,
         SEQSCREEN_BOWTIE2_VFDB.out.versions,
@@ -110,7 +110,7 @@ workflow SEQSCREEN_DSL2 {
     )
 
     if (params.seqscreen_hmmscan) {
-        SEQSCREEN_HMMSCAN(ch_seqscreen_fasta, ch_db, ch_assets)
+        SEQSCREEN_HMMSCAN(ch_seqscreen_fasta, ch_db)
         ch_versions = ch_versions.mix(SEQSCREEN_HMMSCAN.out.versions)
     }
 
@@ -118,8 +118,8 @@ workflow SEQSCREEN_DSL2 {
      * Taxonomic and functional annotation.
      */
     if (mode == 'fast') {
-        SEQSCREEN_DIAMOND_BLASTX(ch_seqscreen_fasta, ch_db, ch_assets)
-        SEQSCREEN_CENTRIFUGE(ch_seqscreen_fasta, ch_db, ch_assets)
+        SEQSCREEN_DIAMOND_BLASTX(ch_seqscreen_fasta, ch_db)
+        SEQSCREEN_CENTRIFUGE(ch_seqscreen_fasta, ch_db)
         ch_versions = ch_versions.mix(
             SEQSCREEN_DIAMOND_BLASTX.out.versions,
             SEQSCREEN_CENTRIFUGE.out.versions
@@ -136,10 +136,10 @@ workflow SEQSCREEN_DSL2 {
         ch_blastx_btab = SEQSCREEN_DIAMOND_BLASTX.out.functional_btab
         ch_blastx_xml = SEQSCREEN_DIAMOND_BLASTX.out.functional_xml
     } else {
-        SEQSCREEN_BLASTN_NT(ch_seqscreen_fasta, ch_db, ch_assets, 'nt')
-        SEQSCREEN_BLASTN_MEGARES(ch_seqscreen_fasta, ch_db, ch_assets, 'megares')
-        SEQSCREEN_MUMMER(ch_seqscreen_fasta, ch_db, ch_assets)
-        SEQSCREEN_BLASTX(ch_seqscreen_fasta, ch_db, ch_assets)
+        SEQSCREEN_BLASTN_NT(ch_seqscreen_fasta, ch_db, 'nt')
+        SEQSCREEN_BLASTN_MEGARES(ch_seqscreen_fasta, ch_db, 'megares')
+        SEQSCREEN_MUMMER(ch_seqscreen_fasta, ch_db)
+        SEQSCREEN_BLASTX(ch_seqscreen_fasta, ch_db)
         ch_versions = ch_versions.mix(
             SEQSCREEN_BLASTN_NT.out.versions,
             SEQSCREEN_BLASTN_MEGARES.out.versions,

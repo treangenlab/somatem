@@ -2,12 +2,11 @@ process SEQSCREEN_HMMSCAN {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/hmmscan/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
 
     output:
     tuple val(meta), path("pfam_hmm"), emit: outdir
@@ -21,12 +20,15 @@ process SEQSCREEN_HMMSCAN {
     """
     mkdir -p pfam_hmm
     esl-translate ${fasta} > pfam_hmm/${prefix}.translated.fasta
-    ${assets}/modules/hmmscan.sh \\
-        --fasta=pfam_hmm/${prefix}.translated.fasta \\
-        --database=${db}/hmmscan/Pfam-A.hmm \\
-        --out=pfam_hmm/${prefix} \\
-        --threads=${task.cpus} \\
-        --evalue=1e-3
+
+    hmmscan \\
+        --cpu ${task.cpus} \\
+        -o pfam_hmm/${prefix}.txt \\
+        --tblout pfam_hmm/${prefix}.tab \\
+        -E 1e-3 \\
+        ${db}/hmmscan/Pfam-A.hmm \\
+        pfam_hmm/${prefix}.translated.fasta \\
+        > hmmscan.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

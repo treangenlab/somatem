@@ -1,0 +1,38 @@
+name: "seqscreen_blastx"
+description: Run BLASTX against the SeqScreen UniRef database and emit XML/BTAB output
+keywords:
+  - seqscreen
+  - blastx
+  - functional annotation
+tools:
+  - "blast":
+      description: "NCBI BLAST+ sequence alignment tools"
+      homepage: "https://blast.ncbi.nlm.nih.gov/"
+      documentation: "https://www.ncbi.nlm.nih.gov/books/NBK279690/"
+      licence: "['Public Domain']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+      pattern: "*.{fa,fasta,fna}"
+  - db:
+      type: directory
+      description: SeqScreen database directory
+output:
+  - btab:
+      type: file
+      description: BLASTX BTAB output
+      pattern: "*.btab"
+  - xml:
+      type: file
+      description: BLASTX XML output
+      pattern: "*.xml"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

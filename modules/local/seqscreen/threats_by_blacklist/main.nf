@@ -2,7 +2,7 @@ process SEQSCREEN_THREATS_BY_BLACKLIST {
     tag "$meta.id:$target"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/threats_by_blacklist/environment.yml"
 
     input:
     tuple val(meta), path(sam), path(m8)

@@ -2,12 +2,11 @@ process SEQSCREEN_BOWTIE2 {
     tag "$meta.id:$target"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/bowtie2/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
     val target
 
     output:
@@ -21,11 +20,16 @@ process SEQSCREEN_BOWTIE2 {
     def db_path = target == 'vfdb' ? "${db}/bowtie2/vfdb/vfdb" : "${db}/bowtie2/bsat_ccl/blacklist.seqs.nt"
     def out = target == 'vfdb' ? "blacklist_vfdb.sam" : "blacklist_bsat.sam"
     """
-    ${assets}/modules/bowtie2.sh \\
-        --fasta=${fasta} \\
-        --database=${db_path} \\
-        --out=${out} \\
-        --threads=${task.cpus}
+    bowtie2 \\
+        --threads ${task.cpus} \\
+        --sensitive \\
+        -f \\
+        --no-head \\
+        --no-unal \\
+        -x ${db_path} \\
+        -U ${fasta} \\
+        -S ${out} \\
+        > bowtie2.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

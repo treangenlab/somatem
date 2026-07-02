@@ -2,7 +2,7 @@ process SEQSCREEN_OUTLIER_DETECTION {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/outlier_detection/environment.yml"
 
     input:
     tuple val(meta), path(fasta), path(blastn_btab)
@@ -17,11 +17,26 @@ process SEQSCREEN_OUTLIER_DETECTION {
     task.ext.when == null || task.ext.when
 
     script:
+    def clean_btab = "${blastn_btab}_outlier_clean.btab"
     """
-    ${assets}/modules/outlier_detection.sh \\
-        --fasta=${fasta} \\
-        --btab=${blastn_btab} \\
-        --out=outlier_detection.txt
+    sort \\
+        -r \\
+        -k 1,1 \\
+        -k 12,12 \\
+        ${blastn_btab} \\
+        > ${blastn_btab}.srt
+
+    python3 ${assets}/scripts/outlier_detection/score_blast.py \\
+        -q ${fasta} \\
+        -b ${blastn_btab}.srt \\
+        -o outlier_detection.txt \\
+        > outlier_detection.log 2>&1
+
+    python3 ${assets}/scripts/outlier_detection/remove_outliers.py \\
+        --outliers outlier_detection.txt \\
+        --btab ${blastn_btab} \\
+        --out ${clean_btab} \\
+        >> outlier_detection.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

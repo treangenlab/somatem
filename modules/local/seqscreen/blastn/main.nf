@@ -2,12 +2,11 @@ process SEQSCREEN_BLASTN {
     tag "$meta.id:$target"
     label 'process_high'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/blastn/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
     val target
 
     output:
@@ -23,12 +22,16 @@ process SEQSCREEN_BLASTN {
     def out = target == 'megares' ? "${prefix}.megares.btab" : "${prefix}.nt.btab"
     def evalue = params.seqscreen_evalue ?: 10
     """
-    ${assets}/modules/blastn.sh \\
-        --fasta=${fasta} \\
-        --database=${db_path} \\
-        --out=${out} \\
-        --threads=${task.cpus} \\
-        --evalue=${evalue}
+    blastn \\
+        -query ${fasta} \\
+        -db ${db_path} \\
+        -out ${out} \\
+        -evalue ${evalue} \\
+        -num_threads ${task.cpus} \\
+        -max_target_seqs 500 \\
+        -dust no \\
+        -outfmt "6 std qseq sseq staxid" \\
+        > blastn.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

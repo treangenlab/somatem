@@ -2,7 +2,7 @@ process SEQSCREEN_TAXONOMIC_ASSIGNMENT_FAST {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/taxonomic_assignment/environment.yml"
 
     input:
     tuple val(meta), path(diamond_btab), path(centrifuge_results)
@@ -45,7 +45,7 @@ process SEQSCREEN_TAXONOMIC_ASSIGNMENT_SENSITIVE {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/taxonomic_assignment/environment.yml"
 
     input:
     tuple val(meta), path(blastx_btab), path(clean_blastn_btab)
@@ -60,7 +60,7 @@ process SEQSCREEN_TAXONOMIC_ASSIGNMENT_SENSITIVE {
 
     script:
     """
-    perl ${assets}/scripts/btab_2_tax_report_sensitive.pl \\
+    python3 ${assets}/scripts/btab_2_tax_report_sensitive.py \\
         --blastx=${blastx_btab} \\
         --blastn=${clean_blastn_btab} \\
         --out=taxonomic_results.txt \\

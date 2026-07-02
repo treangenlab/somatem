@@ -1,0 +1,27 @@
+name: "seqscreen_format_report"
+description: Arrange SeqScreen report outputs into the expected output directory layout
+keywords:
+  - seqscreen
+  - report
+  - formatting
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+output:
+  - outdir:
+      type: directory
+      description: Formatted SeqScreen output directory
+      pattern: "seqscreen_output"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

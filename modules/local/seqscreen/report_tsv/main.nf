@@ -2,7 +2,7 @@ process SEQSCREEN_REPORT_TSV {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/report_tsv/environment.yml"
 
     input:
     tuple val(meta), path(fasta), path(taxonomy), path(functional), path(bsat), path(vfdb)

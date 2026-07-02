@@ -2,7 +2,7 @@ process SEQSCREEN_REFERENCE_INFERENCE {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/reference_inference/environment.yml"
 
     input:
     tuple val(meta), path(fasta), path(report)

@@ -1,0 +1,37 @@
+name: "seqscreen_outlier_detection"
+description: Score and remove outlier BLASTN hits for sensitive-mode taxonomy
+keywords:
+  - seqscreen
+  - outlier detection
+  - taxonomy
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - blastn_btab:
+      type: file
+      description: BLASTN tabular output
+output:
+  - clean_btab:
+      type: file
+      description: BLASTN BTAB with outliers removed
+      pattern: "*_outlier_clean.btab"
+  - outliers:
+      type: file
+      description: Outlier detection summary
+      pattern: "outlier_detection.txt"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

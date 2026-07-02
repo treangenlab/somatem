@@ -2,12 +2,11 @@ process SEQSCREEN_CENTRIFUGE {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/centrifuge/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
 
     output:
     tuple val(meta), path("*.centrifuge"), emit: results
@@ -19,11 +18,14 @@ process SEQSCREEN_CENTRIFUGE {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    ${assets}/modules/centrifuge.sh \\
-        --fasta=${fasta} \\
-        --database=${db}/centrifuge/abv \\
-        --out=${prefix}.centrifuge \\
-        --threads=${task.cpus}
+    centrifuge \\
+        -x ${db}/centrifuge/abv \\
+        -f \\
+        -U ${fasta} \\
+        -S ${prefix}.centrifuge \\
+        --threads ${task.cpus} \\
+        --seed 1 \\
+        > centrifuge.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

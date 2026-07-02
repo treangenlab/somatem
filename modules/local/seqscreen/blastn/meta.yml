@@ -1,0 +1,37 @@
+name: "seqscreen_blastn"
+description: Run BLASTN against a SeqScreen nucleotide database and emit BTAB output
+keywords:
+  - seqscreen
+  - blastn
+  - taxonomy
+tools:
+  - "blast":
+      description: "NCBI BLAST+ sequence alignment tools"
+      homepage: "https://blast.ncbi.nlm.nih.gov/"
+      documentation: "https://www.ncbi.nlm.nih.gov/books/NBK279690/"
+      licence: "['Public Domain']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+      pattern: "*.{fa,fasta,fna}"
+  - db:
+      type: directory
+      description: SeqScreen database directory
+  - target:
+      type: string
+      description: BLASTN target database selector
+output:
+  - btab:
+      type: file
+      description: BLASTN tabular output
+      pattern: "*.btab"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

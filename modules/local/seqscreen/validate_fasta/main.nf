@@ -2,7 +2,7 @@ process SEQSCREEN_VALIDATE_FASTA {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/validate_fasta/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
@@ -23,7 +23,7 @@ process SEQSCREEN_VALIDATE_FASTA {
     echo -n " #### Launching SeqScreen DSL2 pipeline ....... " | tee seqscreen.log
     date '+%H:%M:%S %Y-%m-%d' | tee -a seqscreen.log
 
-    perl ${assets}/scripts/validate_fasta.pl \\
+    python3 ${assets}/scripts/validate_fasta.py \\
         -f ${fasta} \\
         --max_seq_size=1000000000
 

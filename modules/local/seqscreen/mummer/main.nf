@@ -2,12 +2,11 @@ process SEQSCREEN_MUMMER {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/mummer/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
 
     output:
     tuple val(meta), path("*.mummer_re.txt"), emit: results
@@ -19,10 +18,13 @@ process SEQSCREEN_MUMMER {
     script:
     def prefix = "${meta.id}"
     """
-    ${assets}/modules/mummer.sh \\
-        --fasta=${fasta} \\
-        --database=${db}/rebase/rebase.fna \\
-        --out=${prefix}.mummer_re.txt
+    mummer \\
+        -maxmatch \\
+        -l 4 \\
+        ${fasta} \\
+        ${db}/rebase/rebase.fna \\
+        > ${prefix}.mummer_re.txt \\
+        2> mummer.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -2,12 +2,11 @@ process SEQSCREEN_RAPSEARCH2 {
     tag "$meta.id:$target"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/rapsearch2/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
     path db
-    path assets
     val target
 
     output:
@@ -21,12 +20,14 @@ process SEQSCREEN_RAPSEARCH2 {
     def db_path = target == 'vfdb' ? "${db}/rapsearch2/vfdb/vfdb.seqs.aa" : "${db}/rapsearch2/bsat_ccl/blacklist.seqs.aa"
     def out = target == 'vfdb' ? "blacklist_vfdb" : "blacklist_bsat"
     """
-    ${assets}/modules/rapsearch2.sh \\
-        --fasta=${fasta} \\
-        --database=${db_path} \\
-        --out=${out} \\
-        --evalue=1e-9 \\
-        --threads=${task.cpus}
+    rapsearch \\
+        -q ${fasta} \\
+        -d ${db_path} \\
+        -o ${out} \\
+        -z ${task.cpus} \\
+        -e 1e-9 \\
+        -t n \\
+        > rapsearch2.log 2>&1
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

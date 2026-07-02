@@ -2,7 +2,7 @@ process SEQSCREEN_WINDOW_FASTA {
     tag "$meta.id"
     label 'process_single'
 
-    conda "${projectDir}/modules/local/seqscreen/environment.yml"
+    conda "${projectDir}/modules/local/seqscreen/window_fasta/environment.yml"
 
     input:
     tuple val(meta), path(fasta)
