@@ -19,6 +19,7 @@ requirements:
     - nextflow >=25.10.2
     - micromamba
     - coreutils
+    - gdrive
 
 test:
   commands:

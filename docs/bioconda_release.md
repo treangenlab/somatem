@@ -63,13 +63,6 @@ git checkout -b update-somatem-0.8.0
 cp /path/to/somatem/recipes/somatem/meta.yaml recipes/somatem/meta.yaml
 cp /path/to/somatem/recipes/somatem/build.sh recipes/somatem/build.sh
 bioconda-utils lint --packages somatem
-bioconda-utils build --docker --mulled-build-and-test --packages somatem
-```
-
-If Docker is not available, run the non-Docker build first and let Bioconda CI
-run the mulled test after the PR is opened:
-
-```bash
 bioconda-utils build --packages somatem
 ```
 
