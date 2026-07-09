@@ -1,5 +1,5 @@
 //
-// Subworkflow with utility functions specific to the nf-core pipeline template
+// Subworkflow with reusable pipeline utility functions
 //
 
 /*
@@ -33,7 +33,7 @@ def checkConfigProvided() {
     def valid_config = true as Boolean
     if (workflow.profile == 'standard' && workflow.configFiles.size() <= 1) {
         log.warn(
-            "[${workflow.manifest.name}] You are attempting to run the pipeline without any custom configuration!\n\n" + "This will be dependent on your local compute environment but can be achieved via one or more of the following:\n" + "   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`\n" + "   (2) Using an existing nf-core/configs for your Institution e.g. `-profile crick` or `-profile uppmax`\n" + "   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`\n\n" + "Please refer to the quick start section and usage docs for the pipeline.\n "
+            "[${workflow.manifest.name}] You are attempting to run the pipeline without any custom configuration!\n\n" + "This will be dependent on your local compute environment but can be achieved via one or more of the following:\n" + "   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`\n" + "   (2) Using a site-specific profile or cluster config for your institution\n" + "   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`\n\n" + "Please refer to the quick start section and usage docs for the pipeline.\n "
         )
         valid_config = false
     }
@@ -51,7 +51,7 @@ def checkProfileProvided(nextflow_cli_args) {
     }
     if (nextflow_cli_args[0]) {
         log.warn(
-            "nf-core pipelines do not accept positional arguments. The positional argument `${nextflow_cli_args[0]}` has been detected.\n" + "HINT: A common mistake is to provide multiple values separated by spaces e.g. `-profile test, docker`.\n"
+            "Somatem does not accept positional arguments. The positional argument `${nextflow_cli_args[0]}` has been detected.\n" + "HINT: A common mistake is to provide multiple values separated by spaces e.g. `-profile test, docker`.\n"
         )
     }
 }

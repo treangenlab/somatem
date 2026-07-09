@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/treangenlab/somatem/main/nextflow_schema.json",
-    "title": "nf-core/somatem pipeline parameters",
+    "title": "Somatem pipeline parameters",
     "description": "A long-read metagenomics pipeline with support for longitudinal analysis ",
     "type": "object",
     "$defs": {
@@ -41,7 +41,7 @@
             "type": "object",
             "fa_icon": "fas fa-file-import",
             "description": "Less common options for the pipeline, typically set in a config file.",
-            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "help_text": "These options are common to Somatem runs and allow you to customise core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
                 "version": {
                     "type": "boolean",
@@ -106,7 +106,10 @@
             "default": "nanopore"
         },
         "genome": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ]
         },
         "igenomes_base": {
             "type": "string",
@@ -129,7 +132,10 @@
             "default": 10
         },
         "contam_ref": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ]
         },
         "hostile_index": {
             "type": "string",
@@ -381,8 +387,10 @@
             "type": "boolean"
         },
         "pipelines_testdata_base_path": {
-            "type": "string",
-            "default": "https://raw.githubusercontent.com/nf-core/test-datasets/"
+            "type": [
+                "string",
+                "null"
+            ]
         },
         "config_profile_name": {
             "type": "string"
@@ -395,8 +403,10 @@
             "default": "master"
         },
         "custom_config_base": {
-            "type": "string",
-            "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+            "type": [
+                "string",
+                "null"
+            ]
         },
         "config_profile_contact": {
             "type": "string"

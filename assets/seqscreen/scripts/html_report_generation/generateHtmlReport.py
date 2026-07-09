@@ -14,7 +14,11 @@ from html import escape
 from collections import defaultdict
 from collections import Counter
 from distutils.dir_util import copy_tree
-from jinja2 import Environment, FileSystemLoader
+try:
+    from jinja2 import Environment, FileSystemLoader
+except ImportError:
+    Environment = None
+    FileSystemLoader = None
 # Updated the cvs field size to resolve "_csv.Error: field larger than field limit"
 goTerms = {}
 funsocs_start_idx = 5
@@ -373,6 +377,86 @@ def create_go_file(template, outfile, sequences, go_network):
         file.write(result)
 
 
+def create_fallback_output_file(o_file, funsocs_count, version, funsocs_names):
+    """
+    Create a small technical report if the legacy SeqScreen template is missing.
+    """
+    rows = "".join(
+        f"<tr><td>{escape(str(item['name']).replace('_', ' '))}</td><td>{escape(str(item['count']))}</td></tr>"
+        for item in funsocs_count
+    ) or "<tr><td colspan=\"2\">No functional concern categories were detected.</td></tr>"
+    descriptions = "".join(
+        f"<li><strong>{escape(str(item['name']))}</strong>: {escape(str(item['title']))}</li>"
+        for item in funsocs_names
+        if item.get('title')
+    )
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SeqScreen Technical Report</title>
+  <style>
+    body {{ margin: 0; font-family: Arial, Helvetica, sans-serif; color: #18212f; background: #f6f8fb; line-height: 1.5; }}
+    main {{ max-width: 980px; margin: 0 auto; padding: 28px 20px 44px; }}
+    h1 {{ margin: 0 0 6px; font-size: 2rem; }}
+    h2 {{ margin-top: 24px; font-size: 1.2rem; }}
+    a {{ color: #235789; font-weight: 700; }}
+    table {{ width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9dee7; }}
+    td, th {{ padding: 10px; border-top: 1px solid #edf0f5; text-align: left; }}
+    th {{ background: #eef3f8; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>SeqScreen Technical Report</h1>
+    <p>SeqScreen version: {escape(str(version))}</p>
+    <p>The legacy technical template was not found, so this compact report was generated instead. The full parsed data are still available in the <code>data/</code> folder.</p>
+    <p><a href="index.html">Back to plain-language summary</a> | <a href="go.html">Open GO term view</a></p>
+    <h2>Functional Concern Categories</h2>
+    <table><thead><tr><th>Category</th><th>Sequences</th></tr></thead><tbody>{rows}</tbody></table>
+    <h2>Category Notes</h2>
+    <ul>{descriptions or "<li>No category descriptions were available.</li>"}</ul>
+  </main>
+</body>
+</html>
+"""
+    with open(o_file, 'w') as file:
+        file.write(html)
+
+
+def create_fallback_go_file(outfile, go_network):
+    """
+    Create a minimal GO report if the legacy GO visualization template is missing.
+    """
+    edge_count = len(go_network) if go_network else 0
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SeqScreen GO Terms</title>
+  <style>
+    body {{ margin: 0; font-family: Arial, Helvetica, sans-serif; color: #18212f; background: #f6f8fb; line-height: 1.5; }}
+    main {{ max-width: 820px; margin: 0 auto; padding: 28px 20px 44px; }}
+    a {{ color: #235789; font-weight: 700; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GO Term View</h1>
+    <p>The legacy GO visualization template was not found, so the interactive graph could not be rendered.</p>
+    <p>{edge_count} GO network relationships were loaded for this run.</p>
+    <p><a href="index.html">Back to plain-language summary</a> | <a href="out.html">Open technical report</a></p>
+  </main>
+</body>
+</html>
+"""
+    with open(outfile, 'w') as file:
+        file.write(html)
+
+
 def write_file(sequences, archive_name, mode, rflag, fasta_file, length,mtimes):
     
     query_id = 0
@@ -521,6 +605,8 @@ def count_funsocs(sequences):
     return tally
 
 def set_title(funsocs_file):
+    if not funsocs_file:
+        return defaultdict(int)
     ffile = csv.DictReader(open(funsocs_file, 'r'), delimiter='\t')
     title = defaultdict(int)
     for line in ffile:
@@ -577,7 +663,7 @@ def load_sequences(report_file, seq_names_lengths, alignments, go_names):
     flag_idx = field_map.get("flag")
 
     for line in inputs[1:]:
-        fields = line.split("\t")
+        fields = line.rstrip("\n").split("\t")
         # GO Terms: create list of {'id', 'name'} elements from fields["go_idx"] and go_names dict
         go_childs = list(map(lambda term: {
             'id': term.strip(),
@@ -599,7 +685,7 @@ def load_sequences(report_file, seq_names_lengths, alignments, go_names):
         # Updating value of funsocs column in the funsocs array
         idx = 0
         for index in range(funsocs_start_idx, funsocs_end_idx+1):
-            funsocs[idx] = fields[index]
+            funsocs[idx] = fields[index] if index < len(fields) else "0"
             idx = idx+1
        
         if fields[query_idx] in alignments:
@@ -628,6 +714,8 @@ def load_go_names(names_file):
     :return: dict with idx: name
     """
     go_names = {}
+    if not names_file:
+        return go_names
     with open(names_file, 'r') as file:
         for line in file:
             line = line.strip()
@@ -647,6 +735,8 @@ def load_go_network(network_file):
     """
     global goTerms
     go_network = []
+    if not network_file:
+        return go_network
     with open(network_file, 'r') as file:
         for line in file:
             line = line.strip()
@@ -802,23 +892,41 @@ def define_column_positions(header):
     global funsocs_end_idx, funsocs_start_idx, funsocs_col_names
     head_split = header.rstrip().split("\t")
     ret = {}
-    idx = 0
-    flag = False
+    metadata_cols = {
+        "query",
+        "taxid",
+        "tax_id",
+        "go",
+        "multi_taxids_confidence",
+        "go_id_confidence",
+        "size",
+        "organism",
+        "gene_name",
+        "uniprot",
+        "bsat_hit",
+        "vfdb_hit",
+        "flag",
+    }
     for i, item in enumerate(head_split):
         ret[item] = i
-        # Assume disable_organ is the first funsocs column and there are 32 of them
-        if (item == "disable_organ"):
-            funsocs_start_idx = i
-            flag = True
-        #funsocs_col_names contains the names of the funsocs and are obtained from funsocs_start_idx to the size column
-        if (i >= funsocs_start_idx) and flag :
-            if(item == "virulence_regulator"):
-                funsocs_col_names[idx] = item
-                funsocs_end_idx = i
-                flag = False
-            else:
-                funsocs_col_names[idx] = item
-                idx = idx +1
+
+    if "disable_organ" in ret and "virulence_regulator" in ret:
+        start = min(ret["disable_organ"], ret["virulence_regulator"])
+        end = max(ret["disable_organ"], ret["virulence_regulator"])
+        funsoc_indexes = list(range(start, end + 1))
+    else:
+        start_after = ret.get("go_id_confidence", ret.get("go", -1)) + 1
+        end_before = ret.get("size", len(head_split))
+        funsoc_indexes = [
+            i for i in range(start_after, end_before)
+            if head_split[i] not in metadata_cols
+        ]
+
+    if funsoc_indexes:
+        funsocs_start_idx = funsoc_indexes[0]
+        funsocs_end_idx = funsoc_indexes[-1]
+        for idx, index in enumerate(funsoc_indexes):
+            funsocs_col_names[idx] = head_split[index]
 
     return ret
 
@@ -846,6 +954,18 @@ def getParents(child):
                 hold += goTerms[hold[i]]
         hold = hold[numOfParents:]
     return list(set(results))
+
+
+def optional_existing_path(path, expected_kind, label):
+    """
+    Resolve an optional report asset, returning None when it is unavailable.
+    """
+    resolved = os.path.abspath(path)
+    exists = os.path.isdir(resolved) if expected_kind == "dir" else os.path.isfile(resolved)
+    if exists:
+        return resolved
+    print(f"Warning: optional report asset not found: {label} ({resolved}). Using fallback output.", file=sys.stderr)
+    return None
 
 
 def main():
@@ -916,35 +1036,14 @@ def main():
         rflag = re.sub(r'[,]', r' , ',args.rflag) 
         rflag = re.sub(r'[:]', r' : ',rflag)
 
-    # Get dependency folder
-    dependencies = os.path.abspath(args.dependencies)
-    if not os.path.exists(dependencies) or not os.path.isdir(dependencies):
-        sys.exit("The folder '" + dependencies + "' does not exist.")
-
-    # Get template file location
-    template_file = os.path.abspath(args.template)
-    if not os.path.exists(template_file) or not os.path.isfile(template_file):
-        sys.exit("The file '" + template_file + "' does not exist.")
-
-    # Get go visualization template file location
-    go_template = os.path.abspath(args.go_template)
-    if not os.path.exists(go_template) or not os.path.isfile(go_template):
-        sys.exit("The file '" + go_template + "' does not exist.")
-
-    # Get go names file location
-    go_names_file = os.path.abspath(args.go_names)
-    if not os.path.exists(go_names_file) or not os.path.isfile(go_names_file):
-        sys.exit("The file '" + go_names_file + "' does not exist.")
-
-    # Get go network file location
-    go_network_file = os.path.abspath(args.go_network)
-    if not os.path.exists(go_network_file) or not os.path.isfile(go_network_file):
-        sys.exit("The file '" + go_network_file + "' does not exist.")
-   
-    # Get funsocs file location
-    funsocs_file = os.path.abspath(args.funsocs)
-    if not os.path.exists(template_file) or not os.path.isfile(template_file):
-        sys.exit("The file '" + template_file + "' does not exist.")
+    # Get optional report presentation assets. Missing legacy assets should not
+    # prevent SeqScreen results from being reported.
+    dependencies = optional_existing_path(args.dependencies, "dir", "HTML dependencies")
+    template_file = optional_existing_path(args.template, "file", "technical HTML template")
+    go_template = optional_existing_path(args.go_template, "file", "GO HTML template")
+    go_names_file = optional_existing_path(args.go_names, "file", "GO term names")
+    go_network_file = optional_existing_path(args.go_network, "file", "GO term network")
+    funsocs_file = optional_existing_path(args.funsocs, "file", "functional category descriptions")
 
     # Get location of output directory
     if args.output:
@@ -1001,13 +1100,20 @@ def main():
     # Save outputs
 
     # copy dependencies
-    copy_tree(dependencies, archive_name)
+    if dependencies:
+        copy_tree(dependencies, archive_name)
 
     # create the output file with an html template and the calculated variables
     create_executive_report(index_file, seqs, funsocs_count, args.version, mode, rflag, args.fasta, mtimes)
-    create_output_file(template_file, out_file, "out",funsocs_count,args.version,funsocs_names)
+    if template_file and Environment:
+        create_output_file(template_file, out_file, "out",funsocs_count,args.version,funsocs_names)
+    else:
+        create_fallback_output_file(out_file, funsocs_count, args.version, funsocs_names)
 
-    create_go_file(go_template, go_out_file, formatted_go_seqs, go_network)
+    if go_template and Environment:
+        create_go_file(go_template, go_out_file, formatted_go_seqs, go_network)
+    else:
+        create_fallback_go_file(go_out_file, go_network)
     write_file(seqs,archive_name,mode,rflag,args.fasta,len(seqs),mtimes)
     # ===========================================================
 

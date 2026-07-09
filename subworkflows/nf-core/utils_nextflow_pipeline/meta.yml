@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "UTILS_NEXTFLOW_PIPELINE"
 description: Subworkflow with functionality that may be useful for any Nextflow pipeline
 keywords:
@@ -28,7 +27,7 @@ output:
   - dummy_emit:
       type: boolean
       description: |
-        Dummy emit to make nf-core subworkflows lint happy
+        Dummy emit to satisfy subworkflow linting
 authors:
   - "@adamrtalbot"
   - "@drpatelh"

@@ -3,7 +3,7 @@
 // Metagenomics analysis subworkflow: taxonomic profiling, de novo assembly, mapping, binning, quality assessment, and annotation
 
   
-// Include nf-core modules
+// Include vendored community modules
 include { FLYE }                    from '../../modules/nf-core/flye/main'
 include { MINIMAP2_INDEX }          from '../../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN }          from '../../modules/nf-core/minimap2/align/main'
