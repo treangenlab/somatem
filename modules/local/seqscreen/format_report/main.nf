@@ -6,10 +6,12 @@ process SEQSCREEN_FORMAT_REPORT {
 
     publishDir { "${params.outdir}" },
         mode: params.publish_dir_mode,
-        pattern: "seqscreen_output/**",
         saveAs: { filename ->
-            def target = filename.toString().replaceFirst(/^seqscreen_output\/?/, '')
-            target ? target : null
+            def name = filename.toString()
+            if (name == "seqscreen_output" || name == "versions.yml") {
+                return null
+            }
+            name.replaceFirst(/^seqscreen_output\/?/, '')
         }
 
     input:
@@ -34,6 +36,7 @@ process SEQSCREEN_FORMAT_REPORT {
     def confidence = params.seqscreen_taxonomy_confidence_threshold ?: 0
     def filter_taxon = params.seqscreen_filter_taxon ?: '""'
     def keep_taxon = params.seqscreen_keep_taxon ?: '""'
+    def publish_root = params.outdir.toString().startsWith('/') ? params.outdir : "${launchDir}/${params.outdir}"
     """
     mkdir -p seqscreen_output/report_generation
     mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
@@ -55,6 +58,9 @@ process SEQSCREEN_FORMAT_REPORT {
         --filter-taxon ${filter_taxon} \\
         --keep-taxon ${keep_taxon}
 
+    mkdir -p "${publish_root}"
+    cp -R seqscreen_output/. "${publish_root}/"
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         seqscreen: "4.5"
@@ -62,6 +68,7 @@ process SEQSCREEN_FORMAT_REPORT {
     """
 
     stub:
+    def publish_root = params.outdir.toString().startsWith('/') ? params.outdir : "${launchDir}/${params.outdir}"
     """
     mkdir -p seqscreen_output/report_generation
     mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
@@ -70,6 +77,8 @@ process SEQSCREEN_FORMAT_REPORT {
     touch seqscreen_output/report_generation/seqscreen_report.html
     touch seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
     touch seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
+    mkdir -p "${publish_root}"
+    cp -R seqscreen_output/. "${publish_root}/"
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         seqscreen: "stub"
