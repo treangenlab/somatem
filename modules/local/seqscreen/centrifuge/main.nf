@@ -29,7 +29,7 @@ process SEQSCREEN_CENTRIFUGE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        centrifuge: \$(centrifuge --version 2>&1 | head -n 1 | sed 's/^.*centrifuge-class version //')
+        centrifuge: "\$(centrifuge --version 2>&1 | head -n 1 | sed 's/^.*centrifuge-class version //')"
     END_VERSIONS
     """
 

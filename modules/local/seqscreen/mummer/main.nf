@@ -28,7 +28,7 @@ process SEQSCREEN_MUMMER {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        mummer: \$(nucmer --version 2>&1 | head -n 1 | sed 's/^.* //')
+        mummer: "\$(nucmer --version 2>&1 | head -n 1 | sed 's/^.* //')"
     END_VERSIONS
     """
 

@@ -25,7 +25,7 @@ process SEQSCREEN_THREATS_BY_BLACKLIST {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        seqscreen: \$(seqscreen --version 2>&1 | sed 's/^SeqScreen v//; s/^.* //')
+        seqscreen: "4.5"
     END_VERSIONS
     """
 

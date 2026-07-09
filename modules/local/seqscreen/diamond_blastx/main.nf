@@ -25,7 +25,7 @@ process SEQSCREEN_DIAMOND_BLASTX {
     diamond blastx \\
         -q ${fasta} \\
         -d ${db}/diamond/uniref.mini.dmnd \\
-        -o ${prefix}.daa \\
+        -o ${prefix}.ur100.btab \\
         --evalue ${evalue} \\
         --threads ${task.cpus} \\
         --block-size 200 \\
@@ -35,26 +35,32 @@ process SEQSCREEN_DIAMOND_BLASTX {
         --min-orf 10 \\
         --masking 0 \\
         --top 5 \\
-        -f 100
-
-    diamond view \\
-        -a ${prefix}.daa \\
-        --top 5 \\
-        --out ${prefix}.ur100.xml \\
-        --outfmt 5
-
-    diamond view \\
-        -a ${prefix}.daa \\
-        --top 5 \\
-        --out ${prefix}.ur100.btab \\
         --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore ppos qframe score salltitles
+
+    if ! diamond blastx \\
+        -q ${fasta} \\
+        -d ${db}/diamond/uniref.mini.dmnd \\
+        -o ${prefix}.ur100.xml \\
+        --evalue ${evalue} \\
+        --threads ${task.cpus} \\
+        --block-size 200 \\
+        --index-chunks 1 \\
+        --more-sensitive \\
+        --min-orf 10 \\
+        --masking 0 \\
+        --top 5 \\
+        --outfmt 5
+    then
+        echo "Warning: DIAMOND XML output failed for ${prefix}; continuing with tabular output only." >&2
+        : > ${prefix}.ur100.xml
+    fi
 
     ln -s ${prefix}.ur100.btab functional_link.ur100.btab
     ln -s ${prefix}.ur100.xml functional_link.ur100.xml
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        diamond: \$(diamond version 2>&1 | head -n 1 | sed 's/^diamond version //')
+        diamond: "\$(diamond version 2>&1 | head -n 1 | sed 's/^diamond version //')"
     END_VERSIONS
     """
 

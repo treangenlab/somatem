@@ -31,7 +31,7 @@ process SEQSCREEN_RAPSEARCH2 {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        rapsearch2: \$(rapsearch -h 2>&1 | head -n 1 | sed 's/^.*RAPSearch2 //; s/ .*\$//' || true)
+        rapsearch2: "\$(rapsearch -h 2>&1 | sed -n 's/^.*RAPSearch2 \\([^ ]*\\).*$/\\1/p' | head -n 1 || true)"
     END_VERSIONS
     """
 

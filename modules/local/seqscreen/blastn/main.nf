@@ -35,7 +35,7 @@ process SEQSCREEN_BLASTN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        blast: \$(blastn -version 2>&1 | head -n 1 | sed 's/^blastn: //')
+        blast: "\$(blastn -version 2>&1 | head -n 1 | sed 's/^blastn: //')"
     END_VERSIONS
     """
 

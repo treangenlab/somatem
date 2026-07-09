@@ -33,7 +33,7 @@ process SEQSCREEN_BOWTIE2 {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bowtie2: \$(bowtie2 --version 2>&1 | head -n 1 | sed 's/^.*version //')
+        bowtie2: "\$(bowtie2 --version 2>&1 | head -n 1 | sed 's/^.*version //')"
     END_VERSIONS
     """
 

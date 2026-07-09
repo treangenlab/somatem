@@ -32,7 +32,7 @@ process SEQSCREEN_HMMSCAN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        hmmer: \$(hmmscan -h 2>&1 | grep -m1 '^# HMMER' | sed 's/^# HMMER //; s/ .*\$//')
+        hmmer: "\$(hmmscan -h 2>&1 | grep -m1 '^# HMMER' | sed 's/^# HMMER //; s/ .*\$//')"
     END_VERSIONS
     """
 

@@ -79,17 +79,8 @@ def getWorkflowVersion() {
 //
 def processVersionsFromYAML(yaml_file) {
     def yaml = new org.yaml.snakeyaml.Yaml()
-    try {
-        def parsed_versions = yaml.load(yaml_file.text)
-        if (!parsed_versions) {
-            return ''
-        }
-        def versions = parsed_versions.collectEntries { k, v -> [k.toString().tokenize(':')[-1], v] }
-        return yaml.dumpAsMap(versions).trim()
-    } catch (Exception e) {
-        log.warn "Skipping malformed software versions file '${yaml_file}': ${e.message}"
-        return "# Skipped malformed software versions file: ${yaml_file}\n"
-    }
+    def versions = yaml.load(yaml_file).collectEntries { k, v -> [k.tokenize(':')[-1], v] }
+    return yaml.dumpAsMap(versions).trim()
 }
 
 //
