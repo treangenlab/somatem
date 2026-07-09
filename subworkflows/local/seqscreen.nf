@@ -209,7 +209,8 @@ workflow SEQSCREEN_DSL2 {
 
     ch_reference_input = ch_report_key
         .join(ch_fasta_key, by: 0)
-        .map { sample_id, meta, report, fasta_meta, fasta -> tuple(meta, fasta, report) }
+        .join(ch_tax_key, by: 0)
+        .map { sample_id, meta, report, fasta_meta, fasta, tax_meta, taxonomy -> tuple(meta, fasta, report, taxonomy) }
 
     SEQSCREEN_REFERENCE_INFERENCE(ch_reference_input, ch_db, ch_assets)
     ch_versions = ch_versions.mix(SEQSCREEN_REFERENCE_INFERENCE.out.versions)

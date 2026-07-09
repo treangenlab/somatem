@@ -34,7 +34,10 @@ process SEQSCREEN_REPORT_HTML {
         --funsocs ${assets}/scripts/html_report_generation/data/funsocs_description.txt \\
         --mode ${mode} \\
         --go_template ${assets}/scripts/html_report_generation/data/go_template.html \\
-        > html_report_generation.log 2>&1
+        > html_report_generation.log 2>&1 || {
+            cat html_report_generation.log >&2
+            exit 1
+        }
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

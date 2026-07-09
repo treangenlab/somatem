@@ -5,7 +5,7 @@ process SEQSCREEN_REFERENCE_INFERENCE {
     conda "${projectDir}/modules/local/seqscreen/reference_inference/environment.yml"
 
     input:
-    tuple val(meta), path(fasta), path(report)
+    tuple val(meta), path(fasta), path(report), path(taxonomy)
     path db
     path assets
 
@@ -19,7 +19,9 @@ process SEQSCREEN_REFERENCE_INFERENCE {
     script:
     def online = params.seqscreen_online ? '--online' : ''
     """
-    mkdir -p reference_inference inference_working
+    mkdir -p reference_inference/taxonomic_identification/taxonomic_assignment inference_working
+    cp ${taxonomy} reference_inference/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
+
     python3 ${assets}/scripts/reference_inference_short_read.py \\
         --fasta1=${fasta} \\
         --output=reference_inference \\
