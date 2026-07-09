@@ -11,7 +11,7 @@ process SEQSCREEN_REPORT_HTML {
     val rflag
 
     output:
-    tuple val(meta), path("seqscreen_html_report"), emit: html
+    tuple val(meta), path("seqscreen_report.html"), emit: html
     path "versions.yml"                          , emit: versions
 
     when:
@@ -38,6 +38,7 @@ process SEQSCREEN_REPORT_HTML {
             cat html_report_generation.log >&2
             exit 1
         }
+    cp seqscreen_html_report/index.html seqscreen_report.html
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -49,6 +50,7 @@ process SEQSCREEN_REPORT_HTML {
     """
     mkdir -p seqscreen_html_report
     touch seqscreen_html_report/index.html
+    touch seqscreen_report.html
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         seqscreen: "stub"

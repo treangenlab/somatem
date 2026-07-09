@@ -4,9 +4,13 @@ process SEQSCREEN_FORMAT_REPORT {
 
     conda "${projectDir}/modules/local/seqscreen/format_report/environment.yml"
 
-    publishDir { "${params.outdir}/seqscreen/${meta.id}" },
+    publishDir { "${params.outdir}" },
         mode: params.publish_dir_mode,
-        pattern: "seqscreen_output"
+        pattern: "seqscreen_output/**",
+        saveAs: { filename ->
+            def target = filename.toString().replaceFirst(/^seqscreen_output\/?/, '')
+            target ? target : null
+        }
 
     input:
     tuple val(meta), path(report), path(html), path(taxonomy), path(functional), path(reference_inference)
@@ -17,7 +21,7 @@ process SEQSCREEN_FORMAT_REPORT {
     output:
     tuple val(meta), path("seqscreen_output"), emit: outdir
     tuple val(meta), path("seqscreen_output/report_generation/*seqscreen_report.tsv"), emit: report
-    tuple val(meta), path("seqscreen_output/report_generation/seqscreen_html_report"), emit: html
+    tuple val(meta), path("seqscreen_output/report_generation/seqscreen_report.html"), emit: html
     tuple val(meta), path("seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt"), emit: taxonomic_results
     tuple val(meta), path("seqscreen_output/functional_annotation/functional_assignments/functional_results.txt"), emit: functional_results
     path "versions.yml", emit: versions
@@ -37,7 +41,7 @@ process SEQSCREEN_FORMAT_REPORT {
     mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment/inference_working
 
     cp ${report} seqscreen_output/report_generation/
-    cp -R ${html} seqscreen_output/report_generation/seqscreen_html_report
+    cp ${html} seqscreen_output/report_generation/seqscreen_report.html
     cp ${taxonomy} seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
     cp ${functional} seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
     cp -R ${reference_inference} seqscreen_output/reference_inference
@@ -59,11 +63,11 @@ process SEQSCREEN_FORMAT_REPORT {
 
     stub:
     """
-    mkdir -p seqscreen_output/report_generation/seqscreen_html_report
+    mkdir -p seqscreen_output/report_generation
     mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
     mkdir -p seqscreen_output/functional_annotation/functional_assignments
     touch seqscreen_output/report_generation/seqscreen_report.tsv
-    touch seqscreen_output/report_generation/seqscreen_html_report/index.html
+    touch seqscreen_output/report_generation/seqscreen_report.html
     touch seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
     touch seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
     cat <<-END_VERSIONS > versions.yml

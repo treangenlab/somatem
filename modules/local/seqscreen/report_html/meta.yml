@@ -25,9 +25,9 @@ input:
       description: BLASTX XML output
 output:
   - html:
-      type: directory
-      description: HTML report directory
-      pattern: "seqscreen_html_report"
+      type: file
+      description: Self-contained HTML report
+      pattern: "seqscreen_report.html"
   - versions:
       type: file
       description: File containing software versions

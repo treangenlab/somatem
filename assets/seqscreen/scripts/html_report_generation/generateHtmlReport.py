@@ -117,7 +117,7 @@ def create_output_file(t_file, o_file, output_prefix, funsocs_count, version, fu
         file.write(result)
 
 
-def create_executive_report(o_file, sequences, funsocs_count, version, mode, rflag, fasta_file, mtimes):
+def create_executive_report(o_file, sequences, funsocs_count, funsocs_names, version, mode, rflag, fasta_file, mtimes):
     """
     Create a plain-language landing page for people who need the take-home result
     before digging into the technical table.
@@ -126,41 +126,75 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
     concern_sequences = []
     organism_counts = Counter()
     gene_counts = Counter()
+    function_counts = Counter()
+    function_by_taxon = defaultdict(Counter)
+    safety_reason_counts = Counter()
+
+    def truthy(value):
+        return str(value).strip().lower() in ["yes", "y", "1", "true", "flag", "flagged"]
+
+    def clean_label(value, empty="Unassigned"):
+        value = str(value or "").strip()
+        return value if value and value != "-" else empty
+
+    def display_function(name):
+        name = str(name or "").replace("_", " ").strip()
+        return re.sub(r"(\w)([A-Z])", r"\1 \2", name).title()
+
+    def sequence_functions(seq):
+        found = []
+        for idx in sorted(funsocs_col_names):
+            if str(seq.funsocs.get(idx, "0")).strip() == "1":
+                found.append(display_function(funsocs_col_names[idx]))
+        return found
+
+    function_notes = {}
+    for item in funsocs_names:
+        function_notes[display_function(item.get("name"))] = item.get("title")
 
     for seq in sequences:
-        has_functional_signal = any(str(value) == "1" for value in seq.funsocs.values())
-        has_bsat_signal = str(seq.bsat_hit).lower() in ["yes", "1", "true"]
-        has_vfdb_signal = str(seq.vfdb_hit).lower() in ["yes", "1", "true"]
-        has_report_flag = str(seq.flag).lower() in ["yes", "1", "true"]
-        if has_report_flag or has_functional_signal or has_bsat_signal or has_vfdb_signal:
-            concern_sequences.append(seq)
-        if seq.tax_id and seq.tax_id != "-":
-            organism_counts[seq.tax_id] += 1
+        taxon = clean_label(seq.tax_id)
+        functions = sequence_functions(seq)
+        reasons = []
+
+        if truthy(seq.bsat_hit):
+            reasons.append("BSAT/select-agent database hit")
+        if truthy(seq.vfdb_hit):
+            reasons.append("Virulence factor database hit")
+        if truthy(seq.flag):
+            reasons.append("SeqScreen flagged this sequence")
+        if functions:
+            reasons.append("Functional risk signal")
+
+        if reasons:
+            concern_sequences.append((seq, taxon, functions, reasons))
+            safety_reason_counts.update(reasons)
+
+        organism_counts[taxon] += 1
         if seq.gene_name and seq.gene_name != "-":
             gene_counts[seq.gene_name] += 1
+        for function in functions:
+            function_counts[function] += 1
+            function_by_taxon[taxon][function] += 1
 
     concern_count = len(concern_sequences)
     concern_percent = round((concern_count / total) * 100, 1) if total else 0
-    top_categories = sorted(
-        [item for item in funsocs_count if int(item.get("count", 0) or 0) > 0],
-        key=lambda item: int(item.get("count", 0) or 0),
-        reverse=True
-    )[:8]
+    blacklist_count = safety_reason_counts["BSAT/select-agent database hit"] + safety_reason_counts["Virulence factor database hit"]
     top_organisms = organism_counts.most_common(8)
     top_genes = gene_counts.most_common(8)
 
     if concern_count == 0:
-        status_label = "No immediate concern signals detected"
+        status_label = "No immediate safety concern signals detected"
         status_class = "ok"
-        status_text = "SeqScreen did not flag functional or blacklist signals in this sample."
-    elif concern_percent < 10:
-        status_label = "Limited concern signals detected"
-        status_class = "watch"
-        status_text = "A small share of sequences had signals that may deserve review."
-    else:
-        status_label = "Concern signals detected"
+        status_text = "SeqScreen did not find blacklist, virulence-factor, or functional risk signals in this sample."
+    elif blacklist_count > 0:
+        status_label = "Review recommended before release or sharing"
         status_class = "alert"
-        status_text = "Several sequences had signals associated with potential biological risk."
+        status_text = "At least one sequence matched a safety-focused database. Treat this as a screening signal and have a qualified reviewer inspect the technical results."
+    else:
+        status_label = "Functional signals detected"
+        status_class = "watch"
+        status_text = "Some sequences had functions associated with biological activity. These are not diagnoses, but they are worth reviewing in context."
 
     def list_items(items, empty_text):
         if not items:
@@ -170,10 +204,31 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
             for name, count in items
         )
 
-    category_items = "".join(
-        f"<li><span>{escape(str(item['name']).replace('_', ' '))}</span><strong>{escape(str(item['count']))}</strong></li>"
-        for item in top_categories
-    ) or "<li>No functional concern categories were detected.</li>"
+    function_rows = "".join(
+        f"<tr><td>{escape(function)}</td><td>{count}</td><td>{escape(str(function_notes.get(function) or ''))}</td></tr>"
+        for function, count in function_counts.most_common()
+    ) or "<tr><td colspan=\"3\">No functional signals were detected.</td></tr>"
+
+    function_taxon_rows = []
+    for taxon, counts in sorted(function_by_taxon.items(), key=lambda item: sum(item[1].values()), reverse=True):
+        for function, count in counts.most_common():
+            function_taxon_rows.append(
+                f"<tr><td>{escape(taxon)}</td><td>{escape(function)}</td><td>{count}</td></tr>"
+            )
+    function_taxon_table = "".join(function_taxon_rows[:80]) or "<tr><td colspan=\"3\">No function-by-taxon signals were detected.</td></tr>"
+
+    review_rows = []
+    for seq, taxon, functions, reasons in concern_sequences[:40]:
+        review_rows.append(
+            "<tr>"
+            f"<td>{escape(str(seq.query))}</td>"
+            f"<td>{escape(taxon)}</td>"
+            f"<td>{escape(clean_label(seq.gene_name, 'No gene name'))}</td>"
+            f"<td>{escape(', '.join(functions) if functions else 'No functional category')}</td>"
+            f"<td>{escape('; '.join(reasons))}</td>"
+            "</tr>"
+        )
+    review_table = "".join(review_rows) or "<tr><td colspan=\"5\">No sequences require review based on these screening signals.</td></tr>"
 
     input_rows = "".join(
         f"<tr><td>{escape(str(name))}</td><td>{escape(str(modified))}</td></tr>"
@@ -255,6 +310,7 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
       gap: 16px;
       margin-bottom: 16px;
     }}
+    .wide {{ margin-bottom: 16px; }}
     ul.clean {{
       list-style: none;
       padding: 0;
@@ -282,22 +338,43 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
       width: 100%;
       border-collapse: collapse;
       font-size: 0.92rem;
+      background: #fff;
     }}
-    td {{
+    th, td {{
       border-top: 1px solid #edf0f5;
       padding: 8px;
       vertical-align: top;
+      text-align: left;
+    }}
+    th {{
+      background: #eef3f8;
+      color: #2b3443;
+      font-weight: 700;
+    }}
+    .note {{
+      color: var(--muted);
+      font-size: 0.94rem;
+    }}
+    .badge {{
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef3f8;
+      color: #2b3443;
+      font-weight: 700;
+      font-size: 0.82rem;
     }}
     @media (max-width: 860px) {{
       .grid, .two-col {{ grid-template-columns: 1fr; }}
       header {{ padding: 22px 20px; }}
+      table {{ display: block; overflow-x: auto; white-space: nowrap; }}
     }}
   </style>
 </head>
 <body>
   <header>
     <h1>SeqScreen Summary</h1>
-    <p class="subtle">Plain-language overview of pathogen and functional-risk screening results.</p>
+    <p class="subtle">Plain-language overview of pathogen and functional-risk screening results. This file is self-contained and can be shared by itself.</p>
     <div class="status {status_class}">
       <h2>{escape(status_label)}</h2>
       <p>{escape(status_text)}</p>
@@ -308,14 +385,13 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
       <div class="metric"><strong>{total}</strong><span>Total sequences screened</span></div>
       <div class="metric"><strong>{concern_count}</strong><span>Sequences with concern signals</span></div>
       <div class="metric"><strong>{concern_percent}%</strong><span>Share of screened sequences flagged</span></div>
-      <div class="metric"><strong>{escape(version)}</strong><span>SeqScreen version</span></div>
+      <div class="metric"><strong>{blacklist_count}</strong><span>Safety database matches</span></div>
     </div>
 
     <section>
       <h2>How To Read This</h2>
       <p>SeqScreen looks for signals associated with known pathogens, virulence, antimicrobial resistance, and related biological functions. A flagged result is not a final diagnosis. It means the sequence should be reviewed by a domain expert before operational decisions are made.</p>
-      <a class="button" href="out.html">Open Technical Table</a>
-      <a class="button" href="go.html">Open GO Term View</a>
+      <p class="note">Plain-language rule of thumb: safety database matches are the highest-priority review items; functional signals explain what kind of biological activity was detected; taxa show which organism assignments those signals were associated with.</p>
     </section>
 
     <div class="two-col" style="margin-top:16px;">
@@ -329,18 +405,31 @@ def create_executive_report(o_file, sequences, funsocs_count, version, mode, rfl
       </section>
     </div>
 
-    <div class="two-col">
-      <section>
-        <h2>Functional Concern Categories</h2>
-        <ul class="clean">{category_items}</ul>
-      </section>
-      <section>
-        <h2>Run Details</h2>
-        <p><strong>Mode:</strong> {escape(mode)}</p>
-        <p><strong>Runtime flags:</strong> {escape(rflag)}</p>
-        <p><strong>Input FASTA:</strong> {escape(os.path.basename(fasta_file))}</p>
-      </section>
-    </div>
+    <section class="wide">
+      <h2>Functions Found</h2>
+      <p class="note">These are the functional categories detected by SeqScreen, sorted by how often they appeared.</p>
+      <table><thead><tr><th>Function</th><th>Sequences</th><th>Plain-language note</th></tr></thead><tbody>{function_rows}</tbody></table>
+    </section>
+
+    <section class="wide">
+      <h2>Functions By Taxon</h2>
+      <p class="note">This table answers: what functions were found, and which organism assignments were they associated with?</p>
+      <table><thead><tr><th>Taxon</th><th>Function</th><th>Sequences</th></tr></thead><tbody>{function_taxon_table}</tbody></table>
+    </section>
+
+    <section class="wide">
+      <h2>Sequences To Review</h2>
+      <p class="note">This is a short triage list for reviewers. It is capped at the first 40 review items to keep the shared report readable.</p>
+      <table><thead><tr><th>Sequence</th><th>Taxon</th><th>Gene</th><th>Functions</th><th>Why It Is Listed</th></tr></thead><tbody>{review_table}</tbody></table>
+    </section>
+
+    <section class="wide">
+      <h2>Run Details</h2>
+      <p><span class="badge">SeqScreen {escape(version)}</span></p>
+      <p><strong>Mode:</strong> {escape(mode)}</p>
+      <p><strong>Runtime flags:</strong> {escape(rflag)}</p>
+      <p><strong>Input FASTA:</strong> {escape(os.path.basename(fasta_file))}</p>
+    </section>
 
     <section>
       <h2>Input Files</h2>
@@ -1104,7 +1193,7 @@ def main():
         copy_tree(dependencies, archive_name)
 
     # create the output file with an html template and the calculated variables
-    create_executive_report(index_file, seqs, funsocs_count, args.version, mode, rflag, args.fasta, mtimes)
+    create_executive_report(index_file, seqs, funsocs_count, funsocs_names, args.version, mode, rflag, args.fasta, mtimes)
     if template_file and Environment:
         create_output_file(template_file, out_file, "out",funsocs_count,args.version,funsocs_names)
     else:

@@ -107,23 +107,6 @@ workflow {
         file(".nextflow.log").copyTo("${outdir}/pipeline_info/nextflow_${reportSuffix}.log")
     }
 
-    publish:
-    mapping         = ORCHESTRATE_SOMATEM.out.mapping
-    binning_tables  = ORCHESTRATE_SOMATEM.out.bin_tables
-    binning_fasta   = ORCHESTRATE_SOMATEM.out.bin_fasta
-}
-
-output {
-    
-    mapping {
-        path { "mapping/" }
-    }
-    binning_tables {
-        path { "binning/tables/" }
-    }
-    binning_fasta {
-        path { "binning/fasta/" }
-     }
 }
 
 

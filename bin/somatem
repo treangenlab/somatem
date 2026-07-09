@@ -114,6 +114,7 @@ EOF
 resolve_args() {
     RESOLVED_ARGS=()
     HAS_DATA_TYPE=0
+    HAS_OUTDIR=0
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -123,6 +124,7 @@ resolve_args() {
                 ;;
             -o|--outdir)
                 shift
+                HAS_OUTDIR=1
                 RESOLVED_ARGS+=("--outdir" "$1")
                 ;;
             -data|--data_type)
@@ -184,6 +186,9 @@ case "${cmd}" in
         ;;
     seqscreen|pathogen_detection|pathogen-detection)
         require_main_nextflow
+        if [[ "${HAS_OUTDIR}" -eq 0 ]]; then
+            RESOLVED_ARGS+=("--outdir" "seqscreen_results")
+        fi
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type seqscreen \
             "${RESOLVED_ARGS[@]}"
