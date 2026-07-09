@@ -7,7 +7,6 @@ process SEQSCREEN_REPORT_HTML {
     input:
     tuple val(meta), path(fasta), path(report), path(blastx_xml)
     path db
-    path assets
     val mode
     val rflag
 
@@ -19,21 +18,22 @@ process SEQSCREEN_REPORT_HTML {
     task.ext.when == null || task.ext.when
 
     script:
+    def asset_root = "${projectDir}/assets/seqscreen"
     """
-    python3 ${assets}/scripts/html_report_generation/generateHtmlReport.py \\
+    python3 ${asset_root}/scripts/html_report_generation/generateHtmlReport.py \\
         -f ${fasta} \\
         -r ${report} \\
         -b ${blastx_xml} \\
         -o seqscreen_html_report/ \\
         --rflag ${rflag} \\
         --version 4.4 \\
-        -d ${assets}/scripts/html_report_generation/libs/ \\
-        -t ${assets}/scripts/html_report_generation/data/template.html \\
-        -g ${assets}/scripts/html_report_generation/data/go_names.txt \\
+        -d ${asset_root}/scripts/html_report_generation/libs/ \\
+        -t ${asset_root}/scripts/html_report_generation/data/template.html \\
+        -g ${asset_root}/scripts/html_report_generation/data/go_names.txt \\
         -n ${db}/go/go_network.txt \\
-        --funsocs ${assets}/scripts/html_report_generation/data/funsocs_description.txt \\
+        --funsocs ${asset_root}/scripts/html_report_generation/data/funsocs_description.txt \\
         --mode ${mode} \\
-        --go_template ${assets}/scripts/html_report_generation/data/go_template.html \\
+        --go_template ${asset_root}/scripts/html_report_generation/data/go_template.html \\
         > html_report_generation.log 2>&1 || {
             cat html_report_generation.log >&2
             exit 1

@@ -204,7 +204,7 @@ workflow SEQSCREEN_DSL2 {
         }
 
     def rflag = mode
-    SEQSCREEN_REPORT_HTML(ch_html_input, ch_db, ch_assets, mode, rflag)
+    SEQSCREEN_REPORT_HTML(ch_html_input, ch_db, mode, rflag)
     ch_versions = ch_versions.mix(SEQSCREEN_REPORT_HTML.out.versions)
 
     ch_reference_input = ch_report_key
