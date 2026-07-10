@@ -189,7 +189,7 @@ workflow ASSEMBLY_MAGS {
         }
 
     ch_appraise_input = ch_metagenome_otu
-        .cross(ch_bins_otu) { it[0].id }
+        .cross(ch_bins_otu) { bin -> bin[0].id }
         .map { metagenome_tuple, bins_tuple ->
             def meta = metagenome_tuple[0]
             def metOtu = metagenome_tuple[1]
@@ -290,7 +290,7 @@ workflow ASSEMBLY_MAGS {
     // Show which bins got annotation (log)
     BAKTA_BAKTA.out.embl
         .map { meta, _embl -> meta.completeness }
-        .filter { it != null && it >= params.checkm2_completeness_threshold }
+        .filter { completeness -> completeness != null && completeness >= params.checkm2_completeness_threshold }
         .count()
         .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
 
@@ -325,7 +325,7 @@ workflow ASSEMBLY_MAGS {
     ASSEMBLY_MAGS_SUMMARY_REPORT(
         'assembly_mags',
         'Assembly and MAG recovery',
-        Channel.fromPath(params.input),
+        channel.fromPath(params.input),
         ch_assembly_report_files.flatMap { item ->
             def report_file = item
             if (item instanceof Collection && item.size() >= 2) {

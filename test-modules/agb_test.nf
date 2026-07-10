@@ -23,6 +23,5 @@ workflow {
                 meta.single_end = true
                 return [meta, r] }
                 
-    AGB(assembly_dir)
+    AGB(assembly_dir, channel.empty(), channel.empty())
 }
-    

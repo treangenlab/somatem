@@ -35,7 +35,8 @@ You may want to override the default locations for somatem's database storage, c
 
 You can set the following environment variables:
 - `SOMATEM_DB_DIR`: Directory for downloaded databases (default: `~/somatem_databases`). _Change this if you want to store databases in a shared location with other users/other projects etc. to minimize storage and if running on HPC clusters_
-- `NXF_CONDA_CACHEDIR`: Directory for conda environment cache (default: `~/.nextflow/cache`). _Change this if you want to reallocate storage into scratch or something if on a HPC cluster. Note that When using a computing cluster it must be a shared folder accessible from all compute nodes._
+- `NXF_CONDA_CACHEDIR`: Directory for generated Nextflow conda environments. The installed `somatem` command defaults to `$CONDA_PREFIX/share/somatem/conda_cache`.
+- `MAMBA_ROOT_PREFIX`: Directory for micromamba's downloaded and extracted package cache. The installed `somatem` command defaults to `$CONDA_PREFIX/share/somatem/micromamba`.
 - `SOMATEM_UNIFIED_DB_DIR`: Directory for unified database files for ensemble species detection (default: same as `SOMATEM_DB_DIR`). _note: this is a temporary location. These DBs will eventually be integrated into the db dir and this variable will be removed_
 
 Environment variables can be set by exporting using `export SOMATEM_DB_DIR=/path/to/dbs` in the terminal.
@@ -71,12 +72,13 @@ Information on how to run the various subworkflows in somatem can be found in ou
 Several tools in this pipeline rely on large reference databases. Proper configuration is essential to manage storage effectively. The first time you run a pipeline requiring a database these will be installed for you and saved at that path for future runs.
 
 * **Storage Requirements:** Some databases (e.g., Bakta, CheckM2, SingleM) require up to 100 GB of free space. Ensure your target drive has adequate capacity.
-* **Directory Setup:** By default, Somatem stores generated Nextflow conda environments and downloaded databases under the active conda environment at `$CONDA_PREFIX/var/somatem`. If no conda environment is active, it falls back to `~/.somatem`.
+* **Directory Setup:** By default, the installed `somatem` command stores generated Nextflow conda environments at `$CONDA_PREFIX/share/somatem/conda_cache` and micromamba package files at `$CONDA_PREFIX/share/somatem/micromamba`. Direct `nextflow run` launches use the active `$CONDA_PREFIX`; if no conda environment is active, their environment cache falls back to `.somatem/conda_cache` in the pipeline directory. Databases continue to use the configured Somatem database location.
 * **Configuration:** To use another location, set one of these environment variables before running Somatem:
     ```bash
-    export SOMATEM_HOME=/path/to/somatem-data      # sets both databases and conda cache
+    export SOMATEM_HOME=/path/to/somatem-data      # sets Somatem-managed storage roots
     export SOMATEM_DB_DIR=/path/to/databases       # overrides databases only
     export SOMATEM_CONDA_CACHE=/path/to/nxf-envs   # overrides Nextflow conda environments only
+    export MAMBA_ROOT_PREFIX=/path/to/mamba-cache  # overrides micromamba package storage
     export SOMATEM_UNIFIED_DB_DIR=/path/to/unified # overrides ensemble profiling databases
     ```
 
@@ -95,7 +97,7 @@ somatem integrates state-of-the-art bioinformatics tools, neatly organized into 
 ### Pre-processing
 Prepares raw data for downstream analysis through rigorous quality control and filtering.
 * **[NanoPlot](https://github.com/wdecoster/NanoPlot):** QC plotting suite for initial and final assessment of long-read sequencing data.
-* **[Hostile](https://github.com/bede/hostile):** Depletes host contamination by filtering reads that align to a host reference genome.
+* **[Deacon](https://github.com/bede/deacon):** Rapidly depletes host-derived reads using prebuilt panhuman or panmouse minimizer indexes.
 * **[Chopper](https://github.com/wdecoster/chopper):** Filters nanopore reads by quality and length, removing sub-par data.
 
 ### Taxonomic Profiling

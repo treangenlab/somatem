@@ -14,7 +14,7 @@ workflow GENOME_DYNAMICS {
 
     main:
 
-    ch_versions = Channel.empty() // collect versions from all modules
+    ch_versions = channel.empty() // collect versions from all modules
 
     // collect reads and discard meta from clean_reads_ch
     collected_reads_ch = clean_reads_ch.map { meta, reads -> reads }
@@ -58,7 +58,7 @@ workflow GENOME_DYNAMICS {
     GENOME_DYNAMICS_SUMMARY_REPORT(
         'genome_dynamics',
         'Genome dynamics',
-        Channel.fromPath(params.input),
+        channel.fromPath(params.input),
         ch_genome_dynamics_report_files.flatMap { item ->
             def report_file = item
             if (item instanceof Collection && item.size() >= 2) {

@@ -5,6 +5,8 @@
 process LEMUR {
     tag "$meta.id"
     label 'process_medium'
+
+    publishDir { "${params.outdir}/taxonomic_profiling/${meta.id}/lemur" }, mode: params.publish_dir_mode, pattern: '*.tsv'
     
     conda "bioconda::lemur pandas=2.3.2" // peg version with bioconda::lemur=1.0.1
 
@@ -35,4 +37,3 @@ process LEMUR {
     END_VERSIONS
     """
 }
-

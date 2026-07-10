@@ -265,7 +265,7 @@ workflow ISOLATE_ANALYSIS {
     ISOLATE_ANALYSIS_SUMMARY_REPORT(
         'isolate_analysis',
         'Isolate assembly, classification, annotation, and typing',
-        Channel.fromPath(params.input),
+        channel.fromPath(params.input),
         ch_isolate_report_files.flatMap { item ->
             def report_file = item
             if (item instanceof Collection && item.size() >= 2) {

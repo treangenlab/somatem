@@ -40,8 +40,8 @@ workflow SEQSCREEN_DSL2 {
     ch_db
 
     main:
-    ch_versions = Channel.empty()
-    ch_assets = Channel.value(file("${projectDir}/assets/seqscreen"))
+    ch_versions = channel.empty()
+    ch_assets = channel.value(file("${projectDir}/assets/seqscreen"))
 
     def mode = (params.seqscreen_mode ?: 'fast').toString().toLowerCase()
     if (!['fast', 'sensitive'].contains(mode)) {

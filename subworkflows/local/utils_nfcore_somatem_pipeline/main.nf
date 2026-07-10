@@ -31,7 +31,7 @@ workflow PIPELINE_INITIALISATION {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -116,9 +116,13 @@ workflow PIPELINE_INITIALISATION {
     } else {
         channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-            .map { meta, fastq ->
+            .map { sample ->
+                // nf-schema 2.7 wraps each parsed row in a one-element list.
+                def record = sample instanceof Collection && sample.size() == 1 && sample[0] instanceof Collection ? sample[0] : sample
+                def meta = record[0]
+                def fastqs = record[1..-1].findAll { it }
                 def new_meta = meta + [single_end: true]
-                [new_meta, [fastq]]
+                tuple(new_meta, fastqs)
             }
             .set { ch_samplesheet }
     }

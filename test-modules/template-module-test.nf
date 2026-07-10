@@ -19,10 +19,9 @@ params.rank = 'species'
 workflow {
 
     reads_ch = convert_to_nfcore_tuple(params.reads)
-    database_ch = Channel.fromPath(params.database)
-    taxonomy_ch = Channel.fromPath(params.taxonomy)
-    rank_ch = Channel.of(params.rank)
+    database_ch = channel.fromPath(params.database)
+    taxonomy_ch = channel.fromPath(params.taxonomy)
+    rank_ch = channel.of(params.rank)
 
     TOOL(reads_ch, database_ch, taxonomy_ch, rank_ch)
 }
-    

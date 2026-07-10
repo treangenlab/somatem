@@ -137,13 +137,25 @@
                 "null"
             ]
         },
-        "hostile_index": {
+        "deacon_index": {
             "type": "string",
-            "default": "human-t2t-hla-argos985-mycob140.mmi"
+            "description": "Prebuilt Deacon index name (panhuman-1 or panmouse-1), or a path to a custom .idx file.",
+            "default": "panhuman-1"
         },
-        "hostile_db": {
+        "deacon_db": {
             "type": "string",
-            "default": "/home/dbs/hostile"
+            "default": "/home/dbs/deacon"
+        },
+        "deacon_abs_threshold": {
+            "type": "integer",
+            "default": 2,
+            "minimum": 0
+        },
+        "deacon_rel_threshold": {
+            "type": "number",
+            "default": 0.01,
+            "minimum": 0,
+            "maximum": 1
         },
         "emu_db": {
             "type": "string",
@@ -195,21 +207,38 @@
             "type": "string",
             "default": "species"
         },
+        "taxonomic_profiler": {
+            "type": "string",
+            "description": "Classifier used for metagenomic taxonomic profiling.",
+            "default": "sylph",
+            "enum": [
+                "sylph",
+                "lemur-magnet",
+                "kraken2",
+                "singlem"
+            ]
+        },
         "ganon_db": {
             "type": "string",
             "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/ganon2_abvf_030325/"
         },
         "kraken2_db": {
-            "type": "string",
-            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/k2_abfv_030325/"
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Optional custom Kraken2 database. Standard-8 is downloaded when unset."
         },
         "kraken2_standard8_db": {
             "type": "string",
             "default": "/home/dbs/kraken2_standard8_db/"
         },
         "sylph_db": {
-            "type": "string",
-            "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025/sylph_abf_030325/database.syldb"
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Optional custom Sylph .syldb file. Overrides sylph_taxonomic_group."
         },
         "sylph_prok_db_file": {
             "type": "string",
@@ -221,7 +250,40 @@
         },
         "sylph_vir_db": {
             "type": "string",
-            "default": "/home/dbs/sylph_vir_db/"
+            "default": "/home/dbs/imgvr_c200_v0.3.0.syldb"
+        },
+        "sylph_fungal_db": {
+            "type": "string",
+            "default": "/home/dbs/fungi-refseq-2025-10-11-c200-v0.3.syldb"
+        },
+        "sylph_all_db": {
+            "type": "string",
+            "default": "/home/dbs/unified/refseq03032025/sylph_abf_030325/database.syldb"
+        },
+        "sylph_taxonomic_group": {
+            "type": "string",
+            "description": "Bundled Sylph database category to use when sylph_db is not supplied.",
+            "default": "prokaryotic",
+            "enum": [
+                "prokaryotic",
+                "viral",
+                "fungal",
+                "all"
+            ]
+        },
+        "sylph_profile_db": {
+            "type": "string",
+            "description": "Resolved Sylph database path derived from sylph_db or sylph_taxonomic_group."
+        },
+        "sylph_db_url_base": {
+            "type": "string",
+            "description": "Base URL used to download selected standard Sylph databases.",
+            "default": "http://faust.compbio.cs.cmu.edu/sylph-stuff"
+        },
+        "sylph_taxonomy_identifier": {
+            "type": "string",
+            "description": "sylph-tax taxonomy identifier matching the selected Sylph database.",
+            "default": "GTDB_r220"
         },
         "seqscreen_db": {
             "type": "string",
@@ -367,7 +429,7 @@
         "pigeon_skip_db": {
             "type": "boolean"
         },
-        "run_hostile": {
+        "run_deacon": {
             "type": "boolean",
             "default": true
         },

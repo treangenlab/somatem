@@ -32,7 +32,7 @@ WORKFLOW_COPY = {
         ),
         "methods": [
             "Raw long-read quality was assessed with NanoPlot before filtering.",
-            "When enabled, host-derived reads were removed with Hostile using the configured host index.",
+            "When enabled, host-derived reads were depleted with Deacon using the configured panhost minimizer index.",
             "Reads were filtered with Chopper using the configured minimum quality and length thresholds.",
             "Final NanoPlot quality summaries were generated from the cleaned read set.",
         ],
@@ -895,9 +895,30 @@ def taxburst_report_links(files: list[Path]) -> list[tuple[str, str, str]]:
         sample_id = re.sub(r"_taxburst\.html$", "", path.name, flags=re.IGNORECASE)
         if sample_id == path.name:
             sample_id = path.stem
-        href = f"../taxonomy/{quote(sample_id)}/{quote(path.name)}"
+        href = f"../taxonomic_profiling/{quote(sample_id)}/taxburst/{quote(path.name)}"
         links.append((sample_id, path.name, href))
     return sorted(links)
+
+
+def taxburst_report_previews(files: list[Path]) -> str:
+    previews = []
+    for path in files:
+        if path.suffix.lower() != ".html" or "taxburst" not in path.name.lower():
+            continue
+        try:
+            report_html = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            continue
+        sample_id = re.sub(r"_taxburst\.html$", "", path.name, flags=re.IGNORECASE)
+        previews.append(
+            f'<article class="embedded-report"><h3>{esc(sample_id)}</h3>'
+            f'<iframe title="TaxBurst report for {esc(sample_id)}" '
+            f'sandbox="allow-scripts allow-same-origin allow-popups" '
+            f'srcdoc="{html.escape(report_html, quote=True)}"></iframe></article>'
+        )
+        if len(previews) >= 4:
+            break
+    return "".join(previews)
 
 
 def interactive_report_links(files: list[Path]) -> str:
@@ -918,8 +939,10 @@ def interactive_report_links(files: list[Path]) -> str:
         "<th>Sample</th><th>Report file</th><th>Link</th><th>Published path</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
     )
+    previews = taxburst_report_previews(files)
     return (
-        "<p>Interactive TaxBurst reports are published alongside this summary under the taxonomy results directory.</p>"
+        "<p>Interactive TaxBurst results are embedded below and are also available as standalone reports.</p>"
+        + (f'<div class="taxburst-grid">{previews}</div>' if previews else "")
         + table
     )
 
@@ -1187,6 +1210,25 @@ h3 {{
   margin: 22px 0 10px;
   font-size: 1rem;
   color: #293845;
+}}
+.taxburst-grid {{
+  display: grid;
+  gap: 24px;
+  margin: 20px 0;
+}}
+.embedded-report {{
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px 16px;
+  background: var(--soft);
+}}
+.embedded-report iframe {{
+  display: block;
+  width: 100%;
+  height: 720px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
 }}
 .lead {{
   font-size: 1.08rem;

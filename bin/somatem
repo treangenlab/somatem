@@ -11,6 +11,14 @@ while [[ -L "${SOURCE}" ]]; do
 done
 SCRIPT_DIR="$(cd -P "$(dirname "${SOURCE}")" && pwd)"
 
+# Keep Nextflow environments and micromamba's package cache with the Somatem
+# installation instead of writing large caches below the user's home directory.
+# Explicit user overrides always take precedence.
+SOMATEM_INSTALL_PREFIX="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SOMATEM_DEFAULT_HOME="${SOMATEM_INSTALL_PREFIX}/share/somatem"
+export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-${SOMATEM_CONDA_CACHE:-${SOMATEM_HOME:-${SOMATEM_DEFAULT_HOME}}/conda_cache}}"
+export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-${SOMATEM_HOME:-${SOMATEM_DEFAULT_HOME}}/micromamba}"
+
 NEXTFLOW_BIN="nextflow"
 if [[ -x "${SCRIPT_DIR}/nextflow" ]]; then
     NEXTFLOW_BIN="${SCRIPT_DIR}/nextflow"
@@ -83,12 +91,18 @@ Common shortcuts:
   -i, --input            Input sample sheet CSV
   -o, --outdir           Output directory
   -data, --data_type     Data type (16S, isolate or metagenomic)
+  --taxonomic_profiler   Metagenomic classifier: sylph (default), lemur-magnet, kraken2, or singlem
+  --sylph_taxonomic_group Sylph database: prokaryotic (default), viral, fungal, or all
+  --sylph_db             Custom Sylph .syldb file (overrides --sylph_taxonomic_group)
   -params, --params_file Parameters file documenting other options used in the pipeline
   -resume                Resume the last run. Resuming named run with -resume run_name not yet supported
 
 Examples:
   somatem 16S -i samples.csv -o results
   somatem taxonomic_profiling -i samples.csv -o results
+  somatem taxonomic_profiling -i samples.csv -o results --taxonomic_profiler kraken2 --kraken2_db /path/to/db
+  somatem taxonomic_profiling -i samples.csv -o results --sylph_taxonomic_group viral
+  somatem taxonomic_profiling -i samples.csv -o results --sylph_db /path/to/custom.syldb
   somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
   somatem assembly_mags -i samples.csv -o results
   somatem isolate_analysis -i samples.csv -o results

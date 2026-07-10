@@ -5,6 +5,6 @@ include { DOWNLOAD_DBS } from '../download_databases.nf'
 
 workflow {
 
-    DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
+    DOWNLOAD_DBS(params.analysis_type, params.deacon_index,
             params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
 }

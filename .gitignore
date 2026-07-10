@@ -28,8 +28,11 @@ testing*
 .nf-test*
 
 # conda/micromamba environment directories
-miniforge
-micromamba
+miniforge/
+micromamba/
+conda_cache/
+.somatem/conda_cache/
+share/somatem/conda_cache/
 
 # vscode files
 somatem.code-workspace

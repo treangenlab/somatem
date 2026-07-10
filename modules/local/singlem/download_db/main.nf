@@ -19,7 +19,7 @@ process SINGLEM_DOWNLOAD_DB {
 
     script:
     def args = task.ext.args ?: ''
-    singlem_db_local = "./"
+    def singlem_db_local = "./"
 
     """
     

@@ -4,7 +4,7 @@ process TAXBURST {
     label 'process_single'
 
     // Outputs
-    publishDir { "${params.output_dir}/taxonomy/${meta.id}" }, mode: 'copy', pattern: "*.html"
+    publishDir { "${params.outdir}/taxonomic_profiling/${meta.id}/taxburst" }, mode: params.publish_dir_mode, pattern: "*.html"
 
     conda "${moduleDir}/environment.yml"
 

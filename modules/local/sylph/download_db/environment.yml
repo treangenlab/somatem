@@ -1,0 +1,5 @@
+name: sylph_download_db
+channels:
+  - conda-forge
+dependencies:
+  - aria2=1.37.0

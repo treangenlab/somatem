@@ -25,38 +25,40 @@ workflow SOMATEM {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = Channel.empty()
-    ch_key_outputs = Channel.empty()
-    ch_hostile_db = Channel.empty()
-    ch_lemur_db = Channel.empty()
-    ch_checkm2_db = Channel.empty()
-    ch_bakta_db = Channel.empty()
-    ch_kraken2_db = Channel.empty()
-    ch_singlem_db = Channel.empty()
+    ch_versions = channel.empty()
+    ch_key_outputs = channel.empty()
+    ch_deacon_index = channel.empty()
+    ch_lemur_db = channel.empty()
+    ch_checkm2_db = channel.empty()
+    ch_bakta_db = channel.empty()
+    ch_kraken2_db = channel.empty()
+    ch_singlem_db = channel.empty()
+    ch_taxonomy_db = channel.empty()
 
     // -----------------------------------------------------------------
     // Download databases
     // -----------------------------------------------------------------
     if (params.analysis_type != "seqscreen") {
-        DOWNLOAD_DBS(params.analysis_type, params.hostile_index,
+        DOWNLOAD_DBS(params.analysis_type, params.deacon_index,
                 params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
-        ch_hostile_db = DOWNLOAD_DBS.out.ch_hostile_db
+        ch_deacon_index = DOWNLOAD_DBS.out.ch_deacon_index
         ch_lemur_db = DOWNLOAD_DBS.out.ch_lemur_db
         ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db
         ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
         ch_kraken2_db = DOWNLOAD_DBS.out.ch_kraken2_db
         ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
+        ch_taxonomy_db = DOWNLOAD_DBS.out.ch_taxonomy_db
     }
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
-    contam_ref = Channel.value([]) // empty channel for now
+    contam_ref = channel.value([]) // empty channel for now
     if (params.analysis_type == "isolate-analysis" || params.analysis_type == "seqscreen") {
         ch_clean_reads = ch_samplesheet
-        ch_summary_reports = Channel.empty()
+        ch_summary_reports = channel.empty()
     } else {
-        PREPROCESSING(ch_samplesheet, ch_hostile_db, contam_ref)
+        PREPROCESSING(ch_samplesheet, ch_deacon_index, contam_ref)
         ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
         ch_clean_reads = PREPROCESSING.out.clean_reads
         ch_summary_reports = PREPROCESSING.out.summary_report
@@ -67,7 +69,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(ch_clean_reads, ch_lemur_db)
+        TAXONOMIC_PROFILING(ch_clean_reads, ch_taxonomy_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
@@ -127,7 +129,7 @@ workflow SOMATEM {
             error("SeqScreen analysis requires --seqscreen_db to point at a SeqScreen database directory.")
         }
 
-        ch_seqscreen_db = Channel.value(file(params.seqscreen_db, checkIfExists: true))
+        ch_seqscreen_db = channel.value(file(params.seqscreen_db, checkIfExists: true))
 
         SEQSCREEN_DSL2(
             ch_clean_reads,

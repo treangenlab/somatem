@@ -3,4 +3,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - taxburst
+  - python=3.11
+  - sylph-tax=1.9.1
