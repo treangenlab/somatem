@@ -52,8 +52,14 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(FLYE.out.versions)
     FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
-    // visualize assembly graph with agb
-    AGB(FLYE.out.gfa, FLYE.out.gv, FLYE.out.txt)
+    // Keep all Flye graph artifacts for a sample in one tuple so inputs cannot desynchronize.
+    ch_agb_input = FLYE.out.gfa
+        .join(FLYE.out.gv, by: 0)
+        .join(FLYE.out.txt, by: 0)
+        .map { meta, gfa, graph, info -> tuple(meta, gfa, graph, info) }
+
+    AGB(ch_agb_input)
+    ch_versions = ch_versions.mix(AGB.out.versions)
     AGB.out.assembly_graph.view { meta, _graph -> "✓ Assembly graph visualization completed for ${meta.id}" } // log
 
     // Create minimap2 index

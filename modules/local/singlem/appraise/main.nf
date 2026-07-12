@@ -4,9 +4,7 @@ process SINGLEM_APPRAISE {
     
 
     // Outputs
-    publishDir { "${params.output_dir}/appraise/${meta.id}" }, mode: 'copy', pattern: "*.tsv"
-    publishDir { "${params.output_dir}/appraise/${meta.id}" }, mode: 'copy', pattern: "*.svg"
-    publishDir { "${params.output_dir}/appraise/${meta.id}" }, mode: 'copy', pattern: "*.{txt,csv}"
+    publishDir { "${params.outdir}/assembly_mags/${meta.id}/singlem_appraise" }, mode: params.publish_dir_mode, pattern: "*.{tsv,svg,txt,csv}"
 
     conda "${moduleDir}/environment.yml"
 
@@ -85,6 +83,7 @@ process SINGLEM_APPRAISE {
         ${assembly_args} \\
         ${metapackage_args} \\
         ${output_args} \\
+        --threads ${task.cpus} \\
         ${args} \\
         > ${prefix}_appraise_summary.txt
 

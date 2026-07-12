@@ -45,6 +45,7 @@ include { KRAKEN2_KRAKEN2 }        from '../../modules/nf-core/kraken2/kraken2/m
 include { BAKTA_BAKTA }            from '../../modules/local/bakta/bakta/main'
 include { BTYPER3 }                from '../../modules/local/btyper3/main'
 include { CHECKM2_PREDICT }        from '../../modules/nf-core/checkm2/predict/main'
+include { MOB_SUITE_RECON }        from '../../modules/local/mob_suite/recon/main'
 include { SOMATEM_SUMMARY_REPORT as ISOLATE_ANALYSIS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 workflow ISOLATE_ANALYSIS {
@@ -232,6 +233,9 @@ workflow ISOLATE_ANALYSIS {
     CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
+    MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly)
+    ch_versions = ch_versions.mix(MOB_SUITE_RECON.out.versions)
+
     ch_bakta_input = FASTA_FINALIZE.out.assembly.map { meta, assembly ->
         def bakta_meta = meta.sample_id == null ? meta + [sample_id: meta.id] : meta
         tuple(bakta_meta, assembly)
@@ -258,6 +262,10 @@ workflow ISOLATE_ANALYSIS {
             BAKTA_BAKTA.out.json,
             BAKTA_BAKTA.out.png,
             CHECKM2_PREDICT.out.checkm2_tsv,
+            MOB_SUITE_RECON.out.contig_report,
+            MOB_SUITE_RECON.out.mobtyper,
+            MOB_SUITE_RECON.out.mge_report,
+            MOB_SUITE_RECON.out.plasmids,
             ch_btyper3_results,
             ch_versions_for_report
         )
@@ -289,6 +297,9 @@ workflow ISOLATE_ANALYSIS {
     bakta_json           = BAKTA_BAKTA.out.json
     bakta_gff            = BAKTA_BAKTA.out.gff
     checkm2_tsv          = CHECKM2_PREDICT.out.checkm2_tsv
+    plasmid_contig_report = MOB_SUITE_RECON.out.contig_report
+    plasmid_mobtyper      = MOB_SUITE_RECON.out.mobtyper
+    plasmid_fastas        = MOB_SUITE_RECON.out.plasmids
     btyper3_results      = ch_btyper3_results
     summary_report       = ISOLATE_ANALYSIS_SUMMARY_REPORT.out.html
     versions             = ch_versions

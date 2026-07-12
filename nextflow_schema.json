@@ -74,13 +74,22 @@
         }
     ],
     "properties": {
+        "threads": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Total CPU thread budget. High-tier tasks use 90% of this value, while low and medium tiers scale below it."
+        },
         "db_base_dir": {
             "type": "string",
-            "default": "/home/dbs"
+            "description": "Root directory for persistent Somatem databases. Defaults to assets/data/databases within the Somatem installation."
         },
         "unified_db_base_dir": {
             "type": "string",
             "default": "/home/Users/pacbio_bakeoff/data/ref_db/refseq03032025"
+        },
+        "mob_suite_db": {
+            "type": "string",
+            "description": "Persistent MOB-suite plasmid database directory. It is initialized automatically on first use."
         },
         "data_type": {
             "type": "string",
@@ -393,6 +402,11 @@
         "singlem_db": {
             "type": "string",
             "default": "/home/dbs/singlem_db/"
+        },
+        "singlem_metapackage": {
+            "type": "string",
+            "description": "Expected SingleM reference metapackage downloaded by singlem data.",
+            "default": "S6.5.0.GTDB_r232.metapackage_20260319.smpkg.zb"
         },
         "flye_mode": {
             "type": "string",

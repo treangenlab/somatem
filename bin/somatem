@@ -16,6 +16,8 @@ SCRIPT_DIR="$(cd -P "$(dirname "${SOURCE}")" && pwd)"
 # Explicit user overrides always take precedence.
 SOMATEM_INSTALL_PREFIX="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SOMATEM_DEFAULT_HOME="${SOMATEM_INSTALL_PREFIX}/share/somatem"
+SOMATEM_STATE_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/somatem"
+SOMATEM_EXAMPLE_PATH_FILE="${SOMATEM_STATE_DIR}/example_data_dir"
 export NXF_CONDA_CACHEDIR="${NXF_CONDA_CACHEDIR:-${SOMATEM_CONDA_CACHE:-${SOMATEM_HOME:-${SOMATEM_DEFAULT_HOME}}/conda_cache}}"
 export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-${SOMATEM_HOME:-${SOMATEM_DEFAULT_HOME}}/micromamba}"
 
@@ -30,6 +32,7 @@ PIPELINE_DIR_PLACEHOLDER="@""@PIPELINE_DIR@""@"
 if [[ "${PIPELINE_DIR}" == "${PIPELINE_DIR_PLACEHOLDER}" ]]; then
     PIPELINE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 fi
+export SOMATEM_PIPELINE_DIR="${PIPELINE_DIR}"
 
 run_nextflow() {
     local script="$1"
@@ -69,13 +72,12 @@ EOF
 
 show_help() {
     cat <<EOF
-Somatem
+somatem - A modular and open source metagenomic analysis toolkit designed for long reads.
 
 Usage:
   somatem <command> [nextflow args...]
 
 Commands:
-  full_name (short_name)        Description
   pre_processing                Run the main pipeline with pre-processing analysis
   16S                           Run 16S taxonomic profiling (sets data_type to 16S and analysis_type to taxonomic-profiling)
   taxonomic_profiling (tax)     Run taxonomic profiling (defaults to metagenomic data)
@@ -85,11 +87,12 @@ Commands:
   genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
-  help                          Show this help message
+  help                             Show this help message
 
 Common shortcuts:
   -i, --input            Input sample sheet CSV
   -o, --outdir           Output directory
+  -t, --threads          Total CPU budget; high-tier tasks use approximately 90%
   -data, --data_type     Data type (16S, isolate or metagenomic)
   --taxonomic_profiler   Metagenomic classifier: sylph (default), lemur-magnet, kraken2, or singlem
   --sylph_taxonomic_group Sylph database: prokaryotic (default), viral, fungal, or all
@@ -97,31 +100,33 @@ Common shortcuts:
   -params, --params_file Parameters file documenting other options used in the pipeline
   -resume                Resume the last run. Resuming named run with -resume run_name not yet supported
 
+Example data location:
+  A successful 'somatem examples --outdir PATH' is remembered automatically.
+  Set SOMATEM_EXAMPLE_DIR to override the remembered location.
+
 Examples:
-  somatem 16S -i samples.csv -o results
-  somatem taxonomic_profiling -i samples.csv -o results
+  somatem examples
+  somatem 16S -o results
+  somatem taxonomic_profiling -o results
   somatem taxonomic_profiling -i samples.csv -o results --taxonomic_profiler kraken2 --kraken2_db /path/to/db
   somatem taxonomic_profiling -i samples.csv -o results --sylph_taxonomic_group viral
   somatem taxonomic_profiling -i samples.csv -o results --sylph_db /path/to/custom.syldb
   somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
   somatem assembly_mags -i samples.csv -o results
   somatem isolate_analysis -i samples.csv -o results
-  somatem seqscreen -i seqscreen_samples.csv -o results --seqscreen_db /path/to/SeqScreenDB_23.4
+  somatem seqscreen -i samples.csv -o results --seqscreen_db /path/to/SeqScreenDB_23.4
   somatem genome_dynamics -i samples.csv -o results
-  somatem download_example_data --outdir ./assets/data
-  somatem pre_download_databases
-
-Defaults:
-  defaults to --data_type = metagenomic for taxonomic_profiling
+  somatem download_example_data -o ./assets
+  somatem pre_download_databases -o ./assets/dbs
 
 Input CSV format:
   sample,fastq_1
-  mock1,assets/examples/data/16S/mockm95_sub10k.fastq.gz
-  mock2,assets/examples/data/16S/mockm91_sub10k.fastq.gz
+  mock1,assets/data/16S/mockm95_sub10k.fastq.gz
+  mock2,assets/data/16S/mockm91_sub10k.fastq.gz
 
 SeqScreen input CSV format:
   sample,fasta
-  sample1,assets/examples/data/seqscreen/example.fasta
+  sample1,assets/data/other_tools_files/more_files/seqscreen/10_seqs.fasta
 EOF
 }
 
@@ -129,17 +134,30 @@ resolve_args() {
     RESOLVED_ARGS=()
     HAS_DATA_TYPE=0
     HAS_OUTDIR=0
+    HAS_INPUT=0
+    HAS_PARAMS_FILE=0
+    OUTDIR_VALUE=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -i|--input)
                 shift
+                HAS_INPUT=1
                 RESOLVED_ARGS+=("--input" "$1")
                 ;;
             -o|--outdir)
                 shift
                 HAS_OUTDIR=1
+                OUTDIR_VALUE="$1"
                 RESOLVED_ARGS+=("--outdir" "$1")
+                ;;
+            -t|--threads)
+                shift
+                if [[ ! "${1:-}" =~ ^[0-9]+$ || "$1" -lt 1 ]]; then
+                    echo "Error: --threads requires a positive integer." >&2
+                    exit 1
+                fi
+                RESOLVED_ARGS+=("--threads" "$1")
                 ;;
             -data|--data_type)
                 shift
@@ -148,6 +166,7 @@ resolve_args() {
                 ;;
             -params|--params_file)
                 shift
+                HAS_PARAMS_FILE=1
                 pf="$1"
                 if [[ "$pf" != /* && -f "${PIPELINE_DIR}/${pf}" ]]; then
                     RESOLVED_ARGS+=("-params-file" "${PIPELINE_DIR}/${pf}")
@@ -164,6 +183,36 @@ resolve_args() {
     done
 }
 
+use_example_input_by_default() {
+    if [[ "${HAS_INPUT}" -eq 0 && "${HAS_PARAMS_FILE}" -eq 0 ]]; then
+        local example_dir="${SOMATEM_EXAMPLE_DIR:-}"
+        if [[ -z "${example_dir}" && -f "${SOMATEM_EXAMPLE_PATH_FILE}" ]]; then
+            example_dir="$(<"${SOMATEM_EXAMPLE_PATH_FILE}")"
+        fi
+        if [[ -z "${example_dir}" ]]; then
+            example_dir="${PIPELINE_DIR}/assets"
+        fi
+        if [[ ! -f "${example_dir}/samplesheets/$1" ]]; then
+            echo "Error: example sample sheet not found: ${example_dir}/samplesheets/$1" >&2
+            echo "Run 'somatem examples --outdir PATH' first or set SOMATEM_EXAMPLE_DIR." >&2
+            exit 1
+        fi
+        RESOLVED_ARGS+=("--input" "${example_dir}/samplesheets/$1")
+    fi
+}
+
+run_example_download() {
+    local example_dir="$1"
+    shift
+
+    "${NEXTFLOW_BIN}" run "${PIPELINE_DIR}/subworkflows/local/download_example_datasets.nf" \
+        -c "${PIPELINE_DIR}/nextflow.config" "$@"
+
+    mkdir -p "${SOMATEM_STATE_DIR}"
+    printf '%s\n' "${example_dir}" > "${SOMATEM_EXAMPLE_PATH_FILE}"
+    echo "Example data location saved: ${example_dir}"
+}
+
 cmd="${1:-help}"
 if [[ $# -gt 0 ]]; then
     shift
@@ -174,6 +223,7 @@ resolve_args "$@"
 case "${cmd}" in
     16S|16s)
         require_main_nextflow
+        use_example_input_by_default "16S_pilot_samples.csv"
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --data_type 16S \
             --analysis_type taxonomic-profiling \
@@ -187,12 +237,14 @@ case "${cmd}" in
         ;;
     assembly_mags|mag_assembly|mag|assembly)
         require_main_nextflow
+        use_example_input_by_default "mag_samples.csv"
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type assembly \
             "${RESOLVED_ARGS[@]}"
         ;;
     isolate_analysis|isolate-analysis|isolate)
         require_main_nextflow
+        use_example_input_by_default "isolate_samples.csv"
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --data_type isolate \
             --analysis_type isolate-analysis \
@@ -200,6 +252,7 @@ case "${cmd}" in
         ;;
     seqscreen|pathogen_detection|pathogen-detection)
         require_main_nextflow
+        use_example_input_by_default "seqscreen_samples.csv"
         if [[ "${HAS_OUTDIR}" -eq 0 ]]; then
             RESOLVED_ARGS+=("--outdir" "seqscreen_results")
         fi
@@ -209,6 +262,7 @@ case "${cmd}" in
         ;;
     taxonomic_profiling|taxonomic-profiling|tax|profiling)
         require_main_nextflow
+        use_example_input_by_default "meta_tax_samples.csv"
         if [[ "${HAS_DATA_TYPE}" -eq 1 ]]; then
             run_nextflow "${PIPELINE_DIR}/main.nf" \
                 --analysis_type taxonomic-profiling \
@@ -222,14 +276,20 @@ case "${cmd}" in
         ;;
     genome_dynamics|genome-dynamics|dynamics)
         require_main_nextflow
+        use_example_input_by_default "timeseries_samples.csv"
         run_nextflow "${PIPELINE_DIR}/main.nf" \
             --analysis_type genome-dynamics \
             "${RESOLVED_ARGS[@]}"
         ;;
     download_example_data|download-example-data|get_example_data|get-example-data|example_data|examples)
-        run_nextflow "${PIPELINE_DIR}/subworkflows/local/download_example_datasets.nf" \
-            -c "${PIPELINE_DIR}/nextflow.config" \
-            "${RESOLVED_ARGS[@]}"
+        if [[ "${HAS_OUTDIR}" -eq 0 ]]; then
+            OUTDIR_VALUE="${PIPELINE_DIR}/assets"
+            RESOLVED_ARGS+=("--outdir" "${OUTDIR_VALUE}")
+        fi
+        if [[ "${OUTDIR_VALUE}" != /* ]]; then
+            OUTDIR_VALUE="$(pwd)/${OUTDIR_VALUE}"
+        fi
+        run_example_download "${OUTDIR_VALUE}" "${RESOLVED_ARGS[@]}"
         ;;
     pre_download_databases|pre-download-databases|download_databases|download-databases|databases|dbs)
         run_nextflow "${PIPELINE_DIR}/subworkflows/local/utils/pre_download_databases.nf" \

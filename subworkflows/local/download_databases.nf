@@ -82,7 +82,7 @@ workflow DOWNLOAD_DBS {
             ch_lemur_db = LEMUR_STAGE_DB.out.lemur_db
             ch_taxonomy_db = ch_lemur_db
         } else if (params.taxonomic_profiler == "singlem") {
-            SINGLEM_TAXONOMY_DOWNLOAD_DB()
+            SINGLEM_TAXONOMY_DOWNLOAD_DB(params.singlem_metapackage)
             ch_singlem_db = SINGLEM_TAXONOMY_DOWNLOAD_DB.out.singlem_db
             ch_taxonomy_db = ch_singlem_db
         } else if (params.taxonomic_profiler == "kraken2") {
@@ -119,7 +119,7 @@ workflow DOWNLOAD_DBS {
 
         // download singlem db
         if (analysis_type == "assembly") {
-            SINGLEM_DOWNLOAD_DB()
+            SINGLEM_DOWNLOAD_DB(params.singlem_metapackage)
             ch_singlem_db = SINGLEM_DOWNLOAD_DB.out.singlem_db
         }
     }
