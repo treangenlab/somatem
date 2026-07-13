@@ -3,7 +3,7 @@ process SINGLEM_PIPE {
     label 'process_medium'
 
     // Outputs
-    publishDir { "${params.output_dir}/taxonomy/${meta.id}" }, mode: 'copy', pattern: "*.{csv,tsv,html,jplace}"
+    publishDir { "${params.outdir}/taxonomic_profiling/${meta.id}/singlem" }, mode: params.publish_dir_mode, pattern: "*.{csv,tsv,html,jplace}"
 
     conda "${moduleDir}/environment.yml"
 

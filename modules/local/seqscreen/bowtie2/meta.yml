@@ -1,0 +1,37 @@
+name: "seqscreen_bowtie2"
+description: Align FASTA records to SeqScreen blacklist databases with Bowtie2
+keywords:
+  - seqscreen
+  - bowtie2
+  - blacklist
+tools:
+  - "bowtie2":
+      description: "Fast and sensitive read alignment"
+      homepage: "https://bowtie-bio.sourceforge.net/bowtie2/"
+      documentation: "https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+      pattern: "*.{fa,fasta,fna}"
+  - db:
+      type: directory
+      description: SeqScreen database directory
+  - target:
+      type: string
+      description: Blacklist target selector
+output:
+  - sam:
+      type: file
+      description: Bowtie2 SAM alignments
+      pattern: "*.sam"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

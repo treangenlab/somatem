@@ -21,17 +21,31 @@ process TAXBURST_CONVERT {
      */
     script:
     def prefix = task.ext.prefix ?: meta.id
+    def prepare_input = tool_name == 'sylph' ? """
+    export SYLPH_TAXONOMY_CONFIG=\"\$PWD/sylph-tax-config.json\"
+    mkdir -p sylph-taxonomy
+    sylph-tax download --download-to sylph-taxonomy
+    sylph-tax taxprof ${classification_file} \\
+      -t ${params.sylph_taxonomy_identifier} \\
+      -o sylph-tax-
+    classification_input=\$(find . -maxdepth 1 -name '*.sylphmpa' -print -quit)
+    """ : "classification_input=${classification_file}"
 
     """
+    ${prepare_input}
+
     # invoke converter script
     taxburst_prep.py \\
       --from_tool ${tool_name} \\
       --format krona \\
       --output ${prefix}.krona.tsv \\
-      ${classification_file}
+      \${classification_input}
 
     # record tool versions
     echo "${task.process}:" > versions.yml
     echo "  python: \$(python --version | sed 's/Python //')" >> versions.yml
+    if command -v sylph-tax >/dev/null 2>&1; then
+      echo "  sylph-tax: \$(sylph-tax --version 2>&1 | awk '{print \$NF}')" >> versions.yml
+    fi
     """
 }

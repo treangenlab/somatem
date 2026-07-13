@@ -20,6 +20,12 @@ data_type: "metagenomic"
 # 4. genome-dynamics = genomic variation across multiple samples (time-series or cross-section). Provides a variant abundance over time plot. 
 analysis_type: "taxonomic-profiling"
 
+# Metagenomic classifier: sylph, lemur-magnet, kraken2, or singlem.
+taxonomic_profiler: "sylph"
+
+# Sylph database category: prokaryotic, viral, fungal, or all.
+# Set sylph_db to a custom .syldb path to override this selection.
+sylph_taxonomic_group: "prokaryotic"
 
 
 # other options --------------------------------

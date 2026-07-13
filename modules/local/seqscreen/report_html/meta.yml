@@ -1,0 +1,36 @@
+name: "seqscreen_report_html"
+description: Generate the SeqScreen interactive HTML report
+keywords:
+  - seqscreen
+  - html
+  - report
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - report:
+      type: file
+      description: SeqScreen TSV report
+  - blastx_xml:
+      type: file
+      description: BLASTX XML output
+output:
+  - html:
+      type: file
+      description: Self-contained HTML report
+      pattern: "seqscreen_report.html"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

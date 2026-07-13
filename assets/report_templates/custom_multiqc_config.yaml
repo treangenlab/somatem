@@ -47,9 +47,6 @@ module_order:
     - nanoplot:
         name: 'NanoPlot'
         info: 'Long read QC metrics'
-    - hostile:
-        name: 'Hostile'
-        info: 'Host removal statistics'
     # Add other modules as needed
 
 # Avoid using CDN resources - bundle everything

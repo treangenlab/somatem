@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the nf-core/somatem pipeline
+// Subworkflow with functionality specific to the Somatem pipeline
 //
 
 /*
@@ -8,7 +8,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
@@ -32,7 +31,7 @@ workflow PIPELINE_INITIALISATION {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -93,12 +92,37 @@ workflow PIPELINE_INITIALISATION {
                 )
             }
             .set { ch_samplesheet }
+    } else if (params.analysis_type == "seqscreen") {
+        channel
+            .fromPath(params.input, checkIfExists: true)
+            .splitCsv(header: true)
+            .map { row ->
+                def sample = row.sample?.toString()?.trim()
+                def fasta = row.fasta?.toString()?.trim()
+
+                if (!sample) {
+                    error("SeqScreen samplesheet row is missing required field: sample")
+                }
+                if (!fasta) {
+                    error("SeqScreen samplesheet row for sample '${sample}' is missing required field: fasta")
+                }
+
+                tuple(
+                    [id: sample, single_end: true],
+                    file(fasta, checkIfExists: true)
+                )
+            }
+            .set { ch_samplesheet }
     } else {
         channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-            .map { meta, fastq ->
+            .map { sample ->
+                // nf-schema 2.7 wraps each parsed row in a one-element list.
+                def record = sample instanceof Collection && sample.size() == 1 && sample[0] instanceof Collection ? sample[0] : sample
+                def meta = record[0]
+                def fastqs = record[1..-1].findAll { it }
                 def new_meta = meta + [single_end: true]
-                [new_meta, [fastq]]
+                tuple(new_meta, fastqs)
             }
             .set { ch_samplesheet }
     }
@@ -135,7 +159,7 @@ workflow PIPELINE_COMPLETION {
     }
 
     workflow.onError {
-        log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
+        log.error "Pipeline failed. Please check the Nextflow log and Somatem troubleshooting documentation."
     }
 }
 
@@ -194,7 +218,7 @@ def genomeExistsError() {
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
-    // TODO nf-core: Optionally add in-text citation tools to this list.
+    // Optionally add in-text citation tools to this list.
     // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "Tool (Foo et al. 2023)" : "",
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def citation_text = [
@@ -206,7 +230,7 @@ def toolCitationText() {
 }
 
 def toolBibliographyText() {
-    // TODO nf-core: Optionally add bibliographic entries to this list.
+    // Optionally add bibliographic entries to this list.
     // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "<li>Author (2023) Pub name, Journal, DOI</li>" : "",
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
@@ -239,7 +263,7 @@ def methodsDescriptionText(mqc_methods_yaml) {
     meta["tool_citations"] = ""
     meta["tool_bibliography"] = ""
 
-    // TODO nf-core: Only uncomment below if logic in toolCitationText/toolBibliographyText has been filled!
+    // Only uncomment below if logic in toolCitationText/toolBibliographyText has been filled.
     // meta["tool_citations"] = toolCitationText().replaceAll(", \\.", ".").replaceAll("\\. \\.", ".").replaceAll(", \\.", ".")
     // meta["tool_bibliography"] = toolBibliographyText()
 

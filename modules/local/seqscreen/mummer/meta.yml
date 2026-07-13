@@ -1,0 +1,33 @@
+name: "seqscreen_mummer"
+description: Search FASTA records against the SeqScreen REBASE database with MUMmer
+keywords:
+  - seqscreen
+  - mummer
+  - rebase
+tools:
+  - "mummer":
+      description: "Rapid alignment of large DNA sequences"
+      homepage: "https://mummer4.github.io/"
+      documentation: "https://mummer4.github.io/manual/manual.html"
+      licence: "['BSD-3-Clause']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - db:
+      type: directory
+      description: SeqScreen database directory
+output:
+  - results:
+      type: file
+      description: MUMmer REBASE output
+      pattern: "*.mummer_re.txt"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

@@ -3,7 +3,7 @@
 // Metagenomics analysis subworkflow: taxonomic profiling, de novo assembly, mapping, binning, quality assessment, and annotation
 
   
-// Include nf-core modules
+// Include vendored community modules
 include { FLYE }                    from '../../modules/nf-core/flye/main'
 include { MINIMAP2_INDEX }          from '../../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN }          from '../../modules/nf-core/minimap2/align/main'
@@ -52,8 +52,14 @@ workflow ASSEMBLY_MAGS {
     ch_versions = ch_versions.mix(FLYE.out.versions)
     FLYE.out.fasta.view { meta, _fasta -> "✓ Assembly completed for ${meta.id}" } // log
 
-    // visualize assembly graph with agb
-    AGB(FLYE.out.gfa, FLYE.out.gv, FLYE.out.txt)
+    // Keep all Flye graph artifacts for a sample in one tuple so inputs cannot desynchronize.
+    ch_agb_input = FLYE.out.gfa
+        .join(FLYE.out.gv, by: 0)
+        .join(FLYE.out.txt, by: 0)
+        .map { meta, gfa, graph, info -> tuple(meta, gfa, graph, info) }
+
+    AGB(ch_agb_input)
+    ch_versions = ch_versions.mix(AGB.out.versions)
     AGB.out.assembly_graph.view { meta, _graph -> "✓ Assembly graph visualization completed for ${meta.id}" } // log
 
     // Create minimap2 index
@@ -189,7 +195,7 @@ workflow ASSEMBLY_MAGS {
         }
 
     ch_appraise_input = ch_metagenome_otu
-        .cross(ch_bins_otu) { it[0].id }
+        .cross(ch_bins_otu) { bin -> bin[0].id }
         .map { metagenome_tuple, bins_tuple ->
             def meta = metagenome_tuple[0]
             def metOtu = metagenome_tuple[1]
@@ -290,7 +296,7 @@ workflow ASSEMBLY_MAGS {
     // Show which bins got annotation (log)
     BAKTA_BAKTA.out.embl
         .map { meta, _embl -> meta.completeness }
-        .filter { it != null && it >= params.checkm2_completeness_threshold }
+        .filter { completeness -> completeness != null && completeness >= params.checkm2_completeness_threshold }
         .count()
         .view { count -> "✓ Generated annotations for ${count} high-quality bins (≥${params.checkm2_completeness_threshold}% complete)" }
 
@@ -325,7 +331,7 @@ workflow ASSEMBLY_MAGS {
     ASSEMBLY_MAGS_SUMMARY_REPORT(
         'assembly_mags',
         'Assembly and MAG recovery',
-        Channel.fromPath(params.input),
+        channel.fromPath(params.input),
         ch_assembly_report_files.flatMap { item ->
             def report_file = item
             if (item instanceof Collection && item.size() >= 2) {

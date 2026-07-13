@@ -17,10 +17,9 @@ params.threads = 4
 // -------------------------
 workflow {
 
-    reads = Channel.fromPath(params.reads)
-    db_dir = Channel.fromPath(params.db_dir)
-    threads = Channel.of(params.threads)
+    reads = channel.fromPath(params.reads)
+    db_dir = channel.fromPath(params.db_dir)
+    threads = channel.of(params.threads)
 
     CENTRIFUGER_CLASSIFY(reads, db_dir, threads)
 }
-    

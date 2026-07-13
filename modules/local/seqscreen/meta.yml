@@ -58,7 +58,7 @@ output:
     - "seqscreen":
         type: string
         description: The name of the tool
-    - "seqscreen --version":
+    - "echo 4.5":
         type: eval
         description: The expression to obtain the version of the tool
 
@@ -70,7 +70,7 @@ topics:
     - seqscreen:
         type: string
         description: The name of the tool
-    - seqscreen --version:
+    - echo 4.5:
         type: eval
         description: The expression to obtain the version of the tool
 authors:

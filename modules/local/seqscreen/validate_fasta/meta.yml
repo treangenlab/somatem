@@ -1,0 +1,35 @@
+name: "seqscreen_validate_fasta"
+description: Validate SeqScreen FASTA input and emit the staged validated FASTA
+keywords:
+  - seqscreen
+  - fasta
+  - validation
+tools:
+  - "seqscreen":
+      description: "SeqScreen pathogen detection and sequence-of-concern reporting"
+      homepage: "https://gitlab.com/treangenlab/seqscreen"
+      documentation: "https://gitlab.com/treangenlab/seqscreen"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+      pattern: "*.{fa,fasta,fna}"
+output:
+  - fasta:
+      type: file
+      description: Validated FASTA symlink
+      pattern: "*.validated.fasta"
+  - log:
+      type: file
+      description: SeqScreen validation log
+      pattern: "seqscreen.log"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

@@ -1,0 +1,36 @@
+name: "seqscreen_rapsearch2"
+description: Search translated FASTA records against SeqScreen RAPSearch2 blacklist databases
+keywords:
+  - seqscreen
+  - rapsearch2
+  - blacklist
+tools:
+  - "rapsearch2":
+      description: "Fast protein similarity search"
+      homepage: "https://github.com/zhaoyanswill/RAPSearch2"
+      documentation: "https://github.com/zhaoyanswill/RAPSearch2"
+      licence: "['GPL-2.0-only']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fasta:
+      type: file
+      description: Input FASTA file
+  - db:
+      type: directory
+      description: SeqScreen database directory
+  - target:
+      type: string
+      description: Blacklist target selector
+output:
+  - m8:
+      type: file
+      description: RAPSearch2 m8 output
+      pattern: "*.m8"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

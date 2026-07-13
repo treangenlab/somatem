@@ -32,7 +32,7 @@ WORKFLOW_COPY = {
         ),
         "methods": [
             "Raw long-read quality was assessed with NanoPlot before filtering.",
-            "When enabled, host-derived reads were removed with Hostile using the configured host index.",
+            "When enabled, host-derived reads were depleted with Deacon using the configured panhost minimizer index.",
             "Reads were filtered with Chopper using the configured minimum quality and length thresholds.",
             "Final NanoPlot quality summaries were generated from the cleaned read set.",
         ],
@@ -103,6 +103,7 @@ WORKFLOW_COPY = {
             "Long reads were classified with Kraken2 against the configured standard-8 database.",
             "Long-read assemblies were generated with Autocycler and Flye, then polished with short reads when hybrid assembly was enabled.",
             "Final isolate assemblies were evaluated with CheckM2 to estimate completeness and contamination.",
+            "MOB-suite classified assembly contigs against plasmid reference and marker databases and reconstructed predicted plasmids.",
             "Assemblies were annotated with Bakta, and optional BTyper3 typing was run from the Bakta genome FASTA output.",
         ],
         "accent": "#2563eb",
@@ -617,6 +618,94 @@ def taxonomy_figure_section(files: list[Path], workflow: str) -> str:
     return body
 
 
+def plasmid_classification_section(files: list[Path], workflow: str) -> str:
+    if workflow != "isolate_analysis":
+        return ""
+
+    report_paths = [path for path in files if path.name.endswith(".contig_report.txt")]
+    if not report_paths:
+        return ""
+
+    all_rows = []
+    for path in report_paths:
+        header, rows = read_table_rows(path)
+        if not header:
+            continue
+        for row in rows:
+            row["_report"] = path.name
+            all_rows.append(row)
+    if not all_rows:
+        return ""
+
+    def value(row: dict[str, str], *names: str) -> str:
+        lookup = {key.lower(): val for key, val in row.items()}
+        for name in names:
+            if name.lower() in lookup:
+                return str(lookup[name.lower()]).strip()
+        return ""
+
+    display_rows = []
+    chart_rows = []
+    plasmid_count = 0
+    circular_count = 0
+    for idx, row in enumerate(all_rows, start=1):
+        contig = value(row, "contig_id", "contig", "sequence_id") or f"contig_{idx}"
+        molecule = value(row, "molecule_type") or "Unclassified"
+        size_text = value(row, "size", "length")
+        size = to_float(size_text) or 0.0
+        circularity = value(row, "circularity_status") or "not tested"
+        replicon = value(row, "rep_type(s)", "rep_type") or "-"
+        relaxase = value(row, "relaxase_type(s)", "relaxase_type") or "-"
+        mobility = value(row, "predicted_mobility") or "-"
+        neighbor = value(row, "mash_nearest_neighbor", "primary_cluster_id") or "-"
+        is_plasmid = molecule.lower() == "plasmid"
+        is_circular = circularity.lower() in {"circular", "complete", "yes", "y"}
+        plasmid_count += int(is_plasmid)
+        circular_count += int(is_circular)
+        display_rows.append([
+            contig, molecule, f"{int(size):,}" if size else size_text, circularity,
+            replicon, relaxase, mobility, neighbor,
+        ])
+        chart_rows.append((contig, size, molecule, circularity))
+
+    width = 900
+    left = 230
+    bar_width = 520
+    row_height = 34
+    top = 42
+    shown = sorted(chart_rows, key=lambda item: item[1], reverse=True)[:14]
+    max_size = max((item[1] for item in shown), default=1.0) or 1.0
+    svg = [
+        f'<svg class="chart" viewBox="0 0 {width} {top + len(shown) * row_height + 35}" role="img" aria-label="MOB-suite contig classification">',
+        f'<text x="{left}" y="22" class="chart-title">Contig classification and circularity</text>',
+    ]
+    for idx, (contig, size, molecule, circularity) in enumerate(shown):
+        y = top + idx * row_height
+        length = max(2.0, bar_width * size / max_size)
+        color = "#7c3aed" if molecule.lower() == "plasmid" else "#64748b"
+        circular = circularity.lower() in {"circular", "complete", "yes", "y"}
+        svg.append(f'<text x="0" y="{y + 18}" class="axis-label">{esc(contig)}</text>')
+        svg.append(f'<rect x="{left}" y="{y}" width="{length:.2f}" height="20" rx="10" fill="{color}"><title>{esc(molecule)}; {int(size):,} bp; {esc(circularity)}</title></rect>')
+        if circular:
+            svg.append(f'<circle cx="{left + length + 16:.2f}" cy="{y + 10}" r="7" fill="none" stroke="#059669" stroke-width="3"><title>Reported circular</title></circle>')
+    svg.append('</svg>')
+
+    summary = (
+        f"<div class=\"callout\"><strong>{plasmid_count}</strong> contig(s) were classified as plasmid "
+        f"and <strong>{circular_count}</strong> contig(s) were reported circular by MOB-suite. "
+        "Purple bars are plasmid-classified contigs; green rings indicate reported circularity.</div>"
+    )
+    explanation = (
+        "<p>MOB-suite combines plasmid-reference similarity with replicon, relaxase, transfer, and other marker evidence. "
+        "These classifications are predictions: small repetitive contigs and novel plasmids may remain uncertain and should be reviewed with assembly-graph and coverage evidence.</p>"
+    )
+    return summary + explanation + "".join(svg) + table_html(
+        ["Contig", "Class", "Length (bp)", "Circularity", "Replicon", "Relaxase", "Mobility", "Nearest plasmid/cluster"],
+        display_rows,
+        max_cols=8,
+    )
+
+
 def checkm2_rows(files: list[Path]) -> list[dict[str, str]]:
     rows_out = []
     for path in files:
@@ -895,9 +984,30 @@ def taxburst_report_links(files: list[Path]) -> list[tuple[str, str, str]]:
         sample_id = re.sub(r"_taxburst\.html$", "", path.name, flags=re.IGNORECASE)
         if sample_id == path.name:
             sample_id = path.stem
-        href = f"../taxonomy/{quote(sample_id)}/{quote(path.name)}"
+        href = f"../taxonomic_profiling/{quote(sample_id)}/taxburst/{quote(path.name)}"
         links.append((sample_id, path.name, href))
     return sorted(links)
+
+
+def taxburst_report_previews(files: list[Path]) -> str:
+    previews = []
+    for path in files:
+        if path.suffix.lower() != ".html" or "taxburst" not in path.name.lower():
+            continue
+        try:
+            report_html = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            continue
+        sample_id = re.sub(r"_taxburst\.html$", "", path.name, flags=re.IGNORECASE)
+        previews.append(
+            f'<article class="embedded-report"><h3>{esc(sample_id)}</h3>'
+            f'<iframe title="TaxBurst report for {esc(sample_id)}" '
+            f'sandbox="allow-scripts allow-same-origin allow-popups" '
+            f'srcdoc="{html.escape(report_html, quote=True)}"></iframe></article>'
+        )
+        if len(previews) >= 4:
+            break
+    return "".join(previews)
 
 
 def interactive_report_links(files: list[Path]) -> str:
@@ -918,8 +1028,10 @@ def interactive_report_links(files: list[Path]) -> str:
         "<th>Sample</th><th>Report file</th><th>Link</th><th>Published path</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
     )
+    previews = taxburst_report_previews(files)
     return (
-        "<p>Interactive TaxBurst reports are published alongside this summary under the taxonomy results directory.</p>"
+        "<p>Interactive TaxBurst results are embedded below and are also available as standalone reports.</p>"
+        + (f'<div class="taxburst-grid">{previews}</div>' if previews else "")
         + table
     )
 
@@ -1019,6 +1131,10 @@ def main() -> int:
     if mag_figures:
         quality_title = "Assembly Quality Overview" if args.workflow == "isolate_analysis" else "MAG Quality And Coverage Overview"
         sections.append(section(quality_title, mag_figures))
+
+    plasmid_figures = plasmid_classification_section(files, args.workflow)
+    if plasmid_figures:
+        sections.append(section("Circular Contigs And Plasmid Classification", plasmid_figures))
 
     preview_blocks = []
     for path, preview, stats in table_previews(files):
@@ -1187,6 +1303,25 @@ h3 {{
   margin: 22px 0 10px;
   font-size: 1rem;
   color: #293845;
+}}
+.taxburst-grid {{
+  display: grid;
+  gap: 24px;
+  margin: 20px 0;
+}}
+.embedded-report {{
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px 16px;
+  background: var(--soft);
+}}
+.embedded-report iframe {{
+  display: block;
+  width: 100%;
+  height: 720px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
 }}
 .lead {{
   font-size: 1.08rem;

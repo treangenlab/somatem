@@ -11,6 +11,7 @@ include { TAXONOMIC_PROFILING } from '../subworkflows/local/taxonomic-profiling.
 include { GENOME_DYNAMICS } from '../subworkflows/local/genome-dynamics.nf'
 include { ASSEMBLY_MAGS } from '../subworkflows/local/assembly_mags.nf'
 include { ISOLATE_ANALYSIS } from '../subworkflows/local/isolate_analysis.nf'
+include { SEQSCREEN_DSL2 } from '../subworkflows/local/seqscreen.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,25 +25,40 @@ workflow SOMATEM {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = Channel.empty()
-    ch_key_outputs = Channel.empty()
+    ch_versions = channel.empty()
+    ch_key_outputs = channel.empty()
+    ch_deacon_index = channel.empty()
+    ch_lemur_db = channel.empty()
+    ch_checkm2_db = channel.empty()
+    ch_bakta_db = channel.empty()
+    ch_kraken2_db = channel.empty()
+    ch_singlem_db = channel.empty()
+    ch_taxonomy_db = channel.empty()
 
     // -----------------------------------------------------------------
     // Download databases
     // -----------------------------------------------------------------
-    DOWNLOAD_DBS(params.analysis_type, params.hostile_index, 
-            params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
-
+    if (params.analysis_type != "seqscreen") {
+        DOWNLOAD_DBS(params.analysis_type, params.deacon_index,
+                params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
+        ch_deacon_index = DOWNLOAD_DBS.out.ch_deacon_index
+        ch_lemur_db = DOWNLOAD_DBS.out.ch_lemur_db
+        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db
+        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
+        ch_kraken2_db = DOWNLOAD_DBS.out.ch_kraken2_db
+        ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
+        ch_taxonomy_db = DOWNLOAD_DBS.out.ch_taxonomy_db
+    }
 
     // -----------------------------------------------------------------
     // Pre-processing and quality control on raw reads
     // -----------------------------------------------------------------
-    contam_ref = Channel.value([]) // empty channel for now
-    if (params.analysis_type == "isolate-analysis") {
+    contam_ref = channel.value([]) // empty channel for now
+    if (params.analysis_type == "isolate-analysis" || params.analysis_type == "seqscreen") {
         ch_clean_reads = ch_samplesheet
-        ch_summary_reports = Channel.empty()
+        ch_summary_reports = channel.empty()
     } else {
-        PREPROCESSING(ch_samplesheet, DOWNLOAD_DBS.out.ch_hostile_db, contam_ref)
+        PREPROCESSING(ch_samplesheet, ch_deacon_index, contam_ref)
         ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
         ch_clean_reads = PREPROCESSING.out.clean_reads
         ch_summary_reports = PREPROCESSING.out.summary_report
@@ -53,7 +69,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     
     if (params.analysis_type == "taxonomic-profiling") {
-        TAXONOMIC_PROFILING(ch_clean_reads, DOWNLOAD_DBS.out.ch_lemur_db)
+        TAXONOMIC_PROFILING(ch_clean_reads, ch_taxonomy_db)
         ch_versions = ch_versions.mix(TAXONOMIC_PROFILING.out.versions)
         
         ch_key_outputs = ch_key_outputs.mix(TAXONOMIC_PROFILING.out.taxonomy_report)
@@ -66,9 +82,7 @@ workflow SOMATEM {
     if (params.analysis_type == "assembly") {
 
         // unpack the downloaded databases
-        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.map { _meta, db -> db } // strip meta, only take db
-        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
-        ch_singlem_db = DOWNLOAD_DBS.out.ch_singlem_db
+        ch_checkm2_db = ch_checkm2_db.map { _meta, db -> db } // strip meta, only take db
 
         ASSEMBLY_MAGS(ch_clean_reads, 
                 ch_checkm2_db,
@@ -87,9 +101,7 @@ workflow SOMATEM {
     // -----------------------------------------------------------------
     if (params.analysis_type == "isolate-analysis") {
 
-        ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
-        ch_kraken2_db = DOWNLOAD_DBS.out.ch_kraken2_db
-        ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db.map { _meta, db -> db }
+        ch_checkm2_db = ch_checkm2_db.map { _meta, db -> db }
 
         ISOLATE_ANALYSIS(
             ch_clean_reads,
@@ -106,6 +118,29 @@ workflow SOMATEM {
         )
         ch_key_outputs = ch_key_outputs.mix(ISOLATE_ANALYSIS.out.btyper3_results)
         ch_summary_reports = ch_summary_reports.mix(ISOLATE_ANALYSIS.out.summary_report)
+    }
+
+    // -----------------------------------------------------------------
+    // SeqScreen pathogen detection
+    // -----------------------------------------------------------------
+    if (params.analysis_type == "seqscreen") {
+
+        if (!params.seqscreen_db) {
+            error("SeqScreen analysis requires --seqscreen_db to point at a SeqScreen database directory.")
+        }
+
+        ch_seqscreen_db = channel.value(file(params.seqscreen_db, checkIfExists: true))
+
+        SEQSCREEN_DSL2(
+            ch_clean_reads,
+            ch_seqscreen_db
+        )
+        ch_versions = ch_versions.mix(SEQSCREEN_DSL2.out.versions)
+        ch_key_outputs = ch_key_outputs.mix(
+            SEQSCREEN_DSL2.out.report,
+            SEQSCREEN_DSL2.out.taxonomic_results,
+            SEQSCREEN_DSL2.out.functional_results
+        )
     }
 
     // -----------------------------------------------------------------

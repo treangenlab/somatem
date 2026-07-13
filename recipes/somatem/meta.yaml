@@ -16,7 +16,7 @@ build:
 requirements:
   run:
     - bash
-    - nextflow >=25.10.2
+    - nextflow >=26.04.6
     - micromamba
     - coreutils
     - gdrive

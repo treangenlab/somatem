@@ -12,6 +12,11 @@ process KRAKEN2_KRAKEN2 {
         pattern: "*.{txt,fastq.gz}",
         enabled: params.analysis_type == "isolate-analysis"
 
+    publishDir { "${params.outdir}/taxonomic_profiling/${meta.id}/kraken2" },
+        mode: params.publish_dir_mode,
+        pattern: "*.{txt,fastq.gz}",
+        enabled: params.analysis_type == "taxonomic-profiling"
+
     input:
     tuple val(meta), path(reads)
     path  db

@@ -1,4 +1,4 @@
-// nf-core compatibility processes to minimize boilerplate while testing
+// Vendored-module compatibility processes to minimize boilerplate while testing
 
 // Convert a filepath channel into a tuple including meta (id = filename, single_end = true)
 // Supports: 
@@ -20,7 +20,7 @@ workflow convert_to_nfcore_tuple {
         // read multiple files from directory and return a channel with multiple streams?
         tuple_out = channel.fromPath("${reads}/*.fastq.gz")
             .map { r ->
-                def meta = [:] // Use dummy values; meta is required by nf-core modules
+                def meta = [:] // Use dummy values; meta is required by vendored modules
                 meta.id = r.simpleName
                 meta.single_end = true
                 return [meta, r] }
@@ -29,7 +29,7 @@ workflow convert_to_nfcore_tuple {
         // combine multiple files into a single tuple
         tuple_out = channel.fromPath(reads).collect()
             .map { files ->
-                    def meta = [:] // Use dummy values; meta is required by nf-core modules
+                    def meta = [:] // Use dummy values; meta is required by vendored modules
                     meta.id = files.collect{f -> f.simpleName}.join("_")
                     meta.single_end = true
                     return [meta, files] }
@@ -37,7 +37,7 @@ workflow convert_to_nfcore_tuple {
     else {
         tuple_out = channel.fromPath(reads)
             .map { r ->
-                def meta = [:] // Use dummy values; meta is required by nf-core modules
+                def meta = [:] // Use dummy values; meta is required by vendored modules
                 meta.id = r.simpleName
                 meta.single_end = true
                 return [meta, r] }

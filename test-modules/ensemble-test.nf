@@ -21,7 +21,7 @@ workflow {
     reads_ch = convert_to_nfcore_tuple(params.reads)
     
     GANON_CLASSIFY(reads_ch, params.ganon_db)
-    KRAKEN2_KRAKEN2(reads_ch, params.kraken2_db)
+    KRAKEN2_KRAKEN2(reads_ch, params.kraken2_db, false, false)
     
     // LEMUR(reads_ch)
 }

@@ -1,0 +1,87 @@
+process SEQSCREEN_FORMAT_REPORT {
+    tag "$meta.id"
+    label 'process_single'
+
+    conda "${projectDir}/modules/local/seqscreen/format_report/environment.yml"
+
+    publishDir { "${params.outdir}" },
+        mode: params.publish_dir_mode,
+        saveAs: { filename ->
+            def name = filename.toString()
+            if (name == "seqscreen_output" || name == "versions.yml") {
+                return null
+            }
+            name.replaceFirst(/^seqscreen_output\/?/, '')
+        }
+
+    input:
+    tuple val(meta), path(report), path(html), path(taxonomy), path(functional), path(reference_inference)
+    path db
+    path assets
+    val mode
+
+    output:
+    tuple val(meta), path("seqscreen_output"), emit: outdir
+    tuple val(meta), path("seqscreen_output/report_generation/*seqscreen_report.tsv"), emit: report
+    tuple val(meta), path("seqscreen_output/report_generation/seqscreen_report.html"), emit: html
+    tuple val(meta), path("seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt"), emit: taxonomic_results
+    tuple val(meta), path("seqscreen_output/functional_annotation/functional_assignments/functional_results.txt"), emit: functional_results
+    path "versions.yml", emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def format = params.seqscreen_format ?: 1
+    def confidence = params.seqscreen_taxonomy_confidence_threshold ?: 0
+    def filter_taxon = params.seqscreen_filter_taxon ?: '""'
+    def keep_taxon = params.seqscreen_keep_taxon ?: '""'
+    def publish_root = params.outdir.toString().startsWith('/') ? params.outdir : "${launchDir}/${params.outdir}"
+    """
+    mkdir -p seqscreen_output/report_generation
+    mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
+    mkdir -p seqscreen_output/functional_annotation/functional_assignments
+    mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment/inference_working
+
+    cp ${report} seqscreen_output/report_generation/
+    cp ${html} seqscreen_output/report_generation/seqscreen_report.html
+    cp ${taxonomy} seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
+    cp ${functional} seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
+    cp -R ${reference_inference} seqscreen_output/reference_inference
+
+    python3 ${assets}/scripts/format.py \\
+        --report seqscreen_output/report_generation \\
+        --format ${format} \\
+        --mode ${mode} \\
+        --databases=${db} \\
+        --taxonomy_confidence_threshold=${confidence} \\
+        --filter-taxon ${filter_taxon} \\
+        --keep-taxon ${keep_taxon}
+
+    mkdir -p "${publish_root}"
+    cp -R seqscreen_output/. "${publish_root}/"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        seqscreen: "4.5"
+    END_VERSIONS
+    """
+
+    stub:
+    def publish_root = params.outdir.toString().startsWith('/') ? params.outdir : "${launchDir}/${params.outdir}"
+    """
+    mkdir -p seqscreen_output/report_generation
+    mkdir -p seqscreen_output/taxonomic_identification/taxonomic_assignment
+    mkdir -p seqscreen_output/functional_annotation/functional_assignments
+    touch seqscreen_output/report_generation/seqscreen_report.tsv
+    touch seqscreen_output/report_generation/seqscreen_report.html
+    touch seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt
+    touch seqscreen_output/functional_annotation/functional_assignments/functional_results.txt
+    mkdir -p "${publish_root}"
+    cp -R seqscreen_output/. "${publish_root}/"
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        seqscreen: "stub"
+    END_VERSIONS
+    """
+}

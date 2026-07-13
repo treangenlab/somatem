@@ -3,6 +3,8 @@
 process MAGNET {
     tag "$meta.id"
     label 'process_high'
+
+    publishDir { "${params.outdir}/taxonomic_profiling/${meta.id}/magnet" }, mode: params.publish_dir_mode, pattern: '*.csv'
     
     conda "${moduleDir}/dependencies.yml" // for locked env use: locked-spec-file.txt
 
@@ -36,5 +38,4 @@ process MAGNET {
 
     
 }
-
 

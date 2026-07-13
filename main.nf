@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    nf-core/somatem
+    Somatem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/somatem
+    Github : https://github.com/treangenlab/somatem
 ----------------------------------------------------------------------------------------
 */
 
@@ -24,7 +24,6 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_soma
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// TODO nf-core: Remove this line if you don't need a FASTA file
 //   This is an example of how to use getGenomeAttribute() to fetch parameters
 //   from igenomes.config using `--genome`
 params.fasta = getGenomeAttribute('fasta')
@@ -108,23 +107,6 @@ workflow {
         file(".nextflow.log").copyTo("${outdir}/pipeline_info/nextflow_${reportSuffix}.log")
     }
 
-    publish:
-    mapping         = ORCHESTRATE_SOMATEM.out.mapping
-    binning_tables  = ORCHESTRATE_SOMATEM.out.bin_tables
-    binning_fasta   = ORCHESTRATE_SOMATEM.out.bin_fasta
-}
-
-output {
-    
-    mapping {
-        path { "mapping/" }
-    }
-    binning_tables {
-        path { "binning/tables/" }
-    }
-    binning_fasta {
-        path { "binning/fasta/" }
-     }
 }
 
 

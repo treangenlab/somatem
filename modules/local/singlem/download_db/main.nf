@@ -4,14 +4,16 @@ process SINGLEM_DOWNLOAD_DB {
     tag 'singlem_download_db'
     label 'process_single'
 
-    // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-        'biocontainers/YOUR-TOOL-HERE' }"
+        'docker://wwood/singlem:0.21.3':
+        'wwood/singlem:0.21.3' }"
+
+    input:
+    val metapackage_name
 
     output:
-    path "*.smpkg.zb"    , emit: singlem_db
+    path "${metapackage_name}", emit: singlem_db
     path "versions.yml"  , emit: versions
 
     when:
@@ -19,7 +21,7 @@ process SINGLEM_DOWNLOAD_DB {
 
     script:
     def args = task.ext.args ?: ''
-    singlem_db_local = "./"
+    def singlem_db_local = "./"
 
     """
     
@@ -28,6 +30,8 @@ process SINGLEM_DOWNLOAD_DB {
     singlem data \\
         $args \\
         --output-directory $singlem_db_local
+
+    test -d ${metapackage_name}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -48,8 +52,8 @@ process SINGLEM_DOWNLOAD_DB {
     """
     echo $args
 
-    mkdir -p stub.smpkg.zb
-    touch stub.smpkg.zb/CONTENTS.json
+    mkdir -p ${metapackage_name}
+    touch ${metapackage_name}/CONTENTS.json
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

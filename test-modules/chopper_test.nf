@@ -17,8 +17,7 @@ workflow {
     // testing convert_to_nfcore_tuple
     ch_reads = convert_to_nfcore_tuple(params.reads)
 
-    contam_ref = Channel.of([])
+    contam_ref = channel.of([])
 
     CHOPPER(ch_reads, contam_ref)
 }
-    

@@ -1,0 +1,6 @@
+name: deacon_fetch
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::deacon=0.15.0

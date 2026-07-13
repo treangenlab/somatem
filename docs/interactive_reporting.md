@@ -53,12 +53,12 @@ assets/
   "nodes": [
     {"id": "input", "label": "Input FastQ"},
     {"id": "qc", "label": "NanoPlot QC"},
-    {"id": "hostile", "label": "Host Removal"},
+    {"id": "deacon", "label": "Host Removal"},
     // ... other processes
   ],
   "links": [
     {"source": "input", "target": "qc"},
-    {"source": "qc", "target": "hostile"},
+    {"source": "qc", "target": "deacon"},
     // ... process connections
   ]
 }

@@ -17,7 +17,7 @@ process SEQSCREEN {
     tuple val(meta), path("seqscreen_output/taxonomic_identification/taxonomic_assignment/taxonomic_results.txt"), emit: taxonomic_results
     tuple val(meta), path("seqscreen_output/seqscreen.log"), emit: log
     
-    tuple val("${task.process}"), val('seqscreen'), eval("seqscreen --version"), topic: versions, emit: versions_seqscreen
+    tuple val("${task.process}"), val('seqscreen'), eval("echo 4.5"), topic: versions, emit: versions_seqscreen
 
     when:
     task.ext.when == null || task.ext.when
