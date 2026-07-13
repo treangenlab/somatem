@@ -6,7 +6,7 @@ Somatem supports Oxford Nanopore and PacBio 16S, metagenomic, isolate, and longi
 
 ## Install
 
-Somatem supports Linux and macOS and requires Nextflow 26 or newer. Install the Bioconda package with conda, mamba, or micromamba:
+Somatem supports Linux and macOS and requires Nextflow 26.04.6 or newer. Install the Bioconda package with conda, mamba, or micromamba:
 
 ```bash
 micromamba create -n somatem -c bioconda somatem

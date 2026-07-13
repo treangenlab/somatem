@@ -47,21 +47,25 @@ run_nextflow() {
 }
 
 require_main_nextflow() {
-    local version major minor
+    local version major minor patch
 
     version="$(${NEXTFLOW_BIN} -version 2>/dev/null | awk '/version/ { print $2; exit }')"
     major="${version%%.*}"
     minor="${version#*.}"
     minor="${minor%%.*}"
+    patch="${version#*.*.}"
+    patch="${patch%%[^0-9]*}"
 
-    if [[ -z "${version}" || -z "${major}" || -z "${minor}" ]]; then
+    if [[ -z "${version}" || ! "${major}" =~ ^[0-9]+$ || ! "${minor}" =~ ^[0-9]+$ || ! "${patch}" =~ ^[0-9]+$ ]]; then
         echo "Error: could not determine Nextflow version." >&2
         exit 1
     fi
 
-    if (( major < 26 )); then
+    if (( 10#${major} < 26 ||
+          (10#${major} == 26 && 10#${minor} < 4) ||
+          (10#${major} == 26 && 10#${minor} == 4 && 10#${patch} < 6) )); then
         cat >&2 <<EOF
-Error: this Somatem main workflow requires Nextflow >=26.0.0, but found ${version}.
+Error: this Somatem main workflow requires Nextflow >=26.04.6, but found ${version}.
 
 Utility commands such as 'download_example_data' can still run with older Nextflow.
 Update Nextflow, then re-run this command.
