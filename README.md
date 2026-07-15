@@ -1,3 +1,7 @@
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/somatem/badges/version.svg)](https://anaconda.org/bioconda/somatem)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/somatem/badges/latest_release_date.svg)](https://anaconda.org/bioconda/somatem)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/somatem/badges/downloads.svg)](https://anaconda.org/bioconda/somatem)
+
 # somatem
 
 **A modular, open-source Nextflow toolkit for long-read microbiome analysis.**
