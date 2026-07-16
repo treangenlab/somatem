@@ -1,0 +1,32 @@
+name: "seqscreen_linclust"
+description: Cluster quality-filtered reads at 99% identity and emit representative sequences
+keywords:
+  - seqscreen
+  - clustering
+  - fastq
+  - fasta
+tools:
+  - "mmseqs2":
+      description: Ultra-fast and sensitive sequence search and clustering suite
+      homepage: "https://github.com/soedinglab/MMseqs2"
+      documentation: "https://mmseqs.com/latest/userguide.pdf"
+      licence: "['GPL-3.0-or-later']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fastq:
+      type: file
+      description: Quality-filtered FASTQ input
+      pattern: "*.fastq"
+output:
+  - fasta:
+      type: file
+      description: Representative sequence from every MMseqs2 linclust cluster
+      pattern: "*.representatives.fasta"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

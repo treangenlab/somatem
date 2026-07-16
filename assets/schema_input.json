@@ -20,6 +20,13 @@
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
+            "fastq": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "SeqScreen FASTQ file cannot contain spaces and must have extension '.fq', '.fastq', '.fq.gz' or '.fastq.gz'"
+            },
             "fasta": {
                 "type": "string",
                 "format": "file-path",
@@ -31,6 +38,7 @@
         "required": ["sample"],
         "oneOf": [
             { "required": ["fastq_1"] },
+            { "required": ["fastq"] },
             { "required": ["fasta"] }
         ]
     }

@@ -1,0 +1,31 @@
+name: "seqscreen_filter_fastq"
+description: Filter SeqScreen FASTQ reads by mean quality without length filtering
+keywords:
+  - seqscreen
+  - fastq
+  - quality
+tools:
+  - "chopper":
+      description: Fast quality and length filtering for long-read FASTQ data
+      homepage: "https://github.com/wdecoster/chopper"
+      documentation: "https://github.com/wdecoster/chopper"
+      licence: "['MIT']"
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - fastq:
+      type: file
+      description: Plain or gzip-compressed FASTQ input
+      pattern: "*.{fastq,fq,fastq.gz,fq.gz}"
+output:
+  - fastq:
+      type: file
+      description: FASTQ reads with mean Phred quality at least 15
+      pattern: "*.q15.fastq"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@ppreshant"

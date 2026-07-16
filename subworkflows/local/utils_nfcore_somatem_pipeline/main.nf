@@ -99,17 +99,21 @@ workflow PIPELINE_INITIALISATION {
             .map { row ->
                 def sample = row.sample?.toString()?.trim()
                 def fasta = row.fasta?.toString()?.trim()
+                def fastq = row.fastq?.toString()?.trim()
 
                 if (!sample) {
                     error("SeqScreen samplesheet row is missing required field: sample")
                 }
-                if (!fasta) {
-                    error("SeqScreen samplesheet row for sample '${sample}' is missing required field: fasta")
+                if (!fasta && !fastq) {
+                    error("SeqScreen samplesheet row for sample '${sample}' must provide either fasta or fastq")
+                }
+                if (fasta && fastq) {
+                    error("SeqScreen samplesheet row for sample '${sample}' must provide only one of fasta or fastq")
                 }
 
                 tuple(
                     [id: sample, single_end: true],
-                    file(fasta, checkIfExists: true)
+                    file(fasta ?: fastq, checkIfExists: true)
                 )
             }
             .set { ch_samplesheet }

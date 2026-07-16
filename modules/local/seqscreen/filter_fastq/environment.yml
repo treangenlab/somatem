@@ -1,0 +1,6 @@
+---
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::chopper=0.13.0

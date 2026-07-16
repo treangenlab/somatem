@@ -87,7 +87,7 @@ Commands:
   taxonomic_profiling (tax)     Run taxonomic profiling (defaults to metagenomic data)
   assembly_mags (mag)           Run the main pipeline with assembly analysis
   isolate_analysis (isolate)    Run isolate assembly, classification, annotation, and typing
-  seqscreen                     Run SeqScreen pathogen detection from FASTA inputs
+  seqscreen                     Run SeqScreen pathogen detection from FASTA or FASTQ inputs
   genome_dynamics (dynamics)    Run the main pipeline with genome dynamics analysis
   download_example_data (examples) Download example datasets, including sample sheets and config yaml files
   pre_download_databases (dbs)     Download required databases based on config file
@@ -131,6 +131,10 @@ Input CSV format:
 SeqScreen input CSV format:
   sample,fasta
   sample1,assets/data/other_tools_files/more_files/seqscreen/10_seqs.fasta
+
+  Or, for automatic Q15 filtering and 99% read clustering:
+  sample,fastq
+  sample1,reads.fastq.gz
 EOF
 }
 

@@ -11,6 +11,8 @@
 */
 
 include { SEQSCREEN_VALIDATE_FASTA } from '../../modules/local/seqscreen/validate_fasta/main'
+include { SEQSCREEN_FILTER_FASTQ } from '../../modules/local/seqscreen/filter_fastq/main'
+include { SEQSCREEN_LINCLUST } from '../../modules/local/seqscreen/linclust/main'
 include { SEQSCREEN_WINDOW_FASTA } from '../../modules/local/seqscreen/window_fasta/main'
 include { SEQSCREEN_BOWTIE2 as SEQSCREEN_BOWTIE2_BSAT } from '../../modules/local/seqscreen/bowtie2/main'
 include { SEQSCREEN_BOWTIE2 as SEQSCREEN_BOWTIE2_VFDB } from '../../modules/local/seqscreen/bowtie2/main'
@@ -36,7 +38,7 @@ include { SEQSCREEN_FORMAT_REPORT } from '../../modules/local/seqscreen/format_r
 workflow SEQSCREEN_DSL2 {
 
     take:
-    ch_fasta
+    ch_sequences
     ch_db
 
     main:
@@ -48,24 +50,44 @@ workflow SEQSCREEN_DSL2 {
         error("SeqScreen DSL2 currently supports --seqscreen_mode fast or sensitive. Got: ${params.seqscreen_mode}")
     }
 
-    ch_input = ch_fasta.map { record ->
+    ch_input = ch_sequences.map { record ->
         def values = record instanceof List ? record : [record]
         if (values.size() < 2) {
-            error("SEQSCREEN_DSL2 expects [meta, fasta].")
+            error("SEQSCREEN_DSL2 expects [meta, sequence file].")
         }
 
         def meta = values[0]
-        def fasta = values[1]
-        if (fasta instanceof Collection) {
-            if (fasta.size() != 1) {
-                error("SeqScreen expects one FASTA per sample '${meta.id}', got ${fasta.size()} files.")
+        def sequence = values[1]
+        if (sequence instanceof Collection) {
+            if (sequence.size() != 1) {
+                error("SeqScreen expects one FASTA or FASTQ per sample '${meta.id}', got ${sequence.size()} files.")
             }
-            fasta = fasta[0]
+            sequence = sequence[0]
         }
-        tuple(meta, fasta)
+
+        def name = sequence.name.toString().toLowerCase()
+        if (!(name ==~ /.*\.(fa|fasta|fna)(\.gz)?$/) && !(name ==~ /.*\.(fq|fastq)(\.gz)?$/)) {
+            error("SeqScreen input for sample '${meta.id}' must be FASTA or FASTQ (optionally gzip-compressed). Got: ${sequence.name}")
+        }
+
+        tuple(meta, sequence)
     }
 
-    SEQSCREEN_VALIDATE_FASTA(ch_input, ch_assets)
+    ch_input_by_type = ch_input.branch { meta, sequence ->
+        fastq: sequence.name.toString().toLowerCase() ==~ /.*\.(fq|fastq)(\.gz)?$/
+        fasta: true
+    }
+
+    SEQSCREEN_FILTER_FASTQ(ch_input_by_type.fastq)
+    SEQSCREEN_LINCLUST(SEQSCREEN_FILTER_FASTQ.out.fastq)
+    ch_versions = ch_versions.mix(
+        SEQSCREEN_FILTER_FASTQ.out.versions,
+        SEQSCREEN_LINCLUST.out.versions
+    )
+
+    ch_fasta_input = ch_input_by_type.fasta.mix(SEQSCREEN_LINCLUST.out.fasta)
+
+    SEQSCREEN_VALIDATE_FASTA(ch_fasta_input, ch_assets)
     ch_versions = ch_versions.mix(SEQSCREEN_VALIDATE_FASTA.out.versions)
 
     if (params.seqscreen_window) {
