@@ -101,7 +101,7 @@ WORKFLOW_COPY = {
         ),
         "methods": [
             "Long reads were classified with Kraken2 against the configured standard-8 database.",
-            "Long-read assemblies were generated with Autocycler and Flye, then polished with short reads when hybrid assembly was enabled.",
+            "Long-read assemblies from the selected assemblers were combined with Autocycler, then polished with short reads when hybrid assembly was enabled.",
             "Final isolate assemblies were evaluated with CheckM2 to estimate completeness and contamination.",
             "MOB-suite classified assembly contigs against plasmid reference and marker databases and reconstructed predicted plasmids.",
             "Assemblies were annotated with Bakta, and optional BTyper3 typing was run from the Bakta genome FASTA output.",

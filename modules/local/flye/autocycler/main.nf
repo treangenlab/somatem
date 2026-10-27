@@ -9,7 +9,7 @@ process FLYE_AUTOCYCLER {
         pattern: "*.{fasta,gfa,log,txt}"
 
     input:
-    tuple val(meta), path(subsample_reads), path(genome_size_file), val(species)
+    tuple val(meta), path(subsample_reads), path(genome_size_file), val(species), val(read_type)
 
     output:
     tuple val(meta), path("*.assembly.fasta"), emit: assembly
@@ -20,10 +20,12 @@ process FLYE_AUTOCYCLER {
     task.ext.when == null || task.ext.when
 
     script:
-    def mode = params.autocycler_flye_mode ?: params.flye_mode ?: 'nano-hq'
+    def mode = params.autocycler_flye_mode ?: (!params.autocycler_read_type ? params.flye_mode : null) ?: [
+        ont_r10: 'nano-hq', ont_r9: 'nano-raw', pacbio_hifi: 'pacbio-hifi', pacbio_clr: 'pacbio-raw'
+    ][read_type]
     def flye_mode = mode.startsWith('--') ? mode : "--${mode}"
     def args = params.autocycler_flye_args ?: ''
-    def prefix = "${meta.id}.${meta.subsample_id}"
+    def prefix = "${meta.id}.flye.${meta.subsample_id}"
     """
     genome_size=\$(cat ${genome_size_file})
     genome_size_arg=""

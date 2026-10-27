@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - minimap2=2.29
+  - minimap2>=2.29

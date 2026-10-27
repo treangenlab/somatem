@@ -12,7 +12,7 @@ In the Mermaid diagrams, arrows show data or control dependencies rather than a 
 | [`16S`](#16s-profiling) | `TAXONOMIC_PROFILING`, 16S branch | Yes | Emu, Taxburst |
 | [`taxonomic_profiling`](#metagenomic-taxonomic-profiling) | `TAXONOMIC_PROFILING`, metagenomic branch | Yes | Sylph, LEMUR/MAGNET, Kraken2, or SingleM |
 | [`assembly_mags`](#assembly-and-mag-recovery) | `ASSEMBLY_MAGS` | Yes | Flye, AGB, minimap2, samtools, binning tools, Pigeon, CheckM2, SingleM, Bakta |
-| [`isolate_analysis`](#isolate-analysis) | `ISOLATE_ANALYSIS` | No | Autocycler, Flye, Kraken2, optional polishing, CheckM2, MOB-suite, Bakta, optional BTyper3 |
+| [`isolate_analysis`](#isolate-analysis) | `ISOLATE_ANALYSIS` | No | Autocycler, Flye, Myloasm, metaMDBG, Canu, Hifiasm, Kraken2, optional polishing, CheckM2, MOB-suite, Bakta, optional BTyper3 |
 | [`seqscreen`](#seqscreen) | `SEQSCREEN_DSL2` | No | SeqScreen modules, aligners, classifiers, Python reporting |
 | [`genome_dynamics`](#genome-dynamics) | `GENOME_DYNAMICS` | Yes | Rhea, Bandage |
 | [`pre_download_databases`](#database-preparation) | Standalone entry → `DOWNLOAD_DBS` | No | Database-specific download tools |
@@ -45,7 +45,7 @@ flowchart TD
     I --> O["ORCHESTRATE_SOMATEM to SOMATEM — Nextflow"]
     O --> Q{"Analysis type — Nextflow"}
     Q -->|isolate| ID["Prepare databases — DOWNLOAD_DBS"]
-    ID --> IA["Isolate analysis — Autocycler / Flye and downstream tools"]
+    ID --> IA["Isolate analysis — Autocycler consensus and downstream tools"]
     Q -->|SeqScreen| SQ["Check existing database; SeqScreen DSL2 — Nextflow and SeqScreen modules"]
     Q -->|other analyses| D["Prepare required databases — DOWNLOAD_DBS"]
     D --> P["Shared preprocessing — NanoPlot / optional Deacon / Chopper"]
@@ -382,8 +382,8 @@ Source-visible limitations to preserve when reading this diagram:
 | 4 | Kraken2 — `KRAKEN2_KRAKEN2`; optional pigz | Classify the original long reads; produce a classification report and, by default, per-read assignments. Saving classified/unclassified FASTQ files is optional; pigz compresses them when requested. This branch does not filter the assembly input. [Source](../modules/nf-core/kraken2/kraken2/main.nf) |
 | 5 | Autocycler genome-size helper — `AUTOCYCLER_SUBSAMPLE` | Use the supplied sample genome size, then the global fallback; estimate it from the reads when neither is present. Record the value in `genome_size.txt`. [Source](../modules/local/autocycler/subsample/main.nf) |
 | 6 | Autocycler subsample — `AUTOCYCLER_SUBSAMPLE` | Generate multiple long-read subsets, retaining sample metadata. [Source](../modules/local/autocycler/subsample/main.nf) |
-| 7 | Nextflow `flatMap`, Flye — `FLYE_AUTOCYCLER` | Assign each subset a `subsample_id`; assemble every subset independently. Copy out its assembly FASTA, assembly graph GFA, Flye log, and assembly information. [Workflow](../subworkflows/local/isolate_analysis.nf), [module](../modules/local/flye/autocycler/main.nf) |
-| 8 | Nextflow `groupTuple` | Group the Flye FASTA assemblies by sample and remove subset-specific metadata before consensus assembly. [Source](../subworkflows/local/isolate_analysis.nf) |
+| 7 | Nextflow `flatMap`; `FLYE_AUTOCYCLER`, `MYLOASM_AUTOCYCLER`, `METAMDBG_AUTOCYCLER`, `CANU_AUTOCYCLER`, `HIFIASM_AUTOCYCLER` | Assign each subset a `subsample_id`; run every selected assembler on every subset. Publish FASTAs with sample, assembler, and subset in their filenames, plus available graphs/logs. The four added modules use Autocycler helper to standardize outputs, including Canu circular-overlap trimming and Hifiasm primary-contig extraction. [Workflow](../subworkflows/local/isolate_analysis.nf), [Flye](../modules/local/flye/autocycler/main.nf), [Myloasm](../modules/local/myloasm/autocycler/main.nf), [metaMDBG](../modules/local/metamdbg/autocycler/main.nf), [Canu](../modules/local/canu/autocycler/main.nf), [Hifiasm](../modules/local/hifiasm/autocycler/main.nf) |
+| 8 | Nextflow `mix`, `groupTuple` | Combine the selected assemblers' FASTA channels, group all subsets by sample, and remove subset-specific metadata before consensus assembly. [Source](../subworkflows/local/isolate_analysis.nf) |
 | 9 | Autocycler compress — `AUTOCYCLER_CONSENSUS` | Stage the per-subset assemblies and compress them into the Autocycler graph representation. [Source](../modules/local/autocycler/consensus/main.nf) |
 | 10 | Autocycler cluster — same process | Cluster that representation; discover QC-pass clusters. Stop this process with an error if none exist. [Source](../modules/local/autocycler/consensus/main.nf) |
 | 11 | Autocycler trim, then resolve — same process | Run both operations for each QC-pass cluster. [Source](../modules/local/autocycler/consensus/main.nf) |
@@ -410,7 +410,7 @@ flowchart TD
     K["4. Kraken2: classify original long reads; optional pigz"]
     G["5. Autocycler helper: genome size if missing"]
     S["6. Autocycler: subsample long reads"]
-    F["7. Nextflow + Flye: assemble every subset"]
+    F["7. Each selected assembler on every subset:<br/>Flye, Myloasm, metaMDBG, Canu, Hifiasm"]
     GR["8. Nextflow: group assemblies by sample"]
     C["9. Autocycler: compress"]
     CL["10. Autocycler: cluster"]
@@ -466,7 +466,19 @@ flowchart TD
     VER["Tool version files from executed processes"] --> REPORT
 ```
 
-**Defaults and branch details.** [Current configuration](../nextflow.config) selects four Autocycler subsets, Flye as the only implemented assembler, hybrid polishing off, Polypolish and Pypolca enabled within the hybrid branch, and optional BTyper3 off. Bakta's isolate defaults skip small-ORF searching through [module configuration](../conf/modules.config). Kraken2 saves read assignments but not classified/unclassified FASTQs by default. The normal route is therefore long reads → Autocycler/Flye consensus → final FASTA → parallel quality/annotation/plasmid analysis, with read classification alongside assembly.
+**Defaults and branch details.** [Current configuration](../nextflow.config) selects four Autocycler subsets and all five assemblers (`flye,myloasm,metamdbg,canu,hifiasm`), producing 20 candidate assemblies per sample when every task succeeds. Assembly runs in both long-read-only and hybrid modes; `--hybrid_assembly true` additionally enables short-read polishing. Hybrid polishing and optional BTyper3 are off by default; Polypolish and Pypolca are enabled within the hybrid branch. Bakta's isolate defaults skip small-ORF searching through [module configuration](../conf/modules.config). Kraken2 saves read assignments but not classified/unclassified FASTQs by default. The normal route is long reads → assemblies from each selected assembler → Autocycler consensus → final FASTA → parallel quality/annotation/plasmid analysis, with read classification alongside assembly.
+
+Choose a subset with `--autocycler_assemblers flye,canu,hifiasm`; unknown names and empty selections fail early. For ONT R10, use `--autocycler_read_type ont_r10` (the effective default). For PacBio HiFi, use `--autocycler_read_type pacbio_hifi`. When unset, the read type is inferred from `autocycler_flye_mode` or `flye_mode`. An explicit `autocycler_flye_mode` overrides Flye's mode. ONT R9 / PacBio CLR require selecting `flye,canu`; the other three integrations expect high-accuracy reads. Each assembler accepts extra options through `--autocycler_<assembler>_args`. Canu runs locally inside its Nextflow task, with its thread and memory limits set from the task resources. Running all five tools increases compute use; each has a separate Conda environment with minimum-version (`>=`) dependency constraints.
+
+For ONT R10 hybrid input:
+
+```bash
+somatem isolate_analysis -i samples.csv -o results --hybrid_assembly true \
+    --autocycler_read_type ont_r10 \
+    --autocycler_assemblers flye,myloasm,metamdbg,canu,hifiasm -resume
+```
+
+**Contig-count errors.** Autocycler retains its default check rejecting a mean above 25 contigs per candidate assembly. More assemblers do not guarantee passing this check. If the existing Flye candidates average 404.8 contigs, adding four equally sized groups averaging one contig still leaves a mean of about 81.8. Inspect the published candidate assemblies and the existing Kraken2/quality outputs to investigate fragmentation or mixed input, and use `autocycler_assemblers` to select appropriate candidates. The workflow does not automatically discard candidates or raise this threshold. See the upstream [cluster documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster) and [assembler helper documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-helper).
 
 **Outputs.** Under `<outdir>/isolate_analysis/<sample>/`, the modules publish `autocycler/subsamples`, `autocycler/assemblies`, consensus data, `assembly`, `classification/kraken2`, optional `polishing`, `quality/checkm2`, `plasmids`, `annotation/bakta`, and optional `typing/btyper3`. The cross-sample report is `<outdir>/summary_reports/isolate_analysis_summary_report.html`. Actual file presence depends on enabled branches and optional outputs.
 
@@ -474,9 +486,9 @@ flowchart TD
 
 - The standard CSV reader copies neither `shortread_depth`, `short_read_depth`, nor `illumina_depth` into metadata. Its Pypolca depth gate therefore normally sees unknown depth and allows the sample; it does not compute short-read coverage. Metadata supplied directly by another caller can activate the gate. [Parser](../subworkflows/local/utils_nfcore_somatem_pipeline/main.nf), [gate](../subworkflows/local/isolate_analysis.nf).
 - The isolate database route invokes the fixed Standard-8 download process even when `kraken2_db` is configured; the custom-database selection is implemented in the taxonomic-profiling route only. CheckM2 and Bakta download processes are also invoked by this route; resume/caching behavior is separate from that source-level fact. [Database routing](../subworkflows/local/download_databases.nf).
-- The settings named `assembler`, `autocycler_assemblers`, and `shortread_mapper` do not switch implementations in this traced workflow: it calls Flye and BWA directly. The `species` input is passed through assembly inputs but is not used by the called assembly commands. [Workflow](../subworkflows/local/isolate_analysis.nf), [Flye module](../modules/local/flye/autocycler/main.nf).
+- The settings named `assembler` and `shortread_mapper` do not switch implementations in this traced workflow: consensus uses Autocycler and short-read mapping uses BWA. `autocycler_assemblers` selects the candidate assemblers. The `species` input is passed through assembly inputs but is not used by the called assembly commands. [Workflow](../subworkflows/local/isolate_analysis.nf).
 - Empty Bakta placeholder outputs are permitted, so an emitted filename alone does not establish successful annotation plotting or populated content. [Bakta module](../modules/local/bakta/bakta/main.nf).
-- These are static source observations. The pipeline and external scientific tools were not executed; internal algorithms within those external tools are outside this trace.
+- Assembly routing can be checked with `python3 tests/check_autocycler.py` (requires Nextflow, Java, and Python). It executes the assembly section with mocked scientific tools to check sample grouping, assembler selection, read modes, and failure handling. It does not validate biological assembly quality or the complete isolate route; internal algorithms within the external tools are outside this trace.
 
 ## SeqScreen
 

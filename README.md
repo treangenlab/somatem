@@ -51,7 +51,7 @@ echo "source /path/to/somatem_env.sh" >> ~/.bashrc
 | `somatem 16S` | Emu 16S profiling and Taxburst visualization |
 | `somatem taxonomic_profiling` | Metagenomic profiling with Sylph (default), Lemur + MAGnet, Kraken2, or SingleM |
 | `somatem assembly_mags` | Flye assembly, AGB graph reports, read mapping, Pigeon/SemiBin2 binning, CheckM2 assessment, SingleM appraisal, and Bakta annotation |
-| `somatem isolate_analysis` | Autocycler/Flye isolate assembly, optional Polypolish/Pypolca hybrid polishing, Kraken2, CheckM2, MOB-suite, Bakta, and BTyper3 |
+| `somatem isolate_analysis` | Autocycler consensus from Flye, Myloasm, metaMDBG, Canu, and Hifiasm, optional Polypolish/Pypolca hybrid polishing, Kraken2, CheckM2, MOB-suite, Bakta, and BTyper3 |
 | `somatem seqscreen` | Modular SeqScreen pathogen and functional screening with TSV and portable HTML reports |
 | `somatem genome_dynamics` | Rhea structural-variation and horizontal-gene-transfer analysis with Bandage output |
 | `somatem pre_download_databases` | Pre-fetch databases for the selected configuration |

@@ -8,7 +8,7 @@
 
       ONT/PacBio long reads
         -> Autocycler long-read subsampling
-        -> multiple Flye assemblies
+        -> multiple assemblies from each selected long-read assembler
         -> Autocycler consensus assembly
         -> final long-read-first assembly
 
@@ -35,6 +35,10 @@
 
 include { AUTOCYCLER_SUBSAMPLE }   from '../../modules/local/autocycler/subsample/main'
 include { FLYE_AUTOCYCLER }        from '../../modules/local/flye/autocycler/main'
+include { MYLOASM_AUTOCYCLER }     from '../../modules/local/myloasm/autocycler/main'
+include { METAMDBG_AUTOCYCLER }    from '../../modules/local/metamdbg/autocycler/main'
+include { CANU_AUTOCYCLER }        from '../../modules/local/canu/autocycler/main'
+include { HIFIASM_AUTOCYCLER }     from '../../modules/local/hifiasm/autocycler/main'
 include { AUTOCYCLER_CONSENSUS }   from '../../modules/local/autocycler/consensus/main'
 include { BWA_MEM_FOR_POLYPOLISH } from '../../modules/local/bwa/mem_for_polypolish/main'
 include { POLYPOLISH_FILTER }      from '../../modules/local/polypolish/filter/main'
@@ -60,6 +64,25 @@ workflow ISOLATE_ANALYSIS {
 
     main:
     ch_versions = channel.empty()
+
+    def supported_assemblers = ['flye', 'myloasm', 'metamdbg', 'canu', 'hifiasm']
+    def assemblers = (params.autocycler_assemblers ?: '').toString().split(',')
+        .collect { it.trim().toLowerCase() }.findAll { it }.unique()
+    if (!assemblers || assemblers.any { !supported_assemblers.contains(it) }) {
+        error("--autocycler_assemblers must be a comma-separated selection of: ${supported_assemblers.join(', ')}")
+    }
+
+    def flye_mode = (params.autocycler_flye_mode ?: params.flye_mode ?: 'nano-hq').replaceFirst(/^--/, '')
+    def read_type = params.autocycler_read_type ?: [
+        'nano-hq': 'ont_r10', 'nano-raw': 'ont_r9', 'nano-corr': 'ont_r9',
+        'pacbio-hifi': 'pacbio_hifi', 'pacbio-raw': 'pacbio_clr', 'pacbio-corr': 'pacbio_clr'
+    ][flye_mode]
+    if (!(read_type in ['ont_r10', 'ont_r9', 'pacbio_hifi', 'pacbio_clr'])) {
+        error('--autocycler_read_type must be ont_r10, ont_r9, pacbio_hifi, or pacbio_clr.')
+    }
+    if (read_type in ['ont_r9', 'pacbio_clr'] && assemblers.any { it in ['myloasm', 'metamdbg', 'hifiasm'] }) {
+        error('Myloasm, metaMDBG and Hifiasm require high-accuracy reads. For ONT R9 or PacBio CLR, select --autocycler_assemblers flye,canu.')
+    }
 
     def hybrid_assembly = params.hybrid_assembly instanceof Boolean
         ? params.hybrid_assembly
@@ -104,14 +127,38 @@ workflow ISOLATE_ANALYSIS {
         def reads = subsample_reads instanceof List ? subsample_reads : [subsample_reads]
         reads.withIndex().collect { read, idx ->
             def subsample_meta = meta + [subsample_id: String.format('subsample_%02d', idx + 1)]
-            tuple(subsample_meta, read, genome_size_file, species)
+            tuple(subsample_meta, read, genome_size_file, species, read_type)
         }
     }
 
-    FLYE_AUTOCYCLER(ch_subsampled_reads)
-    ch_versions = ch_versions.mix(FLYE_AUTOCYCLER.out.versions)
+    ch_assemblies = channel.empty()
+    if ('flye' in assemblers) {
+        FLYE_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(FLYE_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(FLYE_AUTOCYCLER.out.versions)
+    }
+    if ('myloasm' in assemblers) {
+        MYLOASM_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(MYLOASM_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(MYLOASM_AUTOCYCLER.out.versions)
+    }
+    if ('metamdbg' in assemblers) {
+        METAMDBG_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(METAMDBG_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(METAMDBG_AUTOCYCLER.out.versions)
+    }
+    if ('canu' in assemblers) {
+        CANU_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(CANU_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(CANU_AUTOCYCLER.out.versions)
+    }
+    if ('hifiasm' in assemblers) {
+        HIFIASM_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(HIFIASM_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(HIFIASM_AUTOCYCLER.out.versions)
+    }
 
-    ch_grouped_assemblies = FLYE_AUTOCYCLER.out.assembly
+    ch_grouped_assemblies = ch_assemblies
         .map { meta, assembly -> tuple(meta.id, meta, assembly) }
         .groupTuple(by: 0)
         .map { sample_id, metas, assemblies ->

@@ -412,6 +412,45 @@
             "type": "string",
             "default": "nano-hq"
         },
+        "autocycler_assemblers": {
+            "type": "string",
+            "default": "flye,myloasm,metamdbg,canu,hifiasm",
+            "description": "Comma-separated assemblers to run on each isolate long-read subsample. Supported: flye, myloasm, metamdbg, canu, hifiasm."
+        },
+        "autocycler_read_type": {
+            "type": "string",
+            "enum": ["ont_r10", "ont_r9", "pacbio_hifi", "pacbio_clr"],
+            "description": "Long-read type for isolate assembly. When unset, inferred from autocycler_flye_mode or flye_mode (default: ont_r10). Myloasm, metaMDBG and Hifiasm require ont_r10 or pacbio_hifi."
+        },
+        "autocycler_flye_mode": {
+            "type": "string",
+            "description": "Override Flye's read mode for isolate assembly; otherwise selected from the Autocycler read type."
+        },
+        "autocycler_flye_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Flye arguments for isolate assembly."
+        },
+        "autocycler_myloasm_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Myloasm arguments passed through Autocycler helper."
+        },
+        "autocycler_metamdbg_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional metaMDBG arguments passed through Autocycler helper."
+        },
+        "autocycler_canu_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Canu arguments passed through Autocycler helper. maxMemory defaults to the task's memory allocation."
+        },
+        "autocycler_hifiasm_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Hifiasm arguments passed through Autocycler helper."
+        },
         "sample_environment": {
             "type": "string",
             "default": "human_gut"
