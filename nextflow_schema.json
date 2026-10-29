@@ -412,6 +412,13 @@
             "type": "string",
             "default": "nano-hq"
         },
+        "autocycler_max_contigs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "default": 25,
+            "description": "Maximum mean contigs per input assembly accepted by Autocycler compress and cluster. Raising this threshold does not correct fragmentation or contamination."
+        },
         "autocycler_assemblers": {
             "type": "string",
             "default": "flye,myloasm,metamdbg,canu,hifiasm",

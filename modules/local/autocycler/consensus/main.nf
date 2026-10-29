@@ -33,10 +33,12 @@ process AUTOCYCLER_CONSENSUS {
 
     autocycler compress \\
         -i assemblies \\
-        -a autocycler_out
+        -a autocycler_out \\
+        --max_contigs ${params.autocycler_max_contigs}
 
     autocycler cluster \\
-        -a autocycler_out
+        -a autocycler_out \\
+        --max_contigs ${params.autocycler_max_contigs}
 
     shopt -s nullglob
     clusters=(autocycler_out/clustering/qc_pass/cluster_*)

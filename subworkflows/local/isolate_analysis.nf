@@ -65,6 +65,11 @@ workflow ISOLATE_ANALYSIS {
     main:
     ch_versions = channel.empty()
 
+    def max_contigs = params.autocycler_max_contigs?.toString()
+    if (!max_contigs?.isLong() || max_contigs.toLong() < 1 || max_contigs.toLong() > 4294967295L) {
+        error('--autocycler_max_contigs must be a positive integer (1 to 4294967295).')
+    }
+
     def supported_assemblers = ['flye', 'myloasm', 'metamdbg', 'canu', 'hifiasm']
     def assemblers = (params.autocycler_assemblers ?: '').toString().split(',')
         .collect { it.trim().toLowerCase() }.findAll { it }.unique()

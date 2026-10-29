@@ -67,6 +67,7 @@ elif args[0] == 'subsample':
     for i in range(1, int(value('--count')) + 1):
         shutil.copyfile(value('--reads'), output / f'sample_{i:02d}.fastq')
 elif args[0] == 'compress':
+    assert value('--max_contigs') == os.environ['SOMATEM_TEST_MAX_CONTIGS'], args
     inputs = sorted(Path(value('-i')).glob('*.fasta'))
     assert len(inputs) == int(os.environ['SOMATEM_TEST_CANDIDATES']), inputs
     headers = [p.read_text().splitlines()[0] for p in inputs]
@@ -77,6 +78,7 @@ elif args[0] == 'compress':
     (output / 'consensus_assembly.fasta').write_text(''.join(p.read_text() for p in inputs))
     (output / 'consensus_assembly.gfa').write_text('S\t1\tACGT\n')
 elif args[0] == 'cluster':
+    assert value('--max_contigs') == os.environ['SOMATEM_TEST_MAX_CONTIGS'], args
     cluster = Path(value('-a')) / 'clustering/qc_pass/cluster_001'
     cluster.mkdir(parents=True)
     (cluster / '5_final.gfa').write_text('S\t1\tACGT\n')
@@ -105,6 +107,7 @@ def main():
     # Fail if the documented default list and the runtime configuration diverge.
     schema = json.loads((ROOT / "nextflow_schema.json").read_text())
     assert schema["properties"]["autocycler_assemblers"]["default"] == ",".join(ASSEMBLERS)
+    assert schema["properties"]["autocycler_max_contigs"]["default"] == 25
 
     with tempfile.TemporaryDirectory(prefix="somatem-autocycler-check-") as tmp:
         tmp = Path(tmp)
@@ -142,6 +145,8 @@ singularity.enabled = false
 
         cases = [
             ("default", ASSEMBLERS, "ont_r10", [], None),
+            ("max_contigs", ["flye"], "ont_r10",
+             ["--autocycler_assemblers", "flye", "--autocycler_max_contigs", "200"], None),
             ("subset", ["canu", "hifiasm"], "pacbio_hifi",
              ["--autocycler_assemblers", " Canu, HIFIASM, canu ", "--autocycler_read_type", "pacbio_hifi"], None),
             ("legacy_hifi", ["flye"], "pacbio_hifi",
@@ -156,6 +161,11 @@ singularity.enabled = false
             ("low_accuracy", [], "ont_r9", ["--autocycler_read_type", "ont_r9"], "require high-accuracy reads"),
             ("empty_assembly", ["myloasm"], "ont_r10", ["--autocycler_assemblers", "myloasm"], "Error executing process"),
         ]
+        cases += [
+            (f"bad_max_contigs_{i}", [], "ont_r10", ["--autocycler_max_contigs", value],
+             "--autocycler_max_contigs must be a positive integer")
+            for i, value in enumerate(["0", "-1", "1.5", "typo", "4294967296"])
+        ]
         for name, assemblers, read_type, options, error in cases:
             output = tmp / name
             env = dict(os.environ, PATH=f"{binaries}{os.pathsep}{os.environ['PATH']}",
@@ -166,6 +176,7 @@ singularity.enabled = false
                            "pacbio_hifi": "--pacbio-hifi", "pacbio_clr": "--pacbio-raw"
                        }[read_type],
                        SOMATEM_TEST_CANDIDATES=str(4 * len(assemblers)),
+                       SOMATEM_TEST_MAX_CONTIGS="200" if name == "max_contigs" else "25",
                        SOMATEM_TEST_EMPTY="myloasm" if name == "empty_assembly" else "")
             result = subprocess.run(
                 [nextflow, "-C", str(config), "run", str(workflow),

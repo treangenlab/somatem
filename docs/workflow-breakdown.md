@@ -478,7 +478,13 @@ somatem isolate_analysis -i samples.csv -o results --hybrid_assembly true \
     --autocycler_assemblers flye,myloasm,metamdbg,canu,hifiasm -resume
 ```
 
-**Contig-count errors.** Autocycler retains its default check rejecting a mean above 25 contigs per candidate assembly. More assemblers do not guarantee passing this check. If the existing Flye candidates average 404.8 contigs, adding four equally sized groups averaging one contig still leaves a mean of about 81.8. Inspect the published candidate assemblies and the existing Kraken2/quality outputs to investigate fragmentation or mixed input, and use `autocycler_assemblers` to select appropriate candidates. The workflow does not automatically discard candidates or raise this threshold. See the upstream [cluster documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster) and [assembler helper documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-helper).
+**Contig-count errors.** `--autocycler_max_contigs` sets the maximum mean contigs per candidate assembly accepted by both Autocycler compress and cluster (positive integer; default: 25). For example, a reported mean of 175.1 is below a threshold of 200:
+
+```bash
+somatem isolate_analysis -i samples.csv -o results --autocycler_max_contigs 200 -resume
+```
+
+Raising the threshold only permits these steps to proceed; it does not correct fragmentation or contamination. Inspect the published candidate assemblies and Kraken2 outputs to investigate the cause, and use `autocycler_assemblers` to select appropriate candidates. More assemblers do not guarantee passing this check. The workflow does not automatically discard candidates or raise the threshold. See the upstream [compress documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-compress), [cluster documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster), and [assembler helper documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-helper).
 
 **Outputs.** Under `<outdir>/isolate_analysis/<sample>/`, the modules publish `autocycler/subsamples`, `autocycler/assemblies`, consensus data, `assembly`, `classification/kraken2`, optional `polishing`, `quality/checkm2`, `plasmids`, `annotation/bakta`, and optional `typing/btyper3`. The cross-sample report is `<outdir>/summary_reports/isolate_analysis_summary_report.html`. Actual file presence depends on enabled branches and optional outputs.
 
