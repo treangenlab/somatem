@@ -70,6 +70,11 @@ workflow ISOLATE_ANALYSIS {
         error('--autocycler_max_contigs must be a positive integer (1 to 4294967295).')
     }
 
+    def min_genome_fraction = params.autocycler_min_genome_fraction?.toString()
+    if (!min_genome_fraction?.isDouble() || !(min_genome_fraction.toDouble() > 0 && min_genome_fraction.toDouble() <= 1)) {
+        error('--autocycler_min_genome_fraction must be greater than 0 and at most 1.')
+    }
+
     def supported_assemblers = ['flye', 'myloasm', 'metamdbg', 'canu', 'hifiasm']
     def assemblers = (params.autocycler_assemblers ?: '').toString().split(',')
         .collect { it.trim().toLowerCase() }.findAll { it }.unique()
@@ -166,9 +171,12 @@ workflow ISOLATE_ANALYSIS {
     ch_grouped_assemblies = ch_assemblies
         .map { meta, assembly -> tuple(meta.id, meta, assembly) }
         .groupTuple(by: 0)
-        .map { sample_id, metas, assemblies ->
+        .join(AUTOCYCLER_SUBSAMPLE.out.reads.map { meta, reads, genome_size_file, species ->
+            tuple(meta.id, genome_size_file)
+        }, by: 0)
+        .map { sample_id, metas, assemblies, genome_size_file ->
             def base_meta = metas[0].findAll { key, value -> !['subsample_id', 'seed'].contains(key) }
-            tuple(base_meta, assemblies)
+            tuple(base_meta, assemblies, genome_size_file)
         }
 
     AUTOCYCLER_CONSENSUS(ch_grouped_assemblies)

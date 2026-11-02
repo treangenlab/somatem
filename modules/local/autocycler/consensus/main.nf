@@ -12,7 +12,7 @@ process AUTOCYCLER_CONSENSUS {
         pattern: "*.autocycler.{fasta,gfa}"
 
     input:
-    tuple val(meta), path(assemblies)
+    tuple val(meta), path(assemblies), path(genome_size_file)
 
     output:
     tuple val(meta), path("*.autocycler.fasta"), emit: assembly
@@ -55,6 +55,33 @@ process AUTOCYCLER_CONSENSUS {
     autocycler combine \\
         -a autocycler_out \\
         -i autocycler_out/clustering/qc_pass/cluster_*/5_final.gfa
+
+    # A surviving small cluster does not establish that the genome was recovered.
+    awk -v expected="\$(cat '${genome_size_file}')" \\
+        -v minimum=${params.autocycler_min_genome_fraction} '
+        BEGIN {
+            expected = tolower(expected)
+            gsub(/^[[:space:]]+|[[:space:]]+\$/, "", expected)
+            scale = expected ~ /k\$/ ? 1000 : expected ~ /m\$/ ? 1000000 : expected ~ /g\$/ ? 1000000000 : 1
+            sub(/[kmg]\$/, "", expected)
+            if (expected !~ /^[+]?([0-9]+([.][0-9]*)?|[.][0-9]+)(e[+-]?[0-9]+)?\$/ || expected * scale < 0.5) {
+                print "Invalid genome size for consensus validation: " expected > "/dev/stderr"
+                invalid = 1
+                exit 1
+            }
+            expected = int(expected * scale + 0.5)
+        }
+        !/^>/ { gsub(/[[:space:]]/, ""); bases += length(\$0) }
+        END {
+            if (invalid) exit 1
+            printf "Consensus size: %.0f bp; expected: %.0f bp; recovered: %.2f%%\\n", bases, expected, 100 * bases / expected > "/dev/stderr"
+            if (bases == 0 || bases < expected * minimum) {
+                printf "Incomplete Autocycler consensus: below %.2f%% of the expected genome size.\\n", 100 * minimum > "/dev/stderr"
+                print "Inspect input_assemblies.yaml and clustering/{qc_pass,qc_fail} in autocycler_out in this task work directory; a chromosome cluster may have failed QC." > "/dev/stderr"
+                exit 1
+            }
+        }
+    ' autocycler_out/consensus_assembly.fasta
 
     cp autocycler_out/consensus_assembly.fasta ${prefix}.autocycler.fasta
     cp autocycler_out/consensus_assembly.gfa ${prefix}.autocycler.gfa
