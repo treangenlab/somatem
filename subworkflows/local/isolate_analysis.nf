@@ -10,6 +10,7 @@
         -> Autocycler long-read subsampling
         -> multiple assemblies from each selected long-read assembler
         -> Autocycler consensus assembly
+           (on failure/incomplete consensus: CheckM2-ranked input assembly)
         -> final long-read-first assembly
 
       Optional hybrid polishing when params.hybrid_assembly is true:
@@ -40,6 +41,7 @@ include { METAMDBG_AUTOCYCLER }    from '../../modules/local/metamdbg/autocycler
 include { CANU_AUTOCYCLER }        from '../../modules/local/canu/autocycler/main'
 include { HIFIASM_AUTOCYCLER }     from '../../modules/local/hifiasm/autocycler/main'
 include { AUTOCYCLER_CONSENSUS }   from '../../modules/local/autocycler/consensus/main'
+include { AUTOCYCLER_FALLBACK }    from '../../modules/local/autocycler/fallback/main'
 include { BWA_MEM_FOR_POLYPOLISH } from '../../modules/local/bwa/mem_for_polypolish/main'
 include { POLYPOLISH_FILTER }      from '../../modules/local/polypolish/filter/main'
 include { POLYPOLISH_POLISH }      from '../../modules/local/polypolish/polish/main'
@@ -182,6 +184,20 @@ workflow ISOLATE_ANALYSIS {
     AUTOCYCLER_CONSENSUS(ch_grouped_assemblies)
     ch_versions = ch_versions.mix(AUTOCYCLER_CONSENSUS.out.versions)
 
+    // A reusable value channel supplies the same database to every sample/task.
+    ch_checkm2_database = ch_checkm2_db.first()
+    ch_fallback = AUTOCYCLER_CONSENSUS.out.fallback.map { meta, assemblies, warning ->
+        log.warn(warning.text.trim())
+        tuple(meta, assemblies, warning)
+    }
+    AUTOCYCLER_FALLBACK(ch_fallback, ch_checkm2_database)
+    ch_versions = ch_versions.mix(AUTOCYCLER_FALLBACK.out.versions)
+    AUTOCYCLER_FALLBACK.out.selection.view { meta, report ->
+        def selected = report.readLines().drop(1).find { it.tokenize('\t').last() == 'True' }.tokenize('\t')
+        "WARNING: Sample ${meta.id}: continuing with ${selected[1]} (completeness ${selected[2]}%, contamination ${selected[3]}%, score ${selected[4]})."
+    }
+    ch_selected_assembly = AUTOCYCLER_CONSENSUS.out.assembly.mix(AUTOCYCLER_FALLBACK.out.assembly)
+
     def run_polypolish = hybrid_assembly && (params.run_polypolish instanceof Boolean
         ? params.run_polypolish
         : (params.run_polypolish == null ? true : params.run_polypolish.toString().toBoolean()))
@@ -198,7 +214,7 @@ workflow ISOLATE_ANALYSIS {
             tuple(meta.id, meta, short_reads_1, short_reads_2, genome_size ?: '', species ?: '')
         }
 
-        ch_autocycler_with_short_reads = AUTOCYCLER_CONSENSUS.out.assembly
+        ch_autocycler_with_short_reads = ch_selected_assembly
             .map { meta, assembly -> tuple(meta.id, meta, assembly) }
             .join(ch_short_reads, by: 0)
             .map { sample_id, meta, assembly, read_meta, short_reads_1, short_reads_2, genome_size, species ->
@@ -210,7 +226,7 @@ workflow ISOLATE_ANALYSIS {
     }
 
     if (hybrid_assembly && !run_polypolish && run_pypolca) {
-        ch_polished_with_short_reads = AUTOCYCLER_CONSENSUS.out.assembly
+        ch_polished_with_short_reads = ch_selected_assembly
             .map { meta, assembly -> tuple(meta.id, meta, assembly) }
             .join(ch_short_reads, by: 0)
             .map { sample_id, meta, assembly, read_meta, short_reads_1, short_reads_2, genome_size, species ->
@@ -221,9 +237,9 @@ workflow ISOLATE_ANALYSIS {
     }
 
     if (!hybrid_assembly) {
-        ch_polished_assembly = AUTOCYCLER_CONSENSUS.out.assembly
+        ch_polished_assembly = ch_selected_assembly
     } else if (!run_polypolish) {
-        ch_polished_assembly = AUTOCYCLER_CONSENSUS.out.assembly
+        ch_polished_assembly = ch_selected_assembly
     }
 
     if (hybrid_assembly && run_polypolish) {
@@ -290,7 +306,7 @@ workflow ISOLATE_ANALYSIS {
     FASTA_FINALIZE(ch_final_candidate_assembly)
     ch_versions = ch_versions.mix(FASTA_FINALIZE.out.versions)
 
-    CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
+    CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_database)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
     MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly)
@@ -318,6 +334,7 @@ workflow ISOLATE_ANALYSIS {
             FASTA_FINALIZE.out.assembly,
             AUTOCYCLER_CONSENSUS.out.assembly,
             AUTOCYCLER_CONSENSUS.out.graph,
+            AUTOCYCLER_FALLBACK.out.selection,
             BAKTA_BAKTA.out.tsv,
             BAKTA_BAKTA.out.json,
             BAKTA_BAKTA.out.png,
@@ -352,6 +369,7 @@ workflow ISOLATE_ANALYSIS {
     autocycler_assembly  = AUTOCYCLER_CONSENSUS.out.assembly
     autocycler_graph     = AUTOCYCLER_CONSENSUS.out.graph
     autocycler_outdir    = AUTOCYCLER_CONSENSUS.out.outdir
+    assembly_selection  = AUTOCYCLER_FALLBACK.out.selection
     kraken2_report       = KRAKEN2_KRAKEN2.out.report
     bakta_tsv            = BAKTA_BAKTA.out.tsv
     bakta_json           = BAKTA_BAKTA.out.json

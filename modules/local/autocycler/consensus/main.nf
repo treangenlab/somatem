@@ -10,13 +10,18 @@ process AUTOCYCLER_CONSENSUS {
     publishDir { "${params.outdir}/isolate_analysis/${meta.id}/assembly" },
         mode: params.publish_dir_mode,
         pattern: "*.autocycler.{fasta,gfa}"
+    publishDir { "${params.outdir}/isolate_analysis/${meta.id}/autocycler" },
+        mode: params.publish_dir_mode,
+        pattern: "*.autocycler.{log,warning.txt}"
 
     input:
     tuple val(meta), path(assemblies), path(genome_size_file)
 
     output:
-    tuple val(meta), path("*.autocycler.fasta"), emit: assembly
-    tuple val(meta), path("*.autocycler.gfa")  , emit: graph
+    tuple val(meta), path("*.autocycler.fasta"), emit: assembly, optional: true
+    tuple val(meta), path("*.autocycler.gfa")  , emit: graph, optional: true
+    tuple val(meta), path(assemblies), path("*.autocycler.warning.txt"), emit: fallback, optional: true
+    tuple val(meta), path("*.autocycler.log"), emit: log
     tuple val(meta), path("autocycler_out")    , emit: outdir
     path "versions.yml"                        , emit: versions
 
@@ -31,6 +36,9 @@ process AUTOCYCLER_CONSENSUS {
         cp "\${assembly}" assemblies/
     done
 
+    # Run in a separate shell so errexit still applies inside this conditional.
+    # Keep partial diagnostics even when compress/cluster/resolve/combine fails.
+    if bash -euo pipefail > ${prefix}.autocycler.log 2>&1 <<'RUN_AUTOCYCLER'
     autocycler compress \\
         -i assemblies \\
         -a autocycler_out \\
@@ -83,8 +91,17 @@ process AUTOCYCLER_CONSENSUS {
         }
     ' autocycler_out/consensus_assembly.fasta
 
-    cp autocycler_out/consensus_assembly.fasta ${prefix}.autocycler.fasta
-    cp autocycler_out/consensus_assembly.gfa ${prefix}.autocycler.gfa
+    test -s autocycler_out/consensus_assembly.gfa
+    RUN_AUTOCYCLER
+    then
+        cp autocycler_out/consensus_assembly.fasta ${prefix}.autocycler.fasta
+        cp autocycler_out/consensus_assembly.gfa ${prefix}.autocycler.gfa
+    else
+        echo "Sample ${prefix}: Autocycler failed or produced an incomplete consensus. Selecting an input assembly using CheckM2 completeness - 5 * contamination. See ${prefix}.autocycler.log and autocycler_out for diagnostics." > ${prefix}.autocycler.warning.txt
+        cat ${prefix}.autocycler.warning.txt >&2
+    fi
+    mkdir -p autocycler_out
+    cat ${prefix}.autocycler.log >&2
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
