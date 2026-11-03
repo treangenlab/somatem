@@ -191,7 +191,7 @@ workflow {
     ISOLATE_ANALYSIS(channel.of(
         tuple([id: 'alpha'], file('alpha.fastq'), file('alpha_R1.fastq'), file('alpha_R2.fastq'), '100', ''),
         tuple([id: 'beta'], file('beta.fastq'), file('beta_R1.fastq'), file('beta_R2.fastq'), '100', '')
-    ), channel.value(file('db')), channel.value(file('db')), channel.of(file('checkm2.dmnd')))
+    ), channel.value(file('db')), channel.value(file('db')), channel.value(file('checkm2.dmnd')))
 }
 """)
         config = tmp / "check.config"

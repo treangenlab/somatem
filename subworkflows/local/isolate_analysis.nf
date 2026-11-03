@@ -60,7 +60,7 @@ workflow ISOLATE_ANALYSIS {
     ch_reads
     ch_bakta_db
     ch_kraken2_db
-    ch_checkm2_db
+    ch_checkm2_db // value channel: path(db), reusable across samples/tasks
     // tuple val(meta), path(long_reads), path(short_reads_1), path(short_reads_2),
     //       val(expected_genome_size), val(species)
 
@@ -184,13 +184,11 @@ workflow ISOLATE_ANALYSIS {
     AUTOCYCLER_CONSENSUS(ch_grouped_assemblies)
     ch_versions = ch_versions.mix(AUTOCYCLER_CONSENSUS.out.versions)
 
-    // A reusable value channel supplies the same database to every sample/task.
-    ch_checkm2_database = ch_checkm2_db.first()
     ch_fallback = AUTOCYCLER_CONSENSUS.out.fallback.map { meta, assemblies, warning ->
         log.warn(warning.text.trim())
         tuple(meta, assemblies, warning)
     }
-    AUTOCYCLER_FALLBACK(ch_fallback, ch_checkm2_database)
+    AUTOCYCLER_FALLBACK(ch_fallback, ch_checkm2_db)
     ch_versions = ch_versions.mix(AUTOCYCLER_FALLBACK.out.versions)
     AUTOCYCLER_FALLBACK.out.selection.view { meta, report ->
         def selected = report.readLines().drop(1).find { it.tokenize('\t').last() == 'True' }.tokenize('\t')
@@ -306,7 +304,7 @@ workflow ISOLATE_ANALYSIS {
     FASTA_FINALIZE(ch_final_candidate_assembly)
     ch_versions = ch_versions.mix(FASTA_FINALIZE.out.versions)
 
-    CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_database)
+    CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
     MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly)
