@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
+import time
 
 tool = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -35,24 +36,16 @@ if args in [['--version'], ['-V']] or (tool in ['metaMDBG', 'bwa'] and not args)
 
 read_type = os.environ['SOMATEM_TEST_READ_TYPE']
 failure = os.environ.get('SOMATEM_TEST_FAILURE', '')
+length_case = os.environ.get('SOMATEM_TEST_LENGTH_CASE', '')
 if tool == 'checkm2':
     inputs = [Path(p) for p in args[args.index('--input') + 1:args.index('--output-directory')]]
     output = Path(value('--output-directory'))
-    candidates = output.name == 'candidate_quality'
-    assert len(inputs) == (int(os.environ['SOMATEM_TEST_CANDIDATES']) if candidates else 1), inputs
-    assert len({p.name.split('.')[0] for p in inputs}) == 1, inputs
+    assert len(inputs) == 1, inputs
     assert value('--database_path') == 'checkm2.dmnd', args
     output.mkdir()
-    rows = ['Name\tCompleteness\tContamination\n']
-    for p in sorted(inputs, reverse=True):
-        quality = {'flye': (99, 5), 'myloasm': (98, 1), 'metamdbg': (99.5, 3),
-                   'canu': (93, 0), 'hifiasm': (97, 1)}[p.name.split('.')[1]] if candidates else (98, 1)
-        if failure == 'invalid_quality':
-            quality = ('nan', 0)
-        rows.append(f'{p.stem}\t{quality[0]}\t{quality[1]}\n')
-    if failure == 'missing_quality':
-        rows.pop()
-    (output / 'quality_report.tsv').write_text(''.join(rows))
+    (output / 'quality_report.tsv').write_text(
+        f'Name\tCompleteness\tContamination\n{inputs[0].stem}\t98\t1\n'
+    )
     sys.exit(0)
 if tool == 'kraken2':
     Path(value('--report')).write_text('100.00\t1\t1\tS\t1\tmock\n')
@@ -105,7 +98,8 @@ if tool == 'flye' or args[0] == 'helper':
         (output / 'assembly_info.txt').touch()
     else:
         assert value('--read_type') == read_type, args
-        assert value('--genome_size') == '100', args
+        expected_size = 'invalid' if failure == 'invalid_genome_size' and Path(value('--reads')).read_text().strip() == 'alpha' else '100'
+        assert value('--genome_size') == expected_size, args
         assert value('--test-arg') == assembler, args
         if assembler == 'canu':
             assert 'maxMemory=1' in args, args
@@ -119,20 +113,47 @@ if tool == 'flye' or args[0] == 'helper':
     assert value('--threads') == '1', args
     sample = reads.read_text().strip()
     subset = reads.stem.replace('sample_', 'subsample_')
-    fasta.write_text(f'>{sample}:{assembler}:{subset}:{read_type}\n' + 'A' * 25 + '\n')
+    marker = os.environ.get('SOMATEM_TEST_CONSENSUS_MARKER')
+    if marker and sample == 'beta' and assembler == 'flye' and subset == 'subsample_01':
+        # Leave the other executor slots free; alpha must progress before beta finishes.
+        deadline = time.monotonic() + 30
+        while not Path(marker).exists():
+            assert time.monotonic() < deadline, 'Alpha consensus waited for unfinished beta assembly'
+            time.sleep(0.1)
+    length = 100
+    if sample == 'alpha' and length_case:
+        if length_case == 'all_short_candidates' or assembler != 'flye':
+            length = 79
+        elif subset == 'subsample_02':
+            length = 80
+    header = f'>{sample}:{assembler}:{subset}:{read_type}'
+    sequence = header + '\n' + 'A' * length + '\n'
+    if length_case == 'short_candidates' and sample == 'alpha' and assembler == 'flye' and subset == 'subsample_01':
+        # Both contigs are short individually; their whole-assembly length passes.
+        sequence = header + '\n' + 'A' * 40 + '\n' + header + ':part2\n' + 'A' * 60 + '\n'
+    fasta.write_text(sequence)
     graph.write_text('S\t1\tACGT\n')
 elif args[0] == 'subsample':
     output = Path(value('--out_dir'))
     output.mkdir()
     for i in range(1, int(value('--count')) + 1):
         shutil.copyfile(value('--reads'), output / f'sample_{i:02d}.fastq')
+    if failure == 'invalid_genome_size' and Path(value('--reads')).read_text().strip() == 'alpha':
+        Path('genome_size.txt').write_text('invalid\n')
 elif args[0] == 'compress':
+    assert value('--threads') == '1', args
     assert value('--max_contigs') == os.environ['SOMATEM_TEST_MAX_CONTIGS'], args
     inputs = sorted(Path(value('-i')).glob('*.fasta'))
-    assert len(inputs) == int(os.environ['SOMATEM_TEST_CANDIDATES']), inputs
+    expected_count = 4 if length_case == 'short_candidates' and sample == 'alpha' else int(os.environ['SOMATEM_TEST_CANDIDATES'])
+    assert len(inputs) == expected_count, inputs
+    if length_case == 'all_short_candidates' and sample == 'alpha':
+        sys.exit('Short candidates reached compress')
     headers = [p.read_text().splitlines()[0] for p in inputs]
     assert len(set(headers)) == len(inputs), headers
     assert len({h.split(':')[0] for h in headers}) == 1, headers
+    marker = os.environ.get('SOMATEM_TEST_CONSENSUS_MARKER')
+    if marker and sample == 'alpha':
+        Path(marker).touch()
     output = Path(value('-a'))
     output.mkdir()
     (output / 'consensus_assembly.fasta').write_text(''.join(p.read_text() for p in inputs))
@@ -145,6 +166,11 @@ elif args[0] == 'compress':
     (output / 'consensus_assembly.gfa').write_text('S\t1\tACGT\n')
 elif args[0] == 'cluster':
     assert value('--max_contigs') == os.environ['SOMATEM_TEST_MAX_CONTIGS'], args
+    minimum = os.environ['SOMATEM_TEST_MIN_ASSEMBLIES']
+    if minimum:
+        assert value('--min_assemblies') == minimum, args
+    else:
+        assert '--min_assemblies' not in args, args
     if affected and failure == 'no_clusters':
         sys.exit(0)
     cluster = Path(value('-a')) / 'clustering/qc_pass/cluster_001'
@@ -221,6 +247,14 @@ params.sequencing_technology = 'nanopore'
 
         cases = [
             ("default", ASSEMBLERS, "ont_r10", [], None),
+            ("short_candidates", ASSEMBLERS, "ont_r10", [], None),
+            ("two_subsamples", ASSEMBLERS, "ont_r10", ["--autocycler_subsamples", "2"], None),
+            ("single_assembly", ["flye"], "ont_r10",
+             ["--autocycler_assemblers", "flye", "--autocycler_subsamples", "1"], None),
+            ("min_assemblies", ASSEMBLERS, "ont_r10", ["--autocycler_min_assemblies", "3"], None),
+            ("min_assemblies_strict", ASSEMBLERS, "ont_r10", ["--autocycler_min_assemblies", "5"], None),
+            ("streaming", ["flye", "canu"], "ont_r10",
+             ["--autocycler_assemblers", "flye,canu", "--autocycler_subsamples", "2"], None),
             ("max_contigs", ["flye"], "ont_r10",
              ["--autocycler_assemblers", "flye", "--autocycler_max_contigs", "400"], None),
             ("subset", ["canu", "hifiasm"], "pacbio_hifi",
@@ -237,9 +271,17 @@ params.sequencing_technology = 'nanopore'
             ("low_accuracy", [], "ont_r9", ["--autocycler_read_type", "ont_r9"], "require high-accuracy reads"),
             ("empty_assembly", ["myloasm"], "ont_r10", ["--autocycler_assemblers", "myloasm"], "Error executing process"),
         ]
-        cases += [(name, ASSEMBLERS, 'ont_r10', [], None) for name in [
-            'incomplete', 'empty_consensus', 'no_clusters', 'compress', 'cluster', 'trim', 'resolve', 'combine', 'both', 'boundary'
-        ]]
+        consensus_failures = {
+            'all_short_candidates': 'No candidate assemblies meet the minimum genome fraction',
+            'invalid_genome_size': 'Invalid',
+            'incomplete': 'Incomplete Autocycler consensus',
+            'empty_consensus': 'Incomplete Autocycler consensus',
+            'no_clusters': 'No Autocycler QC-pass clusters',
+            'both': 'Incomplete Autocycler consensus',
+            **{name: 'Simulated Autocycler command failure' for name in ['compress', 'cluster', 'trim', 'resolve', 'combine']},
+        }
+        cases += [(name, ASSEMBLERS, 'ont_r10', [], error) for name, error in consensus_failures.items()]
+        cases += [('boundary', ASSEMBLERS, 'ont_r10', [], None)]
         cases += [(name, ASSEMBLERS, 'ont_r10', options, None) for name, options in [
             ('hybrid', ['--hybrid_assembly', 'true']),
             ('pypolca_only', ['--hybrid_assembly', 'true', '--run_polypolish', 'false']),
@@ -247,11 +289,14 @@ params.sequencing_technology = 'nanopore'
             ('no_polishing', ['--hybrid_assembly', 'true', '--run_polypolish', 'false', '--run_pypolca', 'false']),
             ('typing', ['--run_btyper3', 'true']),
         ]]
-        cases += [(name, ASSEMBLERS, 'ont_r10', [], 'Error executing process')
-                  for name in ['missing_quality', 'invalid_quality']]
         cases += [
             (f"bad_max_contigs_{i}", [], "ont_r10", ["--autocycler_max_contigs", value],
              "--autocycler_max_contigs must be a positive integer")
+            for i, value in enumerate(["0", "-1", "1.5", "typo", "4294967296"])
+        ]
+        cases += [
+            (f"bad_min_assemblies_{i}", [], "ont_r10", ["--autocycler_min_assemblies", value],
+             "--autocycler_min_assemblies must be a positive integer")
             for i, value in enumerate(["0", "-1", "1.5", "typo", "4294967296"])
         ]
         cases += [
@@ -263,8 +308,9 @@ params.sequencing_technology = 'nanopore'
             if sys.argv[1:] and name not in sys.argv[1:]:
                 continue
             output = tmp / name
-            failure = ('incomplete' if name in ['hybrid', 'pypolca_only', 'polypolish_only', 'no_polishing', 'typing']
-                       else name if name in ['incomplete', 'empty_consensus', 'no_clusters', 'compress', 'cluster', 'trim', 'resolve', 'combine', 'both', 'boundary', 'missing_quality', 'invalid_quality'] else '')
+            subsamples = int(options[options.index('--autocycler_subsamples') + 1]) if '--autocycler_subsamples' in options else 4
+            min_assemblies = {'min_assemblies': '3', 'min_assemblies_strict': '5'}.get(name, '')
+            failure = name if name in consensus_failures or name == 'boundary' else ''
             env = dict(os.environ, PATH=f"{binaries}{os.pathsep}{os.environ['PATH']}",
                        NXF_OFFLINE="true", NXF_ANSI_LOG="false",
                        SOMATEM_TEST_READ_TYPE=read_type,
@@ -272,8 +318,11 @@ params.sequencing_technology = 'nanopore'
                            "ont_r10": "--nano-hq", "ont_r9": "--nano-raw",
                            "pacbio_hifi": "--pacbio-hifi", "pacbio_clr": "--pacbio-raw"
                        }[read_type],
-                       SOMATEM_TEST_CANDIDATES=str(4 * len(assemblers)),
+                       SOMATEM_TEST_CANDIDATES=str(subsamples * len(assemblers)),
+                       SOMATEM_TEST_CONSENSUS_MARKER=str(tmp / 'alpha-consensus-started') if name == 'streaming' else '',
                        SOMATEM_TEST_MAX_CONTIGS="400" if name == "max_contigs" else str(max_contigs),
+                       SOMATEM_TEST_MIN_ASSEMBLIES=str(min_assemblies),
+                       SOMATEM_TEST_LENGTH_CASE=name if name in ['short_candidates', 'all_short_candidates'] else '',
                        SOMATEM_TEST_FAILURE=failure,
                        SOMATEM_TEST_EMPTY="myloasm" if name == "empty_assembly" else "")
             result = subprocess.run(
@@ -284,6 +333,20 @@ params.sequencing_technology = 'nanopore'
             )
             if error:
                 assert result.returncode != 0 and error in result.stdout, result.stdout
+                if name in consensus_failures:
+                    assert "Error executing process > 'ISOLATE_ANALYSIS:AUTOCYCLER_CONSENSUS" in result.stdout, result.stdout
+                    for sample in ['alpha', 'beta'] if name == 'both' else ['alpha']:
+                        sample_dir = output / f'isolate_analysis/{sample}'
+                        assert not list((sample_dir / 'assembly').glob('*')), sample_dir
+                        assert not (sample_dir / 'annotation').exists(), sample_dir
+                        assert not (sample_dir / 'quality/checkm2').exists(), sample_dir
+                    if name == 'all_short_candidates':
+                        audits = list((tmp / f'work-{name}').glob('*/*/alpha.autocycler.lengths.tsv'))
+                        assert len(audits) == 1, audits
+                        with audits[0].open() as handle:
+                            lengths = list(csv.DictReader(handle, delimiter='\t'))
+                        assert len(lengths) == subsamples * len(assemblers), lengths
+                        assert all(row['Stage'] == 'candidate' and row['Passes_length_filter'] == 'False' for row in lengths), lengths
             else:
                 assert result.returncode == 0, result.stdout
                 assert (output / 'summary_reports/isolate_analysis_summary_report.html').exists()
@@ -292,28 +355,33 @@ params.sequencing_technology = 'nanopore'
                     assert (sample_dir / f'autocycler/{sample}.autocycler.log').exists()
                     fasta = sample_dir / f'assembly/{sample}.fasta'
                     headers = {line for line in fasta.read_text().splitlines() if line.startswith(">")}
-                    fallback = failure and failure != 'boundary' and (sample == 'alpha' or failure == 'both')
                     expected = {
                         f">{sample}:{assembler}:subsample_{i:02d}:{read_type}"
-                        for assembler in assemblers for i in range(1, 5)
+                        for assembler in assemblers for i in range(1, subsamples + 1)
                     }
-                    if fallback:
-                        expected = {f'>{sample}:myloasm:subsample_01:{read_type}'}
-                        selection = sample_dir / f'quality/assembly_selection/{sample}.assembly_selection.tsv'
-                        with selection.open() as handle:
-                            rows = list(csv.DictReader(handle, delimiter='\t'))
-                        assert (selection.parent / f'{sample}.candidate_quality.tsv').exists()
-                        assert len(rows) == 4 * len(assemblers), rows
-                        assert [r['Assembly'] for r in rows if r['Selected'] == 'True'] == [f'{sample}.myloasm.subsample_01.assembly.fasta'], rows
-                        assert not (sample_dir / f'assembly/{sample}.autocycler.fasta').exists()
-                        assert not (sample_dir / f'assembly/{sample}.autocycler.gfa').exists()
-                        assert (sample_dir / f'autocycler/{sample}.autocycler.warning.txt').exists()
-                        assert f'Sample {sample}: Autocycler failed' in result.stdout, result.stdout
-                        assert f'Sample {sample}: continuing with' in result.stdout, result.stdout
+                    if name == 'short_candidates' and sample == 'alpha':
+                        expected = {f'>{sample}:flye:subsample_{i:02d}:{read_type}' for i in range(1, 5)}
+                        expected.add(f'>{sample}:flye:subsample_01:{read_type}:part2')
+                    with (sample_dir / f'autocycler/{sample}.autocycler.lengths.tsv').open() as handle:
+                        lengths = list(csv.DictReader(handle, delimiter='\t'))
+                    candidates = [row for row in lengths if row['Stage'] == 'candidate']
+                    assert len(candidates) == subsamples * len(assemblers), candidates
+                    assert all(int(row['Expected_bp']) == 100 for row in lengths), lengths
+                    assert all(float(row['Genome_fraction']) == int(row['Length_bp']) / 100 for row in lengths), lengths
+                    for row in candidates:
+                        original = sample_dir / 'autocycler/assemblies' / Path(row['Assembly']).name
+                        assert sum(len(line.strip()) for line in original.read_text().splitlines() if not line.startswith('>')) == int(row['Length_bp']), original
+                    if name == 'short_candidates' and sample == 'alpha':
+                        assert sum(row['Passes_length_filter'] == 'True' for row in candidates) == 4, candidates
+                        assert sorted(int(row['Length_bp']) for row in candidates) == [79] * 16 + [80, 100, 100, 100], candidates
                     else:
-                        assert not (sample_dir / 'quality/assembly_selection').exists()
-                        if failure == 'boundary' and sample == 'alpha':
-                            expected = {'>boundary'}
+                        assert all(row['Passes_length_filter'] == 'True' for row in candidates), candidates
+                    consensus = [row for row in lengths if row['Stage'] == 'consensus']
+                    assert len(consensus) == 1 and consensus[0]['Passes_length_filter'] == 'True', consensus
+                    assert int(consensus[0]['Length_bp']) == sum(len(line.strip()) for line in fasta.read_text().splitlines() if not line.startswith('>')), consensus
+                    assert not (sample_dir / 'quality/assembly_selection').exists()
+                    if failure == 'boundary' and sample == 'alpha':
+                        expected = {'>boundary'}
                     assert headers == expected, (name, sample, headers, expected)
                     assert (sample_dir / f'annotation/bakta/{sample}.fna').read_text() == fasta.read_text()
                     assert (sample_dir / f'plasmids/{sample}.contig_report.txt').read_text() == fasta.read_text()

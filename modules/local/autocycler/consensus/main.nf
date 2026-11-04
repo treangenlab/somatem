@@ -12,16 +12,16 @@ process AUTOCYCLER_CONSENSUS {
         pattern: "*.autocycler.{fasta,gfa}"
     publishDir { "${params.outdir}/isolate_analysis/${meta.id}/autocycler" },
         mode: params.publish_dir_mode,
-        pattern: "*.autocycler.{log,warning.txt}"
+        pattern: "*.autocycler.{log,lengths.tsv}"
 
     input:
     tuple val(meta), path(assemblies), path(genome_size_file)
 
     output:
-    tuple val(meta), path("*.autocycler.fasta"), emit: assembly, optional: true
-    tuple val(meta), path("*.autocycler.gfa")  , emit: graph, optional: true
-    tuple val(meta), path(assemblies), path("*.autocycler.warning.txt"), emit: fallback, optional: true
+    tuple val(meta), path("*.autocycler.fasta"), emit: assembly
+    tuple val(meta), path("*.autocycler.gfa")  , emit: graph
     tuple val(meta), path("*.autocycler.log"), emit: log
+    tuple val(meta), path("*.autocycler.lengths.tsv"), emit: lengths
     tuple val(meta), path("autocycler_out")    , emit: outdir
     path "versions.yml"                        , emit: versions
 
@@ -30,25 +30,70 @@ process AUTOCYCLER_CONSENSUS {
 
     script:
     def prefix = meta.id
+    def assembly_count = assemblies instanceof Collection ? assemblies.size() : 1
+    def min_assemblies_arg = params.autocycler_min_assemblies == null ? '' : "--min_assemblies ${params.autocycler_min_assemblies}"
     """
-    mkdir -p assemblies
-    for assembly in ${assemblies}; do
-        cp "\${assembly}" assemblies/
-    done
+    # Stop on any failed step while streaming and retaining diagnostics.
+    set -o pipefail
+    bash -euo pipefail <<'RUN_AUTOCYCLER' 2>&1 | tee ${prefix}.autocycler.log
+    expected_genome_size=\$(cat '${genome_size_file}')
+    # Apply the same whole-assembly length rule before clustering and after consensus.
+    check_length() {
+        awk -v expected="\$expected_genome_size" \\
+            -v minimum=${params.autocycler_min_genome_fraction} \\
+            -v stage="\$1" -v assembly="\$2" '
+            BEGIN {
+                expected = tolower(expected)
+                gsub(/^[[:space:]]+|[[:space:]]+\$/, "", expected)
+                scale = expected ~ /k\$/ ? 1000 : expected ~ /m\$/ ? 1000000 : expected ~ /g\$/ ? 1000000000 : 1
+                sub(/[kmg]\$/, "", expected)
+                if (expected !~ /^[+]?([0-9]+([.][0-9]*)?|[.][0-9]+)(e[+-]?[0-9]+)?\$/ || expected * scale < 0.5) {
+                    print "Invalid genome size for length validation: " expected > "/dev/stderr"
+                    invalid = 1
+                    exit 2
+                }
+                expected = int(expected * scale + 0.5)
+            }
+            !/^>/ { gsub(/[[:space:]]/, ""); bases += length(\$0) }
+            END {
+                if (invalid) exit 2
+                passes = bases > 0 && bases >= expected * minimum
+                printf "%s\\t%s\\t%.0f\\t%.0f\\t%.6f\\t%s\\n", stage, assembly, bases, expected, bases / expected, passes ? "True" : "False"
+                printf "%s %s: %.0f bp; expected: %.0f bp; recovered: %.2f%%; passes length filter: %s\\n", stage, assembly, bases, expected, 100 * bases / expected, passes ? "yes" : "no" > "/dev/stderr"
+                exit (passes ? 0 : 1)
+            }
+        ' "\$2"
+    }
 
-    # Run in a separate shell so errexit still applies inside this conditional.
-    # Keep partial diagnostics even when compress/cluster/resolve/combine fails.
-    if bash -euo pipefail > ${prefix}.autocycler.log 2>&1 <<'RUN_AUTOCYCLER'
+    mkdir -p assemblies
+    printf 'Stage\\tAssembly\\tLength_bp\\tExpected_bp\\tGenome_fraction\\tPasses_length_filter\\n' > ${prefix}.autocycler.lengths.tsv
+    for assembly in ${assemblies}; do
+        if check_length candidate "\$assembly" >> ${prefix}.autocycler.lengths.tsv; then
+            cp "\$assembly" assemblies/
+        else
+            check_status=\$?
+            if [ "\$check_status" -ne 1 ]; then exit "\$check_status"; fi
+        fi
+    done
+    shopt -s nullglob
+    selected=(assemblies/*.fasta)
+    echo "Autocycler inputs: \${#selected[@]} of ${assembly_count} candidates pass the length filter."
+    if [ \${#selected[@]} -eq 0 ]; then
+        echo "No candidate assemblies meet the minimum genome fraction for ${prefix}. Inspect ${prefix}.autocycler.lengths.tsv and the supplied or estimated genome size." >&2
+        exit 1
+    fi
+
     autocycler compress \\
         -i assemblies \\
         -a autocycler_out \\
-        --max_contigs ${params.autocycler_max_contigs}
+        --max_contigs ${params.autocycler_max_contigs} \\
+        --threads ${task.cpus}
 
     autocycler cluster \\
         -a autocycler_out \\
-        --max_contigs ${params.autocycler_max_contigs}
+        --max_contigs ${params.autocycler_max_contigs} \\
+        ${min_assemblies_arg}
 
-    shopt -s nullglob
     clusters=(autocycler_out/clustering/qc_pass/cluster_*)
     if [ \${#clusters[@]} -eq 0 ]; then
         echo "No Autocycler QC-pass clusters were produced for ${prefix}" >&2
@@ -64,44 +109,16 @@ process AUTOCYCLER_CONSENSUS {
         -a autocycler_out \\
         -i autocycler_out/clustering/qc_pass/cluster_*/5_final.gfa
 
-    # A surviving small cluster does not establish that the genome was recovered.
-    awk -v expected="\$(cat '${genome_size_file}')" \\
-        -v minimum=${params.autocycler_min_genome_fraction} '
-        BEGIN {
-            expected = tolower(expected)
-            gsub(/^[[:space:]]+|[[:space:]]+\$/, "", expected)
-            scale = expected ~ /k\$/ ? 1000 : expected ~ /m\$/ ? 1000000 : expected ~ /g\$/ ? 1000000000 : 1
-            sub(/[kmg]\$/, "", expected)
-            if (expected !~ /^[+]?([0-9]+([.][0-9]*)?|[.][0-9]+)(e[+-]?[0-9]+)?\$/ || expected * scale < 0.5) {
-                print "Invalid genome size for consensus validation: " expected > "/dev/stderr"
-                invalid = 1
-                exit 1
-            }
-            expected = int(expected * scale + 0.5)
-        }
-        !/^>/ { gsub(/[[:space:]]/, ""); bases += length(\$0) }
-        END {
-            if (invalid) exit 1
-            printf "Consensus size: %.0f bp; expected: %.0f bp; recovered: %.2f%%\\n", bases, expected, 100 * bases / expected > "/dev/stderr"
-            if (bases == 0 || bases < expected * minimum) {
-                printf "Incomplete Autocycler consensus: below %.2f%% of the expected genome size.\\n", 100 * minimum > "/dev/stderr"
-                print "Inspect input_assemblies.yaml and clustering/{qc_pass,qc_fail} in autocycler_out in this task work directory; a chromosome cluster may have failed QC." > "/dev/stderr"
-                exit 1
-            }
-        }
-    ' autocycler_out/consensus_assembly.fasta
+    if ! check_length consensus autocycler_out/consensus_assembly.fasta >> ${prefix}.autocycler.lengths.tsv; then
+        echo "Incomplete Autocycler consensus: below the minimum genome fraction. Inspect input_assemblies.yaml and clustering/{qc_pass,qc_fail} in autocycler_out in this task work directory." >&2
+        exit 1
+    fi
 
     test -s autocycler_out/consensus_assembly.gfa
     RUN_AUTOCYCLER
-    then
-        cp autocycler_out/consensus_assembly.fasta ${prefix}.autocycler.fasta
-        cp autocycler_out/consensus_assembly.gfa ${prefix}.autocycler.gfa
-    else
-        echo "Sample ${prefix}: Autocycler failed or produced an incomplete consensus. Selecting an input assembly using CheckM2 completeness - 5 * contamination. See ${prefix}.autocycler.log and autocycler_out for diagnostics." > ${prefix}.autocycler.warning.txt
-        cat ${prefix}.autocycler.warning.txt >&2
-    fi
-    mkdir -p autocycler_out
-    cat ${prefix}.autocycler.log >&2
+
+    cp autocycler_out/consensus_assembly.fasta ${prefix}.autocycler.fasta
+    cp autocycler_out/consensus_assembly.gfa ${prefix}.autocycler.gfa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

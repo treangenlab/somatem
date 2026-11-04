@@ -383,13 +383,12 @@ Source-visible limitations to preserve when reading this diagram:
 | 5 | Autocycler genome-size helper — `AUTOCYCLER_SUBSAMPLE` | Use the supplied sample genome size, then the global fallback; estimate it from the reads when neither is present. Record the value in `genome_size.txt`. [Source](../modules/local/autocycler/subsample/main.nf) |
 | 6 | Autocycler subsample — `AUTOCYCLER_SUBSAMPLE` | Generate multiple long-read subsets, retaining sample metadata. [Source](../modules/local/autocycler/subsample/main.nf) |
 | 7 | Nextflow `flatMap`; `FLYE_AUTOCYCLER`, `MYLOASM_AUTOCYCLER`, `METAMDBG_AUTOCYCLER`, `CANU_AUTOCYCLER`, `HIFIASM_AUTOCYCLER` | Assign each subset a `subsample_id`; run every selected assembler on every subset. Publish FASTAs with sample, assembler, and subset in their filenames, plus available graphs/logs. The four added modules use Autocycler helper to standardize outputs, including Canu circular-overlap trimming and Hifiasm primary-contig extraction. [Workflow](../subworkflows/local/isolate_analysis.nf), [Flye](../modules/local/flye/autocycler/main.nf), [Myloasm](../modules/local/myloasm/autocycler/main.nf), [metaMDBG](../modules/local/metamdbg/autocycler/main.nf), [Canu](../modules/local/canu/autocycler/main.nf), [Hifiasm](../modules/local/hifiasm/autocycler/main.nf) |
-| 8 | Nextflow `mix`, `groupTuple` | Combine the selected assemblers' FASTA channels, group all subsets by sample, and remove subset-specific metadata before consensus assembly. [Source](../subworkflows/local/isolate_analysis.nf) |
-| 9 | Autocycler compress — `AUTOCYCLER_CONSENSUS` | Stage the per-subset assemblies and compress them into the Autocycler graph representation. [Source](../modules/local/autocycler/consensus/main.nf) |
-| 10 | Autocycler cluster — same process | Cluster that representation; discover QC-pass clusters. If none exist, warn and use the CheckM2 fallback below. [Source](../modules/local/autocycler/consensus/main.nf) |
+| 8 | Nextflow `mix`, `groupTuple` | Combine the selected assemblers' FASTA channels and release each sample once its expected assembler × subsample count is complete, without waiting for other samples. Partial groups are retained at channel close. Remove subset-specific metadata before consensus assembly. [Source](../subworkflows/local/isolate_analysis.nf) |
+| 9 | Whole-assembly length filter, then Autocycler compress — `AUTOCYCLER_CONSENSUS` | Retain candidate FASTAs meeting the expected genome fraction, record every decision, and compress the retained assemblies using the task's allocated CPUs. Stop if none qualify. [Source](../modules/local/autocycler/consensus/main.nf) |
+| 10 | Autocycler cluster — same process | Cluster the retained inputs using native automatic minimum assembly support, or an explicit override; discover QC-pass clusters. Stop this process with an error if none exist. [Source](../modules/local/autocycler/consensus/main.nf) |
 | 11 | Autocycler trim, then resolve — same process | Run both operations for each QC-pass cluster. [Source](../modules/local/autocycler/consensus/main.nf) |
 | 12 | Autocycler combine — same process | Combine the resolved cluster graphs. Require the consensus to contain at least `autocycler_min_genome_fraction` (default 0.8) of the supplied or estimated genome size before exporting the consensus FASTA and GFA. Preserve Autocycler diagnostics on failure. [Source](../modules/local/autocycler/consensus/main.nf) |
-| 12a, fallback only | CheckM2 — `AUTOCYCLER_FALLBACK` | If an Autocycler command fails, no clusters pass QC, or the consensus is incomplete, score all original assemblies for that sample with CheckM2. Select the highest `completeness - 5 * contamination`; break ties by higher completeness, lower contamination, then filename. Publish the selected FASTA and candidate ranking TSV. [Source](../modules/local/autocycler/fallback/main.nf) |
-| 13 | Nextflow hybrid/polishing routing | If hybrid assembly is enabled, require paired short reads and join them to the selected consensus or fallback by sample ID. Decide independently whether Polypolish and Pypolca are enabled. Without hybrid polishing, send the selected assembly directly to finalization. [Source](../subworkflows/local/isolate_analysis.nf) |
+| 13 | Nextflow hybrid/polishing routing | If hybrid assembly is enabled, require paired short reads and join them to the consensus by sample ID. Decide independently whether Polypolish and Pypolca are enabled. Without hybrid polishing, send the consensus directly to finalization. [Source](../subworkflows/local/isolate_analysis.nf) |
 | 14 | BWA index, BWA MEM — `BWA_MEM_FOR_POLYPOLISH` | When Polypolish is enabled, copy/index the consensus and map each short-read mate file separately, retaining all alignments for two SAM outputs. [Source](../modules/local/bwa/mem_for_polypolish/main.nf) |
 | 15 | Polypolish filter — `POLYPOLISH_FILTER` | Filter the paired alignment files and produce two filtered SAM files. [Source](../modules/local/polypolish/filter/main.nf) |
 | 16 | Nextflow join, Polypolish polish — `POLYPOLISH_POLISH` | Rejoin the assembly with its filtered SAM files and generate a polished FASTA. [Workflow](../subworkflows/local/isolate_analysis.nf), [module](../modules/local/polypolish/polish/main.nf) |
@@ -413,10 +412,10 @@ flowchart TD
     S["6. Autocycler: subsample long reads"]
     F["7. Each selected assembler on every subset:<br/>Flye, Myloasm, metaMDBG, Canu, Hifiasm"]
     GR["8. Nextflow: group assemblies by sample"]
-    C["9. Autocycler: compress"]
+    C["9. Filter candidate FASTAs by genome length; Autocycler: compress"]
     CL["10. Autocycler: cluster"]
     QC{"Any QC-pass clusters?"}
-    FALLBACK["12a. Warn; CheckM2: rank input assemblies and select fallback"]
+    ERR["Stop: Autocycler failed or consensus is incomplete"]
     TR["11a. Autocycler: trim each QC-pass cluster"]
     RE["11b. Autocycler: resolve each QC-pass cluster"]
     CO["12. Autocycler: combine; consensus FASTA and GFA"]
@@ -441,14 +440,11 @@ flowchart TD
     N --> K
     DBK --> K
     N --> G --> S --> F --> GR --> C --> CL --> QC
-    QC -->|No| FALLBACK
+    QC -->|No| ERR
     QC -->|Yes| TR --> RE --> CO --> SIZE
-    C & CL & TR & RE & CO -. Command failure .-> FALLBACK
-    SIZE -->|No| FALLBACK
+    C & CL & TR & RE & CO -. Command failure .-> ERR
+    SIZE -->|No| ERR
     SIZE -->|Yes| HY
-    DBQ --> FALLBACK
-    GR --> FALLBACK
-    FALLBACK --> HY
     HY -->|No| FIN
     HY -->|Yes| PA --> PP
     CSV -. Paired short reads .-> PA
@@ -492,13 +488,17 @@ somatem isolate_analysis -i samples.csv -o results --hybrid_assembly true \
 somatem isolate_analysis -i samples.csv -o results --autocycler_max_contigs 200 -resume
 ```
 
-Raising the threshold only permits these steps to proceed; it does not correct fragmentation or contamination. Inspect the published candidate assemblies and Kraken2 outputs to investigate the cause, and use `autocycler_assemblers` to select appropriate candidates. More assemblers do not guarantee passing this check. The workflow does not automatically discard candidates or raise the threshold. See the upstream [compress documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-compress), [cluster documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster), and [assembler helper documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-helper).
+Raising the threshold only permits these steps to proceed; it does not correct fragmentation or contamination. Inspect the published candidate assemblies and Kraken2 outputs to investigate the cause, and use `autocycler_assemblers` to select appropriate candidates. More assemblers do not guarantee passing this check. The genome-length filter below runs before this contig-count check; the workflow does not automatically raise the contig-count threshold. See the upstream [compress documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-compress), [cluster documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster), and [assembler helper documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-helper).
+
+**Candidate length takes priority.** Before Autocycler compress or cluster runs, each candidate FASTA must contain at least `autocycler_min_genome_fraction` (default 0.8) of the sample's supplied or estimated genome size. For an expected 5.2 Mb genome, three 5.2 Mb candidates enter Autocycler while four 400 kb candidates are excluded from its input. Total length is measured across the whole FASTA; small contigs within an eligible assembly are preserved, and all original candidate files remain published under `autocycler/assemblies`. This is a minimum-length eligibility rule, not a ranking by longest assembly or closest size, and it does not detect contamination or duplicated sequence.
+
+**Cluster support.** Autocycler applies its native automatic support threshold to the retained candidates: one-quarter of their count, rounded, with a minimum of two (one for a single input). Short excluded candidates therefore cannot raise that threshold or dominate clustering. Set `--autocycler_min_assemblies <positive integer>` to override the support requirement. Other cluster QC rules still apply. See the upstream [cluster QC documentation](https://github.com/rrwick/Autocycler/wiki/Autocycler-cluster#cluster-qc).
 
 **Outputs.** Under `<outdir>/isolate_analysis/<sample>/`, the modules publish `autocycler/subsamples`, `autocycler/assemblies`, consensus data, `assembly`, `classification/kraken2`, optional `polishing`, `quality/checkm2`, `plasmids`, `annotation/bakta`, and optional `typing/btyper3`. The cross-sample report is `<outdir>/summary_reports/isolate_analysis_summary_report.html`. Actual file presence depends on enabled branches and optional outputs.
 
-**Incomplete or failed consensus.** Passing cluster QC alone does not establish that the whole genome was recovered: a small cluster can pass while chromosome clusters fail. The workflow checks the total consensus sequence length against the same sample-specific `genome_size.txt` used for subsampling (sample `expected_genome_size`, then `autocycler_genome_size`, otherwise the estimate from the reads). A result below 80% triggers a warning and fallback for that sample, as do failed Autocycler commands or no QC-pass clusters. CheckM2 evaluates every original candidate assembly for the affected sample and selects the highest `completeness - 5 * contamination` score, with deterministic ties resolved by higher completeness, lower contamination, then filename. This selected assembly proceeds through optional polishing, final CheckM2 assessment, Bakta, MOB-suite, and optional typing. Successful samples keep their consensus without the extra candidate assessment. CheckM2 estimates are required for every candidate; missing or invalid quality results remain errors rather than silently choosing an unassessed assembly.
+**Incomplete or failed consensus.** Passing cluster QC alone does not establish that the whole genome was recovered: a small cluster can pass while chromosome clusters fail. The workflow checks the total consensus sequence length against the same sample-specific `genome_size.txt` used for subsampling (sample `expected_genome_size`, then `autocycler_genome_size`, otherwise the estimate from the reads). A result below 80% fails before polishing, annotation, or publishing the consensus as an assembly. Failed Autocycler commands and an absence of QC-pass clusters also fail the task. CheckM2 evaluates the final assembly downstream; it does not choose an input assembly to replace failed consensus.
 
-The warning and Autocycler log are published under `autocycler/<sample>.autocycler.{warning.txt,log}`, alongside the partial `autocycler_out` diagnostics. The chosen input is `assembly/<sample>.fallback.fasta`; `quality/assembly_selection/<sample>.assembly_selection.tsv` records all candidate scores and the selected row, and `<sample>.candidate_quality.tsv` retains the full CheckM2 report. The final downstream FASTA remains `assembly/<sample>.fasta`. Rejected consensus FASTA/GFA files stay in the diagnostic directory and are not exported as accepted assemblies. Inspect `autocycler_out/input_assemblies.yaml` and `autocycler_out/clustering/{qc_pass,qc_fail}` to investigate cluster rejection. No failed clusters are automatically rescued. `--autocycler_min_genome_fraction` accepts a fraction greater than 0 and at most 1; neither the size check nor the fallback score guarantees assembly correctness.
+While consensus runs, output streams to `.command.log` in its task work directory and is saved as `<sample>.autocycler.log`. `<sample>.autocycler.lengths.tsv` records each candidate's total length, expected length, recovered fraction, and filter decision, plus the final consensus check. Successful tasks publish both files under `autocycler/` alongside the `autocycler_out` diagnostics. If no candidate qualifies, the task fails before running Autocycler. For failed tasks, inspect the log, length report, and any partial `autocycler_out` directory in the reported task work directory, including `input_assemblies.yaml` and `clustering/{qc_pass,qc_fail}`. Rejected consensus FASTA/GFA files remain there and are not exported as accepted assemblies. The final downstream FASTA is `assembly/<sample>.fasta`. No failed clusters are automatically rescued. `--autocycler_min_genome_fraction` accepts a fraction greater than 0 and at most 1; the size check does not guarantee assembly correctness.
 
 **Source-observed limitations.**
 
@@ -506,7 +506,8 @@ The warning and Autocycler log are published under `autocycler/<sample>.autocycl
 - The isolate database route invokes the fixed Standard-8 download process even when `kraken2_db` is configured; the custom-database selection is implemented in the taxonomic-profiling route only. CheckM2 and Bakta download processes are also invoked by this route; resume/caching behavior is separate from that source-level fact. [Database routing](../subworkflows/local/download_databases.nf).
 - The settings named `assembler` and `shortread_mapper` do not switch implementations in this traced workflow: consensus uses Autocycler and short-read mapping uses BWA. `autocycler_assemblers` selects the candidate assemblers. The `species` input is passed through assembly inputs but is not used by the called assembly commands. [Workflow](../subworkflows/local/isolate_analysis.nf).
 - Empty Bakta placeholder outputs are permitted, so an emitted filename alone does not establish successful annotation plotting or populated content. [Bakta module](../modules/local/bakta/bakta/main.nf).
-- Isolate routing can be checked with `python3 tests/check_autocycler.py` (requires Nextflow, Java, and Python). It executes the isolate subworkflow with mocked scientific tools to check sample grouping, assembler selection, read modes, Autocycler failure handling, CheckM2 fallback ranking, polishing, and downstream annotation/reporting. It does not validate biological assembly quality, preprocessing, database downloads, or the tools' internal algorithms.
+- Isolate routing can be checked with `python3 tests/check_autocycler.py` (requires Nextflow, Java, and Python). It executes the isolate subworkflow with mocked scientific tools to check sample grouping, assembler selection, read modes, Autocycler failure handling, polishing, and downstream annotation/reporting. It does not validate biological assembly quality, preprocessing, database downloads, or the tools' internal algorithms.
+- Candidate length priority can be checked with `python3 tests/check_autocycler_support.py` (requires Nextflow, Java, Python, and Autocycler). It uses random toy sequences to verify three complete candidates take precedence over four or seventeen short candidates, small contigs within eligible FASTAs survive, and an empty eligible set fails clearly.
 
 ## SeqScreen
 
