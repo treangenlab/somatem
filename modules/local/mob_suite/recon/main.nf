@@ -1,3 +1,44 @@
+process MOB_SUITE_DATABASE_INIT {
+    label 'process_high'
+    // Recheck external database readiness even when resuming cached sample tasks.
+    cache false
+
+    conda "${moduleDir}/environment.yml"
+
+    input:
+    val database_dir
+
+    output:
+    val database_dir, emit: db
+    path "versions.yml", emit: versions
+
+    script:
+    def database_q = "'" + database_dir.toString().replace("'", "'\"'\"'") + "'"
+    """
+    # ponytail: one initializer per workflow; initialize shared databases before concurrent independent runs.
+    mkdir -p ${database_q}
+    if [[ ! -s ${database_q}/status.txt || ! -s ${database_q}/clusters.txt ]]; then
+        echo 'Initializing the shared MOB-suite databases.' >&2
+        mob_init --database_directory ${database_q}
+    fi
+    test -s ${database_q}/status.txt
+    test -s ${database_q}/clusters.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mob_suite: \$(mob_recon --version 2>&1 | head -1)
+    END_VERSIONS
+    """
+
+    stub:
+    def database_q = "'" + database_dir.toString().replace("'", "'\"'\"'") + "'"
+    """
+    # Never mark a real database initialized during a stub run.
+    mkdir -p ${database_q}
+    printf '"${task.process}":\\n    mob_suite: "stub"\\n' > versions.yml
+    """
+}
+
 process MOB_SUITE_RECON {
     tag "$meta.id"
     label 'process_medium'
@@ -8,6 +49,7 @@ process MOB_SUITE_RECON {
 
     input:
     tuple val(meta), path(assembly)
+    path database_dir
 
     output:
     tuple val(meta), path("${prefix}.contig_report.txt"), emit: contig_report
@@ -18,19 +60,14 @@ process MOB_SUITE_RECON {
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def database_dir = params.mob_suite_db ?: "${params.db_base_dir}/mob_suite"
+    def database_q = "'" + database_dir.toString().replace("'", "'\"'\"'") + "'"
     """
-    mkdir -p '${database_dir}' ${prefix}.plasmids
-
-    if [[ ! -s '${database_dir}/clusters.txt' ]]; then
-        echo 'Initializing the MOB-suite plasmid databases. This is required only once.' >&2
-        mob_init --database_directory '${database_dir}'
-    fi
+    mkdir -p ${prefix}.plasmids
 
     mob_recon \\
         --infile ${assembly} \\
         --outdir mob_recon_out \\
-        --database_directory '${database_dir}' \\
+        --database_directory ${database_q} \\
         --num_threads ${task.cpus}
 
     cp mob_recon_out/contig_report.txt ${prefix}.contig_report.txt

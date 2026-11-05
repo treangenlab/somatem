@@ -58,6 +58,16 @@ echo "source /path/to/somatem_env.sh" >> ~/.bashrc
 
 Each subworkflow will have a dedicated page in the [Somatem wiki](https://github.com/treangenlab/somatem/wiki) covering inputs, options, databases, and examples. Common options are `--input`, `--outdir`, `--threads`, `--data_type`, and `-params-file`; run `somatem help` for the current CLI reference.
 
+### Isolate batches and assembly recovery
+
+If Autocycler fails or its consensus is too small, the isolate workflow passes along a candidate assembly that meets `--autocycler_min_genome_fraction` (default `0.8`) of that sample's supplied or estimated genome size. It selects the qualifying candidate closest to the expected size, breaking ties by filename. If no candidate qualifies, the sample is reported without an assembly and other samples continue. The size threshold is unchanged; fallback selection does not establish biological completeness.
+
+Each completed selection writes `isolate_analysis/<sample>/autocycler/<sample>.autocycler.selection.tsv`, recording `consensus`, `fallback`, or `no_assembly`, the source, and the reason. The summary report shows recovery status; the length audit and Autocycler log remain alongside it. A fallback FASTA has no Autocycler consensus graph. Samples with all expected candidate assemblies proceed immediately; partial groups wait until the remaining assembler tasks finish.
+
+Sample task failures are isolated to that sample and stage. Resource-related exits receive one retry, then the failed task is skipped; other sample task failures are skipped immediately. Check the summary and `pipeline_info/execution_trace_*.txt` for missing outputs and failed tasks, since a completed batch can contain failed samples. MOB-suite database readiness is checked once per run before parallel sample jobs start, reusing an initialized database. Shared database setup failures, invalid workflow settings, and aggregate report failures still fail the run.
+
+For local isolate runs, `--threads` and `--max_memory_gb` budget the total resources requested by concurrent tasks as well as limiting individual tasks. With no explicit memory budget, the workflow reserves `--local_memory_reserve_gb` (default `4`) from detected RAM. These are scheduler budgets; tools must still respect their requested resources. For cluster runs, configure the executor and queue limits for your scheduler. Retain the Nextflow work directory and use `-resume` when rerunning a batch to reuse successful tasks.
+
 ## Storage and databases
 
 Reference databases can require 100 GB or more; Bakta alone is approximately 60 GB. The first applicable run downloads missing databases for reuse.

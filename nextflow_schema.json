@@ -430,7 +430,7 @@
             "exclusiveMinimum": 0,
             "maximum": 1,
             "default": 0.8,
-            "description": "Minimum fraction of the supplied or estimated genome size required for a candidate assembly to enter Autocycler and for the resulting consensus to proceed to polishing and annotation. Applied to total sequence length per assembly, preserving small contigs within eligible assemblies."
+            "description": "Minimum fraction of the supplied or estimated genome size required for candidate assemblies and consensus. Applied to total sequence length per assembly, preserving small contigs. If consensus fails validation or Autocycler fails, the qualifying candidate closest to the expected size proceeds downstream; samples with no qualifying candidate are reported without an assembly."
         },
         "autocycler_assemblers": {
             "type": "string",

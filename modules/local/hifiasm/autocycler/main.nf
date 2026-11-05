@@ -13,7 +13,7 @@ process HIFIASM_AUTOCYCLER {
 
     output:
     tuple val(meta), path("*.assembly.fasta"), emit: assembly
-    tuple val(meta), path("*.assembly.gfa"), emit: graph
+    tuple val(meta), path("*.assembly.gfa"), optional: true, emit: graph
     path "versions.yml", emit: versions
 
     when:

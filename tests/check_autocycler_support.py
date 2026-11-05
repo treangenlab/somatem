@@ -31,11 +31,11 @@ def main():
     env = dict(os.environ, NXF_OFFLINE="true", NXF_ANSI_LOG="false")
 
     with tempfile.TemporaryDirectory(prefix="somatem-autocycler-support-") as tmp:
-        for name, full_count, short_count, minimum, error in [
-            ("three_full_seventeen_short", 3, 17, None, None),
-            ("three_full_four_short", 3, 4, None, None),
-            ("all_short", 0, 7, None, "No candidate assemblies meet the minimum genome fraction"),
-            ("explicit_four", 3, 4, 4, "No Autocycler QC-pass clusters"),
+        for name, full_count, short_count, minimum, status in [
+            ("three_full_seventeen_short", 3, 17, None, "consensus"),
+            ("three_full_four_short", 3, 4, None, "consensus"),
+            ("all_short", 0, 7, None, "no_assembly"),
+            ("explicit_four", 3, 4, 4, "fallback"),
         ]:
             case = Path(tmp) / name
             inputs = case / "inputs"
@@ -72,12 +72,18 @@ singularity.enabled = false
                 stderr=subprocess.STDOUT, timeout=180,
             )
             published = case / "results/isolate_analysis/synthetic/assembly/synthetic.autocycler.fasta"
-            if error is None:
-                assert run.returncode == 0, run.stdout
-            else:
-                assert run.returncode != 0 and error in run.stdout, run.stdout
+            assert run.returncode == 0, run.stdout
+            selection_file = case / 'results/isolate_analysis/synthetic/autocycler/synthetic.autocycler.selection.tsv'
+            with selection_file.open() as handle:
+                selection, = csv.DictReader(handle, delimiter='\t')
+            assert selection['Status'] == status, selection
+            if status == 'no_assembly':
                 assert not published.exists(), name
                 assert not list((case / "work").glob("*/*/synthetic.autocycler.fasta")), name
+            elif status == 'fallback':
+                assert selection['Source'] == 'candidate_00.fasta', selection
+                assert published.read_text() == (inputs / 'candidate_00.fasta').read_text()
+                assert not (published.parent / 'synthetic.autocycler.gfa').exists()
             task_dirs = list((case / "work").glob("*/*/.command.sh"))
             assert len(task_dirs) == 1, run.stdout
             task = task_dirs[0].parent
@@ -88,6 +94,8 @@ singularity.enabled = false
             for path in staged:
                 assert path.read_text() == (inputs / path.name).read_text(), path
             audit = task / "synthetic.autocycler.lengths.tsv"
+            published_audit = case / "results/isolate_analysis/synthetic/autocycler/synthetic.autocycler.lengths.tsv"
+            assert published_audit.read_text() == audit.read_text()
             with audit.open() as handle:
                 rows = list(csv.DictReader(handle, delimiter="\t"))
             candidates = [row for row in rows if row["Stage"] == "candidate"]
@@ -99,18 +107,16 @@ singularity.enabled = false
                 assert int(row["Length_bp"]) == (52000 if row["Assembly"] in passing else 2000), row
                 assert (float(row["Genome_fraction"]) >= 0.8) == (row["Assembly"] in passing), row
             consensus = [row for row in rows if row["Stage"] == "consensus"]
-            if error is None:
+            if status == 'consensus':
                 lengths = sorted(len("".join(record.splitlines()[1:]))
                                  for record in published.read_text().split(">")[1:])
                 assert lengths == [2000, 50000], (name, lengths)
                 assert len(consensus) == 1 and int(consensus[0]["Length_bp"]) == 52000, rows
                 assert consensus[0]["Passes_length_filter"].lower() == "true", rows
-                published_audit = case / "results/isolate_analysis/synthetic/autocycler/synthetic.autocycler.lengths.tsv"
-                assert published_audit.read_text() == audit.read_text()
             else:
                 assert not consensus, rows
             print(f"PASS {name}: {full_count} complete candidates retained; "
-                  f"{'52000-base consensus' if error is None else 'rejected'}", flush=True)
+                  f"{status}", flush=True)
 
 
 if __name__ == "__main__":

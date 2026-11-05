@@ -29,6 +29,8 @@ process POLYPOLISH_POLISH {
         ${filtered_2} \\
         > ${prefix}.polypolish.fasta
 
+    test -s ${prefix}.polypolish.fasta
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         polypolish: \$(polypolish --version 2>&1 | sed 's/^polypolish //')

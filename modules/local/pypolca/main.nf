@@ -36,6 +36,7 @@ process PYPOLCA {
         ${args}
 
     cp pypolca_out/pypolca_corrected.fasta ${prefix}.pypolca.fasta
+    test -s ${prefix}.pypolca.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

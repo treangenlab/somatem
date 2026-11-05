@@ -49,7 +49,7 @@ include { KRAKEN2_KRAKEN2 }        from '../../modules/nf-core/kraken2/kraken2/m
 include { BAKTA_BAKTA }            from '../../modules/local/bakta/bakta/main'
 include { BTYPER3 }                from '../../modules/local/btyper3/main'
 include { CHECKM2_PREDICT }        from '../../modules/nf-core/checkm2/predict/main'
-include { MOB_SUITE_RECON }        from '../../modules/local/mob_suite/recon/main'
+include { MOB_SUITE_DATABASE_INIT; MOB_SUITE_RECON } from '../../modules/local/mob_suite/recon/main'
 include { SOMATEM_SUMMARY_REPORT as ISOLATE_ANALYSIS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 workflow ISOLATE_ANALYSIS {
@@ -64,6 +64,11 @@ workflow ISOLATE_ANALYSIS {
 
     main:
     ch_versions = channel.empty()
+
+    def subsamples = params.autocycler_subsamples?.toString()
+    if (!subsamples?.isInteger() || subsamples.toInteger() < 1) {
+        error('--autocycler_subsamples must be a positive integer.')
+    }
 
     def max_contigs = params.autocycler_max_contigs?.toString()
     if (!max_contigs?.isLong() || max_contigs.toLong() < 1 || max_contigs.toLong() > 4294967295L) {
@@ -174,15 +179,16 @@ workflow ISOLATE_ANALYSIS {
     }
 
     ch_grouped_assemblies = ch_assemblies
-        .map { meta, assembly -> tuple(meta.id, meta, assembly) }
+        .map { meta, assembly -> tuple(meta.id, assembly) }
         // Release ready samples immediately; retain partial groups at channel close.
+        // ponytail: ignored assembler tasks leave partial groups until the assembly
+        // channel closes; per-task completion records would remove that remaining barrier.
         .groupTuple(by: 0, size: ((params.autocycler_subsamples ?: 4) as int) * assemblers.size(), remainder: true)
         .join(AUTOCYCLER_SUBSAMPLE.out.reads.map { meta, reads, genome_size_file, species ->
-            tuple(meta.id, genome_size_file)
-        }, by: 0)
-        .map { sample_id, metas, assemblies, genome_size_file ->
-            def base_meta = metas[0].findAll { key, value -> !['subsample_id', 'seed'].contains(key) }
-            tuple(base_meta, assemblies, genome_size_file)
+            tuple(meta.id, meta, genome_size_file)
+        }, by: 0, remainder: true)
+        .map { sample_id, assemblies, meta, genome_size_file ->
+            tuple(meta, assemblies ?: [], genome_size_file)
         }
 
     AUTOCYCLER_CONSENSUS(ch_grouped_assemblies)
@@ -199,7 +205,8 @@ workflow ISOLATE_ANALYSIS {
     if (hybrid_assembly) {
         ch_short_reads = ch_isolate_input.map { meta, long_reads, short_reads_1, short_reads_2, genome_size, species ->
             if (!short_reads_1 || !short_reads_2) {
-                error("Hybrid isolate assembly requires paired short reads for sample '${meta.id}'.")
+                log.warn "Paired short reads are missing for sample '${meta.id}'; retaining the validated long-read assembly."
+                return null
             }
             tuple(meta.id, meta, short_reads_1, short_reads_2, genome_size ?: '', species ?: '')
         }
@@ -293,13 +300,29 @@ workflow ISOLATE_ANALYSIS {
         ch_final_candidate_assembly = ch_polished_assembly
     }
 
+    if (hybrid_assembly && (run_polypolish || run_pypolca)) {
+        // Keep the validated assembly when a sample's optional polishing fails.
+        // Successful pairs flow immediately; unmatched originals flow at channel close.
+        ch_final_candidate_assembly = AUTOCYCLER_CONSENSUS.out.assembly
+            .map { meta, assembly -> tuple(meta.id, meta, assembly) }
+            .join(ch_final_candidate_assembly.map { meta, assembly -> tuple(meta.id, assembly) }, by: 0, remainder: true)
+            .map { sample_id, meta, original, polished ->
+                if (polished == null) {
+                    log.warn "Optional polishing did not finish for sample '${sample_id}'; retaining the validated assembly."
+                }
+                tuple(meta, polished ?: original)
+            }
+    }
+
     FASTA_FINALIZE(ch_final_candidate_assembly)
     ch_versions = ch_versions.mix(FASTA_FINALIZE.out.versions)
 
     CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
-    MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly)
+    MOB_SUITE_DATABASE_INIT(file(params.mob_suite_db ?: "${params.db_base_dir}/mob_suite").toString())
+    ch_versions = ch_versions.mix(MOB_SUITE_DATABASE_INIT.out.versions)
+    MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly, MOB_SUITE_DATABASE_INIT.out.db)
     ch_versions = ch_versions.mix(MOB_SUITE_RECON.out.versions)
 
     ch_bakta_input = FASTA_FINALIZE.out.assembly.map { meta, assembly ->
@@ -324,6 +347,8 @@ workflow ISOLATE_ANALYSIS {
             FASTA_FINALIZE.out.assembly,
             AUTOCYCLER_CONSENSUS.out.assembly,
             AUTOCYCLER_CONSENSUS.out.graph,
+            AUTOCYCLER_CONSENSUS.out.selection,
+            AUTOCYCLER_CONSENSUS.out.lengths,
             BAKTA_BAKTA.out.tsv,
             BAKTA_BAKTA.out.json,
             BAKTA_BAKTA.out.png,
@@ -349,7 +374,7 @@ workflow ISOLATE_ANALYSIS {
                 return report_file
             }
             return [report_file]
-        }.collect()
+        }.collect().ifEmpty([])
     )
     ch_versions = ch_versions.mix(ISOLATE_ANALYSIS_SUMMARY_REPORT.out.versions)
 
@@ -358,6 +383,7 @@ workflow ISOLATE_ANALYSIS {
     autocycler_assembly  = AUTOCYCLER_CONSENSUS.out.assembly
     autocycler_graph     = AUTOCYCLER_CONSENSUS.out.graph
     autocycler_outdir    = AUTOCYCLER_CONSENSUS.out.outdir
+    assembly_selection  = AUTOCYCLER_CONSENSUS.out.selection
     kraken2_report       = KRAKEN2_KRAKEN2.out.report
     bakta_tsv            = BAKTA_BAKTA.out.tsv
     bakta_json           = BAKTA_BAKTA.out.json

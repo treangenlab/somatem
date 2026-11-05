@@ -13,7 +13,7 @@ process FLYE_AUTOCYCLER {
 
     output:
     tuple val(meta), path("*.assembly.fasta"), emit: assembly
-    tuple val(meta), path("*.assembly.gfa")  , emit: graph
+    tuple val(meta), path("*.assembly.gfa")  , optional: true, emit: graph
     path "versions.yml"                      , emit: versions
 
     when:
@@ -41,7 +41,9 @@ process FLYE_AUTOCYCLER {
         ${args}
 
     cp flye_out/assembly.fasta ${prefix}.assembly.fasta
-    cp flye_out/assembly_graph.gfa ${prefix}.assembly.gfa
+    if [ -s flye_out/assembly_graph.gfa ]; then
+        cp flye_out/assembly_graph.gfa ${prefix}.assembly.gfa
+    fi
     cp flye_out/flye.log ${prefix}.flye.log
     cp flye_out/assembly_info.txt ${prefix}.assembly_info.txt
 
