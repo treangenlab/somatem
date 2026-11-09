@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - "bioconda::metagenomescope=1.2.0"
+  - "bioconda::metagenomescope>=1.2.0"

@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - "bioconda::seqscreen=4.5"
+  - "bioconda::seqscreen>=4.5"

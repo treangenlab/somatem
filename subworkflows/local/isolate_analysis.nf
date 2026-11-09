@@ -8,7 +8,7 @@
 
       ONT/PacBio long reads
         -> Autocycler long-read subsampling
-        -> multiple Flye assemblies
+        -> multiple assemblies from each selected long-read assembler
         -> Autocycler consensus assembly
         -> final long-read-first assembly
 
@@ -35,6 +35,10 @@
 
 include { AUTOCYCLER_SUBSAMPLE }   from '../../modules/local/autocycler/subsample/main'
 include { FLYE_AUTOCYCLER }        from '../../modules/local/flye/autocycler/main'
+include { MYLOASM_AUTOCYCLER }     from '../../modules/local/myloasm/autocycler/main'
+include { METAMDBG_AUTOCYCLER }    from '../../modules/local/metamdbg/autocycler/main'
+include { CANU_AUTOCYCLER }        from '../../modules/local/canu/autocycler/main'
+include { HIFIASM_AUTOCYCLER }     from '../../modules/local/hifiasm/autocycler/main'
 include { AUTOCYCLER_CONSENSUS }   from '../../modules/local/autocycler/consensus/main'
 include { BWA_MEM_FOR_POLYPOLISH } from '../../modules/local/bwa/mem_for_polypolish/main'
 include { POLYPOLISH_FILTER }      from '../../modules/local/polypolish/filter/main'
@@ -45,7 +49,7 @@ include { KRAKEN2_KRAKEN2 }        from '../../modules/nf-core/kraken2/kraken2/m
 include { BAKTA_BAKTA }            from '../../modules/local/bakta/bakta/main'
 include { BTYPER3 }                from '../../modules/local/btyper3/main'
 include { CHECKM2_PREDICT }        from '../../modules/nf-core/checkm2/predict/main'
-include { MOB_SUITE_RECON }        from '../../modules/local/mob_suite/recon/main'
+include { MOB_SUITE_DATABASE_INIT; MOB_SUITE_RECON } from '../../modules/local/mob_suite/recon/main'
 include { SOMATEM_SUMMARY_REPORT as ISOLATE_ANALYSIS_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
 workflow ISOLATE_ANALYSIS {
@@ -54,12 +58,51 @@ workflow ISOLATE_ANALYSIS {
     ch_reads
     ch_bakta_db
     ch_kraken2_db
-    ch_checkm2_db
+    ch_checkm2_db // value channel: path(db), reusable across samples/tasks
     // tuple val(meta), path(long_reads), path(short_reads_1), path(short_reads_2),
     //       val(expected_genome_size), val(species)
 
     main:
     ch_versions = channel.empty()
+
+    def subsamples = params.autocycler_subsamples?.toString()
+    if (!subsamples?.isInteger() || subsamples.toInteger() < 1) {
+        error('--autocycler_subsamples must be a positive integer.')
+    }
+
+    def max_contigs = params.autocycler_max_contigs?.toString()
+    if (!max_contigs?.isLong() || max_contigs.toLong() < 1 || max_contigs.toLong() > 4294967295L) {
+        error('--autocycler_max_contigs must be a positive integer (1 to 4294967295).')
+    }
+
+    def min_assemblies = params.autocycler_min_assemblies?.toString()
+    if (min_assemblies != null && (!min_assemblies.isLong() || min_assemblies.toLong() < 1 || min_assemblies.toLong() > 4294967295L)) {
+        error('--autocycler_min_assemblies must be a positive integer (1 to 4294967295).')
+    }
+
+    def min_genome_fraction = params.autocycler_min_genome_fraction?.toString()
+    if (!min_genome_fraction?.isDouble() || !(min_genome_fraction.toDouble() > 0 && min_genome_fraction.toDouble() <= 1)) {
+        error('--autocycler_min_genome_fraction must be greater than 0 and at most 1.')
+    }
+
+    def supported_assemblers = ['flye', 'myloasm', 'metamdbg', 'canu', 'hifiasm']
+    def assemblers = (params.autocycler_assemblers ?: '').toString().split(',')
+        .collect { it.trim().toLowerCase() }.findAll { it }.unique()
+    if (!assemblers || assemblers.any { !supported_assemblers.contains(it) }) {
+        error("--autocycler_assemblers must be a comma-separated selection of: ${supported_assemblers.join(', ')}")
+    }
+
+    def flye_mode = (params.autocycler_flye_mode ?: params.flye_mode ?: 'nano-hq').replaceFirst(/^--/, '')
+    def read_type = params.autocycler_read_type ?: [
+        'nano-hq': 'ont_r10', 'nano-raw': 'ont_r9', 'nano-corr': 'ont_r9',
+        'pacbio-hifi': 'pacbio_hifi', 'pacbio-raw': 'pacbio_clr', 'pacbio-corr': 'pacbio_clr'
+    ][flye_mode]
+    if (!(read_type in ['ont_r10', 'ont_r9', 'pacbio_hifi', 'pacbio_clr'])) {
+        error('--autocycler_read_type must be ont_r10, ont_r9, pacbio_hifi, or pacbio_clr.')
+    }
+    if (read_type in ['ont_r9', 'pacbio_clr'] && assemblers.any { it in ['myloasm', 'metamdbg', 'hifiasm'] }) {
+        error('Myloasm, metaMDBG and Hifiasm require high-accuracy reads. For ONT R9 or PacBio CLR, select --autocycler_assemblers flye,canu.')
+    }
 
     def hybrid_assembly = params.hybrid_assembly instanceof Boolean
         ? params.hybrid_assembly
@@ -104,19 +147,48 @@ workflow ISOLATE_ANALYSIS {
         def reads = subsample_reads instanceof List ? subsample_reads : [subsample_reads]
         reads.withIndex().collect { read, idx ->
             def subsample_meta = meta + [subsample_id: String.format('subsample_%02d', idx + 1)]
-            tuple(subsample_meta, read, genome_size_file, species)
+            tuple(subsample_meta, read, genome_size_file, species, read_type)
         }
     }
 
-    FLYE_AUTOCYCLER(ch_subsampled_reads)
-    ch_versions = ch_versions.mix(FLYE_AUTOCYCLER.out.versions)
+    ch_assemblies = channel.empty()
+    if ('flye' in assemblers) {
+        FLYE_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(FLYE_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(FLYE_AUTOCYCLER.out.versions)
+    }
+    if ('myloasm' in assemblers) {
+        MYLOASM_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(MYLOASM_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(MYLOASM_AUTOCYCLER.out.versions)
+    }
+    if ('metamdbg' in assemblers) {
+        METAMDBG_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(METAMDBG_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(METAMDBG_AUTOCYCLER.out.versions)
+    }
+    if ('canu' in assemblers) {
+        CANU_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(CANU_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(CANU_AUTOCYCLER.out.versions)
+    }
+    if ('hifiasm' in assemblers) {
+        HIFIASM_AUTOCYCLER(ch_subsampled_reads)
+        ch_assemblies = ch_assemblies.mix(HIFIASM_AUTOCYCLER.out.assembly)
+        ch_versions = ch_versions.mix(HIFIASM_AUTOCYCLER.out.versions)
+    }
 
-    ch_grouped_assemblies = FLYE_AUTOCYCLER.out.assembly
-        .map { meta, assembly -> tuple(meta.id, meta, assembly) }
-        .groupTuple(by: 0)
-        .map { sample_id, metas, assemblies ->
-            def base_meta = metas[0].findAll { key, value -> !['subsample_id', 'seed'].contains(key) }
-            tuple(base_meta, assemblies)
+    ch_grouped_assemblies = ch_assemblies
+        .map { meta, assembly -> tuple(meta.id, assembly) }
+        // Release ready samples immediately; retain partial groups at channel close.
+        // ponytail: ignored assembler tasks leave partial groups until the assembly
+        // channel closes; per-task completion records would remove that remaining barrier.
+        .groupTuple(by: 0, size: ((params.autocycler_subsamples ?: 4) as int) * assemblers.size(), remainder: true)
+        .join(AUTOCYCLER_SUBSAMPLE.out.reads.map { meta, reads, genome_size_file, species ->
+            tuple(meta.id, meta, genome_size_file)
+        }, by: 0, remainder: true)
+        .map { sample_id, assemblies, meta, genome_size_file ->
+            tuple(meta, assemblies ?: [], genome_size_file)
         }
 
     AUTOCYCLER_CONSENSUS(ch_grouped_assemblies)
@@ -133,7 +205,8 @@ workflow ISOLATE_ANALYSIS {
     if (hybrid_assembly) {
         ch_short_reads = ch_isolate_input.map { meta, long_reads, short_reads_1, short_reads_2, genome_size, species ->
             if (!short_reads_1 || !short_reads_2) {
-                error("Hybrid isolate assembly requires paired short reads for sample '${meta.id}'.")
+                log.warn "Paired short reads are missing for sample '${meta.id}'; retaining the validated long-read assembly."
+                return null
             }
             tuple(meta.id, meta, short_reads_1, short_reads_2, genome_size ?: '', species ?: '')
         }
@@ -227,13 +300,29 @@ workflow ISOLATE_ANALYSIS {
         ch_final_candidate_assembly = ch_polished_assembly
     }
 
+    if (hybrid_assembly && (run_polypolish || run_pypolca)) {
+        // Keep the validated assembly when a sample's optional polishing fails.
+        // Successful pairs flow immediately; unmatched originals flow at channel close.
+        ch_final_candidate_assembly = AUTOCYCLER_CONSENSUS.out.assembly
+            .map { meta, assembly -> tuple(meta.id, meta, assembly) }
+            .join(ch_final_candidate_assembly.map { meta, assembly -> tuple(meta.id, assembly) }, by: 0, remainder: true)
+            .map { sample_id, meta, original, polished ->
+                if (polished == null) {
+                    log.warn "Optional polishing did not finish for sample '${sample_id}'; retaining the validated assembly."
+                }
+                tuple(meta, polished ?: original)
+            }
+    }
+
     FASTA_FINALIZE(ch_final_candidate_assembly)
     ch_versions = ch_versions.mix(FASTA_FINALIZE.out.versions)
 
     CHECKM2_PREDICT(FASTA_FINALIZE.out.assembly, ch_checkm2_db)
     ch_versions = ch_versions.mix(CHECKM2_PREDICT.out.versions)
 
-    MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly)
+    MOB_SUITE_DATABASE_INIT(file(params.mob_suite_db ?: "${params.db_base_dir}/mob_suite").toString())
+    ch_versions = ch_versions.mix(MOB_SUITE_DATABASE_INIT.out.versions)
+    MOB_SUITE_RECON(FASTA_FINALIZE.out.assembly, MOB_SUITE_DATABASE_INIT.out.db)
     ch_versions = ch_versions.mix(MOB_SUITE_RECON.out.versions)
 
     ch_bakta_input = FASTA_FINALIZE.out.assembly.map { meta, assembly ->
@@ -258,6 +347,8 @@ workflow ISOLATE_ANALYSIS {
             FASTA_FINALIZE.out.assembly,
             AUTOCYCLER_CONSENSUS.out.assembly,
             AUTOCYCLER_CONSENSUS.out.graph,
+            AUTOCYCLER_CONSENSUS.out.selection,
+            AUTOCYCLER_CONSENSUS.out.lengths,
             BAKTA_BAKTA.out.tsv,
             BAKTA_BAKTA.out.json,
             BAKTA_BAKTA.out.png,
@@ -283,7 +374,7 @@ workflow ISOLATE_ANALYSIS {
                 return report_file
             }
             return [report_file]
-        }.collect()
+        }.collect().ifEmpty([])
     )
     ch_versions = ch_versions.mix(ISOLATE_ANALYSIS_SUMMARY_REPORT.out.versions)
 
@@ -292,6 +383,7 @@ workflow ISOLATE_ANALYSIS {
     autocycler_assembly  = AUTOCYCLER_CONSENSUS.out.assembly
     autocycler_graph     = AUTOCYCLER_CONSENSUS.out.graph
     autocycler_outdir    = AUTOCYCLER_CONSENSUS.out.outdir
+    assembly_selection  = AUTOCYCLER_CONSENSUS.out.selection
     kraken2_report       = KRAKEN2_KRAKEN2.out.report
     bakta_tsv            = BAKTA_BAKTA.out.tsv
     bakta_json           = BAKTA_BAKTA.out.json

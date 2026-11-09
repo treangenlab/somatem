@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::bandage_ng=2026.4.1
+  - bioconda::bandage_ng>=2026.4.1
   - pip
   - pip:
     - csvkit

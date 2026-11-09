@@ -412,6 +412,65 @@
             "type": "string",
             "default": "nano-hq"
         },
+        "autocycler_max_contigs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "default": 200,
+            "description": "Maximum mean contigs per input assembly accepted by Autocycler compress and cluster. Raising this threshold does not correct fragmentation or contamination."
+        },
+        "autocycler_min_assemblies": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "Override the minimum number of input assemblies supporting an Autocycler cluster. By default, Autocycler computes this from the candidate assemblies remaining after the genome-length filter."
+        },
+        "autocycler_min_genome_fraction": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "default": 0.8,
+            "description": "Minimum fraction of the supplied or estimated genome size required for candidate assemblies and consensus. Applied to total sequence length per assembly, preserving small contigs. If consensus fails validation or Autocycler fails, the qualifying candidate closest to the expected size proceeds downstream; samples with no qualifying candidate are reported without an assembly."
+        },
+        "autocycler_assemblers": {
+            "type": "string",
+            "default": "flye,myloasm,metamdbg,canu,hifiasm",
+            "description": "Comma-separated assemblers to run on each isolate long-read subsample. Supported: flye, myloasm, metamdbg, canu, hifiasm."
+        },
+        "autocycler_read_type": {
+            "type": "string",
+            "enum": ["ont_r10", "ont_r9", "pacbio_hifi", "pacbio_clr"],
+            "description": "Long-read type for isolate assembly. When unset, inferred from autocycler_flye_mode or flye_mode (default: ont_r10). Myloasm, metaMDBG and Hifiasm require ont_r10 or pacbio_hifi."
+        },
+        "autocycler_flye_mode": {
+            "type": "string",
+            "description": "Override Flye's read mode for isolate assembly; otherwise selected from the Autocycler read type."
+        },
+        "autocycler_flye_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Flye arguments for isolate assembly."
+        },
+        "autocycler_myloasm_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Myloasm arguments passed through Autocycler helper."
+        },
+        "autocycler_metamdbg_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional metaMDBG arguments passed through Autocycler helper."
+        },
+        "autocycler_canu_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Canu arguments passed through Autocycler helper. maxMemory defaults to the task's memory allocation."
+        },
+        "autocycler_hifiasm_args": {
+            "type": "string",
+            "default": "",
+            "description": "Additional Hifiasm arguments passed through Autocycler helper."
+        },
         "sample_environment": {
             "type": "string",
             "default": "human_gut"

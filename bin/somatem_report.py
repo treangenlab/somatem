@@ -101,7 +101,7 @@ WORKFLOW_COPY = {
         ),
         "methods": [
             "Long reads were classified with Kraken2 against the configured standard-8 database.",
-            "Long-read assemblies were generated with Autocycler and Flye, then polished with short reads when hybrid assembly was enabled.",
+            "Long-read assemblies were combined with Autocycler, with a length-qualified candidate retained when consensus failed. The selected assembly was polished with short reads when hybrid assembly was enabled.",
             "Final isolate assemblies were evaluated with CheckM2 to estimate completeness and contamination.",
             "MOB-suite classified assembly contigs against plasmid reference and marker databases and reconstructed predicted plasmids.",
             "Assemblies were annotated with Bakta, and optional BTyper3 typing was run from the Bakta genome FASTA output.",
@@ -223,8 +223,70 @@ def read_table_rows(path: Path, max_rows: int = 10000) -> tuple[list[str], list[
 
 
 def read_samplesheet(path: Path) -> tuple[list[str], list[list[str]]]:
-    header, rows = read_table(path, max_rows=5000)
-    return header, rows
+    # Samplesheets seed outcome reporting, so preview byte/row limits must not drop samples.
+    try:
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            sample = handle.read(8192)
+            handle.seek(0)
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+            except csv.Error:
+                dialect = csv.excel
+            rows = [[cell.strip() for cell in row] for row in csv.reader(handle, dialect) if any(cell.strip() for cell in row)]
+    except OSError:
+        return [], []
+    return (rows[0], rows[1:]) if rows else ([], [])
+
+
+def isolate_status_section(files: list[Path], sample_header: list[str], sample_rows: list[list[str]]) -> str:
+    sample_column = first_present(sample_header, ["sample"])
+    if sample_column is None:
+        return "<p>Sample outcomes could not be matched: the samplesheet has no sample column.</p>"
+
+    available = {path.name for path in files if file_size(path) > 0}
+    selections = {}
+    for path in files:
+        if path.name.endswith(".autocycler.selection.tsv"):
+            _header, rows = read_table_rows(path, max_rows=1)
+            for row in rows:
+                selections[row.get("Sample", "")] = row
+
+    sample_index = sample_header.index(sample_column)
+    rows = []
+    for sample_row in sample_rows:
+        sample = sample_row[sample_index] if sample_index < len(sample_row) else ""
+        selected = selections.get(sample, {})
+        selection_status = selected.get("Status", "")
+        required = {
+            "Final assembly": f"{sample}.fasta",
+            "Kraken2": f"{sample}.kraken2.report.txt",
+            "CheckM2": f"{sample}_checkm2_report.tsv",
+            "Bakta table": f"{sample}.tsv",
+            "Bakta JSON": f"{sample}.json",
+            "MOB-suite": f"{sample}.contig_report.txt",
+        }
+        missing = [label for label, filename in required.items() if filename not in available]
+        if selection_status not in {"consensus", "fallback", "no_assembly"}:
+            missing.append("Assembly selection record")
+        has_final = required["Final assembly"] in available
+        if selection_status == "no_assembly":
+            outcome = "Selection/output mismatch" if has_final else "No usable assembly"
+        else:
+            outcome = "Incomplete" if missing else "Expected outputs present"
+        rows.append([
+            sample, outcome, selection_status or "Unavailable",
+            selected.get("Source", ""), selected.get("Reason", ""), ", ".join(missing) or "None",
+        ])
+
+    counts = Counter(row[1] for row in rows)
+    return (
+        "<p>Every input sample is listed below, including samples without an assembly. "
+        "Output presence is checked using nonempty final assembly, Kraken2, CheckM2, Bakta and MOB-suite files; "
+        "optional typing and polishing are not assessed by this table. Missing outputs may indicate a failed or skipped step. "
+        "Consult the execution trace and task logs for details.</p>"
+        + "<p>" + "; ".join(f"{esc(status)}: {count}" for status, count in sorted(counts.items())) + ".</p>"
+        + table_html(["Sample", "Outcome", "Assembly selection", "Selected source", "Selection reason", "Missing or empty outputs"], rows, max_cols=6)
+    )
 
 
 def classify_file(path: Path) -> str:
@@ -1113,6 +1175,8 @@ def main() -> int:
         "<p>The table below records the samplesheet rows used to seed this workflow run.</p>"
         + table_html(sample_header, sample_rows[:100], max_cols=10),
     ))
+    if args.workflow == "isolate_analysis":
+        sections.append(section("Sample Outcomes", isolate_status_section(files, sample_header, sample_rows)))
     sections.append(section(
         "Workflow Outputs",
         "<p>This section inventories the files staged into the summary report. The categories distinguish "

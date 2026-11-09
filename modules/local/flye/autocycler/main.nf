@@ -9,21 +9,23 @@ process FLYE_AUTOCYCLER {
         pattern: "*.{fasta,gfa,log,txt}"
 
     input:
-    tuple val(meta), path(subsample_reads), path(genome_size_file), val(species)
+    tuple val(meta), path(subsample_reads), path(genome_size_file), val(species), val(read_type)
 
     output:
     tuple val(meta), path("*.assembly.fasta"), emit: assembly
-    tuple val(meta), path("*.assembly.gfa")  , emit: graph
+    tuple val(meta), path("*.assembly.gfa")  , optional: true, emit: graph
     path "versions.yml"                      , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def mode = params.autocycler_flye_mode ?: params.flye_mode ?: 'nano-hq'
+    def mode = params.autocycler_flye_mode ?: (!params.autocycler_read_type ? params.flye_mode : null) ?: [
+        ont_r10: 'nano-hq', ont_r9: 'nano-raw', pacbio_hifi: 'pacbio-hifi', pacbio_clr: 'pacbio-raw'
+    ][read_type]
     def flye_mode = mode.startsWith('--') ? mode : "--${mode}"
     def args = params.autocycler_flye_args ?: ''
-    def prefix = "${meta.id}.${meta.subsample_id}"
+    def prefix = "${meta.id}.flye.${meta.subsample_id}"
     """
     genome_size=\$(cat ${genome_size_file})
     genome_size_arg=""
@@ -39,7 +41,9 @@ process FLYE_AUTOCYCLER {
         ${args}
 
     cp flye_out/assembly.fasta ${prefix}.assembly.fasta
-    cp flye_out/assembly_graph.gfa ${prefix}.assembly.gfa
+    if [ -s flye_out/assembly_graph.gfa ]; then
+        cp flye_out/assembly_graph.gfa ${prefix}.assembly.gfa
+    fi
     cp flye_out/flye.log ${prefix}.flye.log
     cp flye_out/assembly_info.txt ${prefix}.assembly_info.txt
 
