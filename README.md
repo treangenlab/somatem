@@ -66,7 +66,7 @@ Each completed selection writes `isolate_analysis/<sample>/autocycler/<sample>.a
 
 Sample task failures are isolated to that sample and stage. Resource-related exits receive one retry, then the failed task is skipped; other sample task failures are skipped immediately. Check the summary and `pipeline_info/execution_trace_*.txt` for missing outputs and failed tasks, since a completed batch can contain failed samples. MOB-suite database readiness is checked once per run before parallel sample jobs start, reusing an initialized database. Shared database setup failures, invalid workflow settings, and aggregate report failures still fail the run.
 
-For local isolate runs, `--threads` and `--max_memory_gb` budget the total resources requested by concurrent tasks as well as limiting individual tasks. With no explicit memory budget, the workflow reserves `--local_memory_reserve_gb` (default `4`) from detected RAM. These are scheduler budgets; tools must still respect their requested resources. For cluster runs, configure the executor and queue limits for your scheduler. Retain the Nextflow work directory and use `-resume` when rerunning a batch to reuse successful tasks.
+For local isolate and SeqScreen runs, `--threads` and `--max_memory_gb` limit the combined CPU and memory requests of concurrent tasks as well as each task's request. With no explicit memory budget, the workflow reserves `--local_memory_reserve_gb` (default `4`) from detected RAM. Actual tool memory use can exceed a request. For cluster runs, configure the executor and queue limits for your scheduler. Retain the Nextflow work directory and use `-resume` when rerunning a batch to reuse successful tasks.
 
 ## Storage and databases
 

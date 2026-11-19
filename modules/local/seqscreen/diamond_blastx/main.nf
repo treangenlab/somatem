@@ -21,6 +21,8 @@ process SEQSCREEN_DIAMOND_BLASTX {
     script:
     def prefix = "${meta.id}"
     def evalue = params.seqscreen_evalue ?: 30
+    // DIAMOND estimates ~6 GB per billion letters. Allow 8 GiB and cap at its usual 2-billion-letter block.
+    def blockSize = Math.min(2.0d, task.memory.toMega() / 8192.0d)
     """
     diamond blastx \\
         -q ${fasta} \\
@@ -28,8 +30,7 @@ process SEQSCREEN_DIAMOND_BLASTX {
         -o ${prefix}.ur100.btab \\
         --evalue ${evalue} \\
         --threads ${task.cpus} \\
-        --block-size 200 \\
-        --index-chunks 1 \\
+        --block-size ${blockSize} \\
         --salltitles \\
         --more-sensitive \\
         --min-orf 10 \\
@@ -43,8 +44,7 @@ process SEQSCREEN_DIAMOND_BLASTX {
         -o ${prefix}.ur100.xml \\
         --evalue ${evalue} \\
         --threads ${task.cpus} \\
-        --block-size 200 \\
-        --index-chunks 1 \\
+        --block-size ${blockSize} \\
         --more-sensitive \\
         --min-orf 10 \\
         --masking 0 \\
