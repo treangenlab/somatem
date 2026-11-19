@@ -23,7 +23,7 @@ Supported modes:
 --seqscreen_mode sensitive
 ```
 
-On a shared server using the local executor, set `--threads` and `--max_memory_gb` to the CPU and RAM available to this run. For example, `--threads 8 --max_memory_gb 32` lets Nextflow schedule up to 8 CPUs and 32 GiB of task requests across all samples.
+Inside a Slurm batch job, the local executor takes its CPU budget from `--cpus-per-task` or the CPUs allocated on the current node. Somatem reads Slurm's `--mem` or `--mem-per-cpu` allocation and reserves `--local_memory_reserve_gb` (default `4`) for Nextflow and other overhead. For example, a single task with 32 CPUs and 128 GiB gives Nextflow a scheduling budget of 32 CPUs and 124 GiB when Java can see the full allocation. The command above uses these defaults automatically. You can still supply `--threads` and `--max_memory_gb` for a smaller budget. To check the budget used by a run, look for `Creating local task monitor` in `.nextflow.log`.
 
 In fast mode, both DIAMOND outputs use the same block size, up to 2 billion letters. Tasks requesting less than 16 GiB use smaller blocks. Changing block size can change some alignment results. [DIAMOND memory options](https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options)
 

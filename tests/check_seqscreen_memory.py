@@ -22,8 +22,9 @@ def main():
                        cwd=tmp, check=True)
         (tmp / "check.config").write_text(f"""
 params.analysis_type = 'seqscreen'
-params.threads = 2
-params.max_memory_gb = 1
+params.threads = null
+params.max_cpus = null
+params.max_memory_gb = null
 params.local_memory_reserve_gb = 4
 params.seqscreen_evalue = 30
 includeConfig '{ROOT}/conf/base.config'
@@ -35,13 +36,24 @@ workflow {{
     SEQSCREEN_DIAMOND_BLASTX(samples, file('db'))
 }}
 """)
-        subprocess.run(["nextflow", "-C", "check.config", "run", "check.nf"], cwd=tmp, check=True,
-                       env=os.environ | {"NXF_OFFLINE": "true"})
-        log = (tmp / ".nextflow.log").read_text()
-        assert "executor 'local' > cpus=2; memory=1 GB;" in log
-        assert "peakRunning=1;" in log  # Each sample requests the entire memory budget.
+        env = {key: value for key, value in os.environ.items() if not key.startswith("SLURM_")}
+        env["NXF_OFFLINE"] = "true"
+        for name, allocation, args, memory in [
+            ("node", {"SLURM_CPUS_PER_TASK": "2", "SLURM_MEM_PER_NODE": "5120"}, [], "1 GB"),
+            ("per-cpu", {"SLURM_CPUS_ON_NODE": "2", "SLURM_MEM_PER_CPU": "2560"}, [], "1 GB"),
+            ("override", {"SLURM_CPUS_PER_TASK": "4", "SLURM_MEM_PER_NODE": "8192"},
+             ["--threads", "2", "--max_memory_gb", "1"], "1 GB"),
+            ("bounded", {"SLURM_CPUS_PER_TASK": "2", "SLURM_MEM_PER_NODE": "512"},
+             ["--threads", "32", "--max_memory_gb", "128"], "512 MB"),
+            ("outside-slurm", {}, ["--threads", "2", "--max_memory_gb", "1"], "1 GB"),
+        ]:
+            subprocess.run(["nextflow", "-C", "check.config", "run", "check.nf", "-w", name, *args],
+                           cwd=tmp, check=True, env=env | allocation)
+            log = (tmp / ".nextflow.log").read_text()
+            assert f"executor 'local' > cpus=2; memory={memory};" in log, name
+            assert "peakRunning=1;" in log, name  # Each sample requests the entire memory budget.
         for sample in ("a", "b"):
-            (tabular,) = (tmp / "work").glob(f"*/*/{sample}.ur100.btab")
+            (tabular,) = (tmp / "node").glob(f"*/*/{sample}.ur100.btab")
             assert tabular.read_text().startswith("query\treference\t")
             assert "<Hit>" in tabular.with_suffix(".xml").read_text()
             script = (tabular.parent / ".command.sh").read_text()
