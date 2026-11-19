@@ -50,6 +50,7 @@ workflow {{
             subprocess.run(["nextflow", "-C", "check.config", "run", "check.nf", "-w", name, *args],
                            cwd=tmp, check=True, env=env | allocation)
             log = (tmp / ".nextflow.log").read_text()
+            assert "Unrecognized config option 'executor." not in log, name
             assert f"executor 'local' > cpus=2; memory={memory};" in log, name
             assert "peakRunning=1;" in log, name  # Each sample requests the entire memory budget.
         for sample in ("a", "b"):
