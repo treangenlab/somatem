@@ -29,7 +29,15 @@ process SEQSCREEN_BOWTIE2 {
         -x ${db_path} \\
         -U ${fasta} \\
         -S ${out} \\
-        > bowtie2.log 2>&1
+        > bowtie2.log 2>&1 || {
+            status=\$?
+            cat bowtie2.log >&2
+            # Bowtie2 reports its child's SIGKILL as wrapper exit 1.
+            if [[ \$status == 1 ]] && grep -Fq 'bowtie2-align died with signal 9 (KILL)' bowtie2.log; then
+                exit 137
+            fi
+            exit "\$status"
+        }
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
