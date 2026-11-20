@@ -32,9 +32,14 @@ process SEQSCREEN_BOWTIE2 {
         > bowtie2.log 2>&1 || {
             status=\$?
             cat bowtie2.log >&2
-            # Bowtie2 reports its child's SIGKILL as wrapper exit 1.
-            if [[ \$status == 1 ]] && grep -Fq 'bowtie2-align died with signal 9 (KILL)' bowtie2.log; then
-                exit 137
+            # Recover the child signal when the wrapper masks a retryable failure.
+            if [[ \$status == 1 ]]; then
+                if grep -Fq 'bowtie2-align died with signal 9 (KILL)' bowtie2.log; then
+                    exit 137
+                fi
+                if grep -Fq 'std::bad_alloc' bowtie2.log && grep -Fq 'bowtie2-align died with signal 6 (ABRT)' bowtie2.log; then
+                    exit 134
+                fi
             fi
             exit "\$status"
         }

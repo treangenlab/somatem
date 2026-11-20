@@ -19,7 +19,15 @@ def main():
 set -eu
 if [[ $1 == --version ]]; then echo 'bowtie2 version test'; exit 0; fi
 if [[ ${BAD_INDEX:-0} == 1 ]]; then echo 'index missing' >&2; exit 1; fi
-if [[ $2 != 1 ]]; then echo '(ERR): bowtie2-align died with signal 9 (KILL)' >&2; exit 1; fi
+if [[ $2 != 1 ]]; then
+    if [[ ${!#} == blacklist_bsat.sam ]]; then
+        echo "terminate called after throwing an instance of 'std::bad_alloc'" >&2
+        echo '(ERR): bowtie2-align died with signal 6 (ABRT) (core dumped)' >&2
+    else
+        echo '(ERR): bowtie2-align died with signal 9 (KILL)' >&2
+    fi
+    exit 1
+fi
 touch "${!#}"
 """)
         bowtie2.chmod(0o755)
@@ -51,17 +59,17 @@ workflow {{
         log = (tmp / ".nextflow.log").read_text()
         assert "peakRunning=1;" in log
         trace = (tmp / "trace.txt").read_text().splitlines()
-        for alias in ("BSAT", "VFDB"):
+        for alias, status in (("BSAT", 134), ("VFDB", 137)):
             for sample in ("a", "b"):
                 task = f"SEQSCREEN_BOWTIE2_{alias} ({sample}:{alias.lower()})"
-                assert f"{task}\t1\t137\t124 GB\t16" in trace
+                assert f"{task}\t1\t{status}\t124 GB\t16" in trace
                 assert f"{task}\t2\t0\t124 GB\t1" in trace
 
         failed = subprocess.run(cmd, cwd=tmp, env=env | {"BAD_INDEX": "1"},
                                 capture_output=True, text=True)
         assert failed.returncode != 0 and "index missing" in failed.stdout + failed.stderr
         assert "Execution is retried" not in (tmp / ".nextflow.log").read_text()
-        print("PASS Bowtie2 local memory reservation, SIGKILL retry and ordinary failure")
+        print("PASS Bowtie2 local memory reservation, allocation failure and SIGKILL retries, and ordinary failure")
 
 
 if __name__ == "__main__":
