@@ -1,4 +1,4 @@
-"""Check both SeqScreen Bowtie2 aliases with Nextflow and a simulated killed aligner."""
+"""Check SeqScreen's handling of wrapped Bowtie2 and Centrifuge failures with Nextflow."""
 
 import os
 from pathlib import Path
@@ -31,6 +31,16 @@ fi
 touch "${!#}"
 """)
         bowtie2.chmod(0o755)
+        centrifuge = tmp / "centrifuge"
+        centrifuge.write_text("""#!/usr/bin/env bash
+set -eu
+if [[ $1 == --version ]]; then echo 'centrifuge-class version test'; exit 0; fi
+if [[ ${BAD_INDEX:-0} == 1 ]]; then echo 'index missing' >&2; exit 1; fi
+while [[ $1 != --threads ]]; do shift; done
+if [[ $2 != 1 ]]; then echo '(ERR): centrifuge-class died with signal 9 (KILL)' >&2; exit 1; fi
+touch sample.centrifuge
+""")
+        centrifuge.chmod(0o755)
         (tmp / "check.config").write_text(f"""
 params.analysis_type = 'seqscreen'
 params.threads = 32
@@ -46,19 +56,22 @@ trace.fields = 'name,attempt,exit,memory,cpus'
         (tmp / "main.nf").write_text(f"""
 include {{ SEQSCREEN_BOWTIE2 as SEQSCREEN_BOWTIE2_BSAT }} from '{module}'
 include {{ SEQSCREEN_BOWTIE2 as SEQSCREEN_BOWTIE2_VFDB }} from '{module}'
+include {{ SEQSCREEN_CENTRIFUGE }} from '{ROOT}/modules/local/seqscreen/centrifuge/main'
 workflow {{
     samples = channel.of('a', 'b').map {{ id -> tuple([id: id], file('sample.fa')) }}
     SEQSCREEN_BOWTIE2_BSAT(samples, file('db'), 'bsat')
     SEQSCREEN_BOWTIE2_VFDB(samples, file('db'), 'vfdb')
+    SEQSCREEN_CENTRIFUGE(samples, file('db'))
 }}
 """)
         env = {k: v for k, v in os.environ.items() if not k.startswith("SLURM_")}
         env.update(PATH=f"{tmp}:{env['PATH']}", NXF_OFFLINE="true", BAD_INDEX="0")
         cmd = ["nextflow", "-C", "check.config", "run", "main.nf", "-ansi-log", "false"]
         subprocess.run(cmd, cwd=tmp, env=env, check=True)
-        log = (tmp / ".nextflow.log").read_text()
-        assert "peakRunning=1;" in log
         trace = (tmp / "trace.txt").read_text().splitlines()
+        for sample in ("a", "b"):
+            assert f"SEQSCREEN_CENTRIFUGE ({sample})\t1\t137\t124 GB\t16" in trace
+            assert f"SEQSCREEN_CENTRIFUGE ({sample})\t2\t0\t124 GB\t1" in trace
         for alias, status in (("BSAT", 134), ("VFDB", 137)):
             for sample in ("a", "b"):
                 task = f"SEQSCREEN_BOWTIE2_{alias} ({sample}:{alias.lower()})"
@@ -69,7 +82,7 @@ workflow {{
                                 capture_output=True, text=True)
         assert failed.returncode != 0 and "index missing" in failed.stdout + failed.stderr
         assert "Execution is retried" not in (tmp / ".nextflow.log").read_text()
-        print("PASS Bowtie2 local memory reservation, allocation failure and SIGKILL retries, and ordinary failure")
+        print("PASS Bowtie2 and Centrifuge allocation failure and SIGKILL retries, and ordinary failure")
 
 
 if __name__ == "__main__":

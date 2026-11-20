@@ -25,7 +25,14 @@ process SEQSCREEN_CENTRIFUGE {
         -S ${prefix}.centrifuge \\
         --threads ${task.cpus} \\
         --seed 1 \\
-        > centrifuge.log 2>&1
+        > centrifuge.log 2>&1 || {
+            status=\$?
+            cat centrifuge.log >&2
+            if [[ \$status == 1 ]] && grep -Fq 'centrifuge-class died with signal 9 (KILL)' centrifuge.log; then
+                exit 137
+            fi
+            exit "\$status"
+        }
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
