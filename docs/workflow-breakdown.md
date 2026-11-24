@@ -8,7 +8,7 @@ In the Mermaid diagrams, arrows show data or control dependencies rather than a 
 
 | Command | Nextflow route | Shared preprocessing | Main tools |
 |---|---|---|---|
-| [`pre_processing`](#preprocessing) | `PREPROCESSING` | This is the preprocessing route | NanoPlot, optional Deacon, Chopper |
+| [`pre_processing`](#preprocessing) | `PREPROCESSING` | This is the preprocessing route | NanoPlot, optional Deacon or Hostile, Chopper |
 | [`16S`](#16s-profiling) | `TAXONOMIC_PROFILING`, 16S branch | Yes | Emu, Taxburst |
 | [`taxonomic_profiling`](#metagenomic-taxonomic-profiling) | `TAXONOMIC_PROFILING`, metagenomic branch | Yes | Sylph, LEMUR/MAGNET, Kraken2, or SingleM |
 | [`assembly_mags`](#assembly-and-mag-recovery) | `ASSEMBLY_MAGS` | Yes | Flye, AGB, minimap2, samtools, binning tools, Pigeon, CheckM2, SingleM, Bakta |
@@ -48,7 +48,7 @@ flowchart TD
     ID --> IA["Isolate analysis — Autocycler consensus and downstream tools"]
     Q -->|SeqScreen| SQ["Check existing database; SeqScreen DSL2 — Nextflow and SeqScreen modules"]
     Q -->|other analyses| D["Prepare required databases — DOWNLOAD_DBS"]
-    D --> P["Shared preprocessing — NanoPlot / optional Deacon / Chopper"]
+    D --> P["Shared preprocessing — NanoPlot / optional Deacon or Hostile / Chopper"]
     P --> T{"Dispatch — Nextflow"}
     T -->|preprocessing only| R["Workflow reports — Python somatem_report.py"]
     T -->|16S or metagenomic| TAX["Taxonomic profiling — selected profiling tools"]
@@ -66,26 +66,26 @@ Database acquisition and independent read tasks can overlap; the overview groups
 
 ## Preprocessing
 
-Entry: `somatem pre_processing` selects `analysis_type=pre-processing`. This runs the shared `PREPROCESSING` subworkflow and stops before any downstream analysis. Defaults are metagenomic data, `sample_environment=human_gut`, minimum quality 10, and minimum length 250; therefore host depletion is enabled with the default settings. `run_deacon` is computed from a human/mouse environment and non-16S data. Sources: [CLI](../bin/somatem), [orchestrator](../workflows/somatem.nf), [preprocessing](../subworkflows/local/pre-processing.nf), [defaults](../nextflow.config), [module arguments](../conf/modules.config).
+Entry: `somatem pre_processing` selects `analysis_type=pre-processing`. This runs the shared `PREPROCESSING` subworkflow and stops before any downstream analysis. Defaults are metagenomic data, `sample_environment=human_gut`, minimum quality 10, and minimum length 250; therefore host depletion is enabled with the default settings. `run_deacon` is computed from a human/mouse environment and non-16S data. Supplying `--hostile_reference` selects Hostile for any sample environment and bypasses Deacon. Sources: [CLI](../bin/somatem), [orchestrator](../workflows/somatem.nf), [preprocessing](../subworkflows/local/pre-processing.nf), [defaults](../nextflow.config), [module arguments](../conf/modules.config).
 
 | Step | Tool / implementation | Behavior and result |
 |---|---|---|
 | 1 | Nextflow initialization | Validate/parse the samplesheet into metadata/read tuples; enter `PREPROCESSING`. |
-| 2, optional | Nextflow path lookup; **Deacon** (`DEACON_FETCH`) | When host depletion is enabled, reuse an existing supplied index path or fetch the human/mouse minimizer index. |
+| 2, optional | Nextflow, **minimap2** or **Deacon** | For Hostile, build one minimap2 index from the host FASTA or reuse a supplied `.mmi`. For Deacon, reuse a supplied index or fetch the human/mouse index. |
 | 3, independent QC branch | **NanoPlot** (`RawNanoPlot`) | Read the original input and produce HTML, text statistics, logs, and optional PNGs. This does not gate the filtering branch. |
-| 4, optional | **Deacon** (`DEACON_FILTER`) | Deplete reads matching the host index; output compressed clean FASTQ and a JSON summary. Otherwise pass original reads onward. |
-| 5 | **zcat → Chopper → gzip** (`CHOPPER`) | Decompress, filter by configured quality/minimum length, and recompress to `<sample>.fastq.gz`. The orchestrator supplies an empty contaminant reference, so Chopper's additional reference-based removal is inactive. |
+| 4, optional | **Deacon** (`DEACON_FILTER`) or **Hostile** (`HOSTILE_CLEAN`) | Deplete reads matching the host index and output compressed clean FASTQ and a JSON summary. Otherwise pass original reads onward. |
+| 5 | **gzip -dc → Chopper → gzip** (`CHOPPER`) | Decompress, filter by configured quality/minimum length, and recompress to `<sample>.fastq.gz`. The orchestrator supplies an empty contaminant reference, so Chopper's additional reference-based removal is inactive. |
 | 6 | **NanoPlot** (`FinalNanoPlot`) | Generate post-filtering QC. Configuration adds a two-second shell delay, one concurrent final-QC task, and scratch execution. |
-| 7 | **Python**, `somatem_report.py` (`PREPROCESSING_SUMMARY_REPORT`) | Collect raw/final NanoStats, filtered FASTQ, optional Deacon outputs, software versions, and the original samplesheet into `pre_processing_summary_report.html`. |
+| 7 | **Python**, `somatem_report.py` (`PREPROCESSING_SUMMARY_REPORT`) | Collect raw/final NanoStats, filtered FASTQ, optional host-removal outputs, software versions, and the original samplesheet into `pre_processing_summary_report.html`. |
 | 8 | Nextflow/nf-core version collation | Emit clean reads, the summary, and versions; the top-level pipeline writes `pipeline_info/somatem_software_versions.yml` and completion records. |
 
 ```mermaid
 flowchart TD
     P0["Input / initialization — Nextflow + nf-schema"] --> P1["Raw QC — NanoPlot"]
     P0 --> P2{"Host depletion enabled? — Nextflow"}
-    P2 -->|yes| P3["Reuse index or fetch — Nextflow / Deacon"]
-    P3 --> P4["Host depletion — Deacon filter"]
-    P2 -->|no| P5["Quality / length filter — zcat → Chopper → gzip"]
+    P2 -->|yes| P3["Prepare or reuse the selected host index"]
+    P3 --> P4["Host depletion — Deacon or Hostile"]
+    P2 -->|no| P5["Quality / length filter — gzip -dc → Chopper → gzip"]
     P4 --> P5
     P5 --> P6["Final QC — sleep + NanoPlot"]
     P1 --> P7["Collect inputs — Nextflow"]
@@ -108,7 +108,7 @@ Entry: `somatem 16S` sets `data_type=16S` and `analysis_type=taxonomic-profiling
 | 1 | Nextflow initialization | Resolve the 16S samplesheet and read tuples. |
 | 2 | **OSF client** (`EMU_DOWNLOAD_DB`), shell `mkdir`/`mv` (`EMU_STAGE_DB`) | Obtain `species_taxid.fasta` and `taxonomy.tsv` using the configured persistent database directory, then stage an `emu_db` directory. |
 | 3 | **NanoPlot** (`RawNanoPlot`) | Original-read QC, independent of read filtering. |
-| 4 | **zcat → Chopper → gzip** | Quality/length-filter reads. An explicitly enabled Deacon branch is inherited from shared preprocessing; it is disabled by the 16S defaults. |
+| 4 | **gzip -dc → Chopper → gzip** | Quality/length-filter reads. Shared preprocessing supports explicit host removal with Deacon or a Hostile reference. The 16S defaults skip host removal. |
 | 5 | **NanoPlot** (`FinalNanoPlot`) and **Python** `somatem_report.py` | Final QC and the common preprocessing summary; profiling can begin when filtered reads are ready. |
 | 6 | **Emu** (`EMU_ABUNDANCE`) | Run abundance estimation on clean reads with `params.emu_db`. Emit abundance TSV; optional assignment TSV, SAM, and unclassified FASTA outputs depend on configured Emu flags. Defaults keep counts/read assignments and request unclassified outputs, while `keep_files` is false. |
 | 7 | **Python**, `taxburst_prep.py` (`TAXBURST_CONVERT`) | Convert Emu abundance into Krona-format TSV. Skip Emu unmapped/unclassified tax-ID rows, normalize missing taxonomy ranks, and adjust the duplicated Actinobacteria class label. |
@@ -119,8 +119,8 @@ Entry: `somatem 16S` sets `data_type=16S` and `analysis_type=taxonomic-profiling
 ```mermaid
 flowchart TD
     S0["Input / initialization — Nextflow + nf-schema"] --> S1["Raw QC — NanoPlot"]
-    S0 --> S2["Quality / length filter — zcat → Chopper → gzip"]
-    S0 -. explicit run_deacon override .-> SD["Reuse/fetch index; deplete host — Nextflow + Deacon"]
+    S0 --> S2["Quality / length filter — gzip -dc → Chopper → gzip"]
+    S0 -. explicit host removal .-> SD["Prepare index and deplete host — Deacon or Hostile"]
     SD -. optional replacement input .-> S2
     S2 --> S3["Final QC — sleep + NanoPlot"]
     S1 --> S4["Preprocessing summary — Nextflow collect + Python somatem_report.py"]
@@ -147,7 +147,7 @@ Entry: `somatem taxonomic_profiling` (alias `tax`) selects metagenomic data unle
 | Step | Tool / implementation | Behavior and result |
 |---|---|---|
 | 1 | Nextflow initialization | Parse the input samplesheet and choose the data-type/profiler branch. |
-| 2 | Nextflow + **Deacon**, **NanoPlot**, **Chopper**, **gzip**, **Python** | Run the complete shared preprocessing path: optional host-index reuse/fetch and depletion; independent raw QC; quality/length filtering; final QC; preprocessing HTML summary. |
+| 2 | Nextflow + **Deacon** or **Hostile**, **NanoPlot**, **Chopper**, **gzip**, **Python** | Run the complete shared preprocessing path: optional host-index reuse/fetch and depletion; independent raw QC; quality/length filtering; final QC; preprocessing HTML summary. |
 | 3a, Sylph only | Nextflow path checks; **aria2c** (`SYLPH_DOWNLOAD_DB`) | Reuse the selected `.syldb`; otherwise download a supported standard database. Missing explicitly supplied databases and missing `all` databases fail instead of being downloaded. The default group is prokaryotic. |
 | 3b, LEMUR only | Groovy/Java HTTPS + JSON parsing; **aria2c**, **tar**, **mv** (`LEMUR_DATABASEDOWNLOAD`); shell staging (`LEMUR_STAGE_DB`) | Resolve Zenodo metadata/checksum, obtain/extract the selected database, and stage its reference and taxonomy files. Stored database outputs can be reused. |
 | 3c, Kraken2 only | Nextflow path check, or **aria2c**, **tar**, shell (`KRAKEN2_TAXONOMY_DOWNLOAD_DB`) | Use a supplied existing database or acquire/extract the configured Standard-8 database. |
@@ -166,8 +166,8 @@ Entry: `somatem taxonomic_profiling` (alias `tax`) selects metagenomic data unle
 flowchart TD
     T0["Input / initialization — Nextflow + nf-schema"] --> T1["Raw QC — NanoPlot"]
     T0 --> T2{"Host depletion enabled? — Nextflow"}
-    T2 -->|yes| T3["Reuse/fetch index; filter — Nextflow + Deacon"]
-    T2 -->|no| T4["Quality / length filter — zcat → Chopper → gzip"]
+    T2 -->|yes| T3["Prepare index and filter — Deacon or Hostile"]
+    T2 -->|no| T4["Quality / length filter — gzip -dc → Chopper → gzip"]
     T3 --> T4
     T4 --> T5["Final QC — sleep + NanoPlot"]
     T1 --> T6["Preprocessing summary — Nextflow collect + Python somatem_report.py"]
@@ -208,7 +208,7 @@ Sources: [database dispatch](../subworkflows/local/download_databases.nf), [Sylp
 
 ## Assembly and MAG recovery
 
-Entry: `somatem assembly_mags` (alias `mag`), selecting `analysis_type=assembly`. [SOMATEM](../workflows/somatem.nf) calls [ASSEMBLY_MAGS](../subworkflows/local/assembly_mags.nf) with **cleaned reads**. The local comment calling these “raw reads” does not reflect the caller. First, the shared launch path parses the samplesheet, [preprocessing](#preprocessing) runs NanoPlot, optional Deacon, Chopper and final NanoPlot, and [database preparation](#database-preparation) supplies CheckM2, Bakta and the SingleM metapackage. The table expands the analysis that follows.
+Entry: `somatem assembly_mags` (alias `mag`), selecting `analysis_type=assembly`. [SOMATEM](../workflows/somatem.nf) calls [ASSEMBLY_MAGS](../subworkflows/local/assembly_mags.nf) with **cleaned reads**. The local comment calling these “raw reads” does not reflect the caller. First, the shared launch path parses the samplesheet, [preprocessing](#preprocessing) runs NanoPlot, optional Deacon or Hostile, Chopper and final NanoPlot, and [database preparation](#database-preparation) supplies CheckM2, Bakta and the SingleM metapackage. The table expands the analysis that follows.
 
 The default route uses Flye, iterative binning with three binners, Pigeon candidate selection, DAS Tool consensus, CheckM2 assessment and completeness-gated Bakta annotation. Defaults come from [nextflow.config](../nextflow.config) and [module configuration](../conf/modules.config).
 
@@ -236,7 +236,7 @@ The default route uses Flye, iterative binning with three binners, Pigeon candid
 
 ```mermaid
 flowchart TD
-    ASTART["Samplesheet initialization — Nextflow / nf-schema"] --> APRE["Shared preprocessing — NanoPlot / optional Deacon / Chopper / Python summary"]
+    ASTART["Samplesheet initialization — Nextflow / nf-schema"] --> APRE["Shared preprocessing — NanoPlot / optional Deacon or Hostile / Chopper / Python summary"]
     ASTART --> ADB["Database preparation — Groovy / aria2c / tar / bakta_db / SingleM data"]
     A0["Cleaned reads + CheckM2/Bakta/SingleM databases"]
     APRE --> A0
@@ -653,8 +653,8 @@ Entry: `somatem genome_dynamics` (alias `dynamics`) selects `analysis_type=genom
 | Step | Tool / implementation | Behavior and result |
 |---|---|---|
 | 1 | Nextflow initialization | Parse the time-series samplesheet/read tuples. |
-| 2 | **Deacon** + Nextflow, optional | Reuse/fetch the host index and deplete host reads if enabled. |
-| 3 | **NanoPlot**, **zcat → Chopper → gzip**, **NanoPlot**, **Python** | Complete the shared preprocessing path: raw QC runs independently; filtered reads feed final QC and the preprocessing summary. |
+| 2 | **Deacon** or **Hostile** + Nextflow, optional | Prepare the selected host index and deplete host reads if enabled. |
+| 3 | **NanoPlot**, **gzip -dc → Chopper → gzip**, **NanoPlot**, **Python** | Complete the shared preprocessing path: raw QC runs independently; filtered reads feed final QC and the preprocessing summary. |
 | 4 | Nextflow `map → collect → flatten → map` | Discard per-sample metadata, gather all clean read paths, flatten them, and assign `[id: multiple, single_end: true]`. A `.view()` also prints this collected tuple. There is no explicit chronological sorting in this subworkflow. |
 | 5 | **Rhea** (`RHEA`) | Invoke one external `rhea` process on the full read-path list. Declared outputs include the `metaflye` directory/GFA, Bandage metadata, base-pair counts, edge/node coverage, normalized coverage, logs, structural-variant TSV, and GAF files. |
 | 6 | **Bandage image**, twice (`BANDAGE_IMAGE`) | Render the Rhea graph as PNG and SVG. The generic module also supports decompression via `zcat` and cleanup of the temporary uncompressed file for a gzipped GFA, although Rhea supplies an uncompressed GFA here. |
@@ -665,8 +665,8 @@ Entry: `somatem genome_dynamics` (alias `dynamics`) selects `analysis_type=genom
 flowchart TD
     G0["Input / initialization — Nextflow + nf-schema"] --> G1["Raw QC — NanoPlot"]
     G0 --> G2{"Host depletion enabled? — Nextflow"}
-    G2 -->|yes| G3["Reuse/fetch index; deplete — Nextflow + Deacon"]
-    G2 -->|no| G4["Quality / length filter — zcat → Chopper → gzip"]
+    G2 -->|yes| G3["Prepare index and deplete — Deacon or Hostile"]
+    G2 -->|no| G4["Quality / length filter — gzip -dc → Chopper → gzip"]
     G3 --> G4
     G4 --> G5["Final QC — sleep + NanoPlot"]
     G1 --> G6["Preprocessing summary — Nextflow collect + Python somatem_report.py"]
@@ -694,7 +694,7 @@ flowchart TD
 | Step / branch | Tool | Behavior |
 |---|---|---|
 | D1 | Bash → Nextflow | Launch the standalone database entry with the repository configuration. No samplesheet is read. |
-| D2, eligible host depletion | Nextflow path check or Deacon `index fetch` | Reuse an existing index path or fetch the configured host index. Excluded for isolate and SeqScreen. |
+| D2, eligible host depletion | Nextflow, minimap2 or Deacon `index fetch` | Reuse a supplied index, build a Hostile index from the host FASTA, or fetch the configured Deacon index. Excluded for isolate and SeqScreen. |
 | D3a, 16S | OSF client → shell `mkdir`/`mv` | Fetch Emu sequence/taxonomy files, then stage a database directory. |
 | D3b, Sylph | Nextflow path check or aria2c | Reuse the selected `.syldb` or download a supported standard group database. A missing custom or `all` database causes an error. |
 | D3c, LEMUR/MAGNET | Groovy/Java HTTPS and JSON → aria2c → tar → shell staging | Read Zenodo metadata, verify download checksum, extract and stage LEMUR files. |
@@ -709,7 +709,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     D1["D1 CLI and config — Bash / Nextflow"] --> H{"Eligible host depletion? — Nextflow"}
-    H -->|yes| D2["D2 Existing path or index fetch — Nextflow / Deacon"]
+    H -->|yes| D2["D2 Prepare selected host index — Nextflow / minimap2 / Deacon"]
     D1 --> A{"Analysis type — Nextflow"}
     A -->|taxonomic profiling| T{"Data type / profiler — Nextflow"}
     T -->|16S| E["D3a Fetch files — OSF client"]
@@ -827,7 +827,7 @@ These 15 standalone `.nf` harnesses are separate from the nine CLI commands. Eac
 | [agb_test.nf](../test-modules/agb_test.nf) | Nextflow wraps an assembly directory in metadata → `AGB` wrapper, Python/AGB | Passes empty graph/info channels; differs from production GFA/GV/info wiring. |
 | [bandage_test.nf](../test-modules/bandage_test.nf) | Tuple helper for graph and color CSV → `BANDAGENG_IMAGE`, BandageNG | Production genome dynamics calls the separate Bandage module. |
 | [centrifuger-test.nf](../test-modules/centrifuger-test.nf) | Nextflow read/database/thread channels → `centrifuger` | Centrifuger is a test-only alternative here; SeqScreen uses Centrifuge. |
-| [chopper_test.nf](../test-modules/chopper_test.nf) | Tuple helper + empty contaminant reference → zcat/Chopper/gzip | No raw/final NanoPlot branch. |
+| [chopper_test.nf](../test-modules/chopper_test.nf) | Tuple helper + empty contaminant reference → gzip -dc/Chopper/gzip | No raw/final NanoPlot branch. |
 | [deacon_test.nf](../test-modules/deacon_test.nf) | Tuple helper; Deacon index fetch → Deacon filter | Fetches the configured index directly. |
 | [emu_test.nf](../test-modules/emu_test.nf) | OSF database download → attempted shell staging → Nextflow print | References nonexistent `emu_db_files`; module output is `db_files`. Emu abundance call is commented out. |
 | [ensemble-test.nf](../test-modules/ensemble-test.nf) | Tuple helper → Ganon and Kraken2 in parallel | No ensemble reconciliation step is implemented in the harness. |
@@ -855,7 +855,7 @@ flowchart TD
         CE0["Reads, DB, threads — Nextflow channels"] --> CE1["Classify — Centrifuger"]
     end
     subgraph CHOPTEST["chopper_test.nf"]
-        CH0["Read tuple and empty contaminant reference — Nextflow"] --> CH1["Filter — zcat / Chopper / gzip"]
+        CH0["Read tuple and empty contaminant reference — Nextflow"] --> CH1["Filter — gzip -dc / Chopper / gzip"]
     end
     subgraph DEACTEST["deacon_test.nf"]
         DE0["Read tuple — Nextflow helper"] --> DE2["Deplete host — Deacon filter"]

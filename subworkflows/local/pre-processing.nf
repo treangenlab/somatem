@@ -4,6 +4,7 @@ include { convert_to_nfcore_tuple } from './utils/nf-core-compatibility.nf'
 
 include { NANOPLOT as RawNanoPlot; NANOPLOT as FinalNanoPlot } from '../../modules/nf-core/nanoplot/main.nf'
 include { DEACON_FILTER } from '../../modules/local/deacon/filter/main.nf'
+include { HOSTILE_CLEAN } from '../../modules/local/hostile/clean/main.nf'
 include { CHOPPER } from '../../modules/nf-core/chopper/main.nf'
 include { SOMATEM_SUMMARY_REPORT as PREPROCESSING_SUMMARY_REPORT } from '../../modules/local/somatem_summary_report/main.nf'
 
@@ -16,7 +17,7 @@ workflow PREPROCESSING {
 
     take:
     reads_ch // channel: [ meta, reads ]
-    ch_deacon_index // channel: path to a Deacon minimizer index
+    ch_host_index // reusable host index for the selected filter
     contam_ref // channel: path to contaminant reference
 
     main:
@@ -26,13 +27,17 @@ workflow PREPROCESSING {
     RawNanoPlot(reads_ch) // initial QC
     ch_versions = ch_versions.mix(RawNanoPlot.out.versions.first())
     
-    // if using a host derived sample (human, mouse supported for now)
-    if (params.run_deacon) {
-        DEACON_FILTER(reads_ch, ch_deacon_index)
-        ch_versions = ch_versions.mix(DEACON_FILTER.out.versions)
-        reads_dehosted_ch = DEACON_FILTER.out.fastq
-    } else {
-        reads_dehosted_ch = reads_ch
+    ch_host_report_files = channel.empty()
+    reads_dehosted_ch = reads_ch
+    if (params.hostile_reference || params.run_deacon) {
+        if (params.hostile_reference) {
+            host_filter = HOSTILE_CLEAN(reads_ch, ch_host_index)
+        } else {
+            host_filter = DEACON_FILTER(reads_ch, ch_host_index)
+        }
+        reads_dehosted_ch = host_filter.fastq
+        ch_versions = ch_versions.mix(host_filter.versions)
+        ch_host_report_files = host_filter.fastq.mix(host_filter.json)
     }
 
     CHOPPER(reads_dehosted_ch, contam_ref) // quality filtering; future contam removal
@@ -43,12 +48,8 @@ workflow PREPROCESSING {
 
     ch_versions_for_report = ch_versions
     ch_preprocessing_report_files = RawNanoPlot.out.txt
-        .mix(FinalNanoPlot.out.txt, CHOPPER.out.fastq)
+        .mix(FinalNanoPlot.out.txt, CHOPPER.out.fastq, ch_host_report_files)
         .mix(ch_versions_for_report)
-
-    if (params.run_deacon) {
-        ch_preprocessing_report_files = ch_preprocessing_report_files.mix(DEACON_FILTER.out.fastq, DEACON_FILTER.out.json)
-    }
 
     PREPROCESSING_SUMMARY_REPORT(
         'pre_processing',

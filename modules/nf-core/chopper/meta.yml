@@ -7,10 +7,9 @@ keywords:
   - nanopore
   - qc
 tools:
-  - "zcat":
-      description: "zcat uncompresses either a list of files on the command line or
-        its standard input and writes the uncompressed data on standard output."
-      documentation: "https://linux.die.net/man/1/zcat"
+  - "gzip":
+      description: "Decompress gzip input to standard output."
+      documentation: "https://linux.die.net/man/1/gzip"
       args_id: "$args"
       identifier: ""
   - "chopper":

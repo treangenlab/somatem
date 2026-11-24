@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { DEACON_FETCH } from '../../modules/local/deacon/fetch/main.nf'
+include { MINIMAP2_INDEX as HOSTILE_INDEX } from '../../modules/nf-core/minimap2/index/main'
 include { CHECKM2_DATABASEDOWNLOAD } from '../../modules/nf-core/checkm2/databasedownload/main'   
 include { BAKTA_BAKTADBDOWNLOAD } from '../../modules/nf-core/bakta/baktadbdownload/main' 
 include { KRAKEN2_STANDARD8_DOWNLOAD_DB; KRAKEN2_STANDARD8_DOWNLOAD_DB as KRAKEN2_TAXONOMY_DOWNLOAD_DB } from '../../modules/local/kraken2/download_db/main.nf'
@@ -21,7 +22,7 @@ workflow DOWNLOAD_DBS {
 
     main:
     // Initialize empty channels for each database type
-    ch_deacon_index = channel.empty()
+    ch_host_index = channel.empty()
     ch_emu_db = channel.empty()
     ch_lemur_db = channel.empty()
     ch_sylph_db = channel.empty()
@@ -39,13 +40,26 @@ workflow DOWNLOAD_DBS {
     // pre-processing databases 
     // ------------------------------------------------
 
-    if (params.run_deacon && analysis_type != "isolate-analysis" && analysis_type != "seqscreen") {
-        if (file(deacon_index).exists()) {
-            ch_deacon_index = channel.value(file(deacon_index))
-        } else {
-            log.info "Fetching Deacon host-depletion index: ${deacon_index}"
-            DEACON_FETCH(deacon_index)
-            ch_deacon_index = DEACON_FETCH.out.index
+    if (!(analysis_type in ['isolate-analysis', 'seqscreen'])) {
+        if (params.hostile_reference) {
+            def reference = file(params.hostile_reference, glob: false, checkIfExists: true)
+            if (!reference.isFile() || !(reference.name ==~ /.+\.(?:(?:fa|fna|fasta)(?:\.gz)?|mmi)/)) {
+                error("--hostile_reference requires a host FASTA (.fa, .fna, .fasta, optionally gzipped) or a minimap2 .mmi file: ${reference}")
+            }
+            if (reference.extension == 'mmi') {
+                ch_host_index = channel.value(reference)
+            } else {
+                HOSTILE_INDEX(tuple([id: 'host'], reference))
+                ch_host_index = HOSTILE_INDEX.out.index.map { meta, index -> index }
+            }
+        } else if (params.run_deacon) {
+            if (file(deacon_index).exists()) {
+                ch_host_index = channel.value(file(deacon_index))
+            } else {
+                log.info "Fetching Deacon host-depletion index: ${deacon_index}"
+                DEACON_FETCH(deacon_index)
+                ch_host_index = DEACON_FETCH.out.index
+            }
         }
     }
 
@@ -125,7 +139,7 @@ workflow DOWNLOAD_DBS {
     }
 
     emit: // emit empty channels if not downloaded
-    ch_deacon_index = ch_deacon_index
+    ch_host_index = ch_host_index
 
     // taxonomic profiling databases
     ch_emu_db = ch_emu_db // not used currently ; 

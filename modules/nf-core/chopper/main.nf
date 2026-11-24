@@ -27,7 +27,7 @@ process CHOPPER {
 
     if ("$fastq" == "${prefix}.fastq.gz") error "Input and output names are the same, set prefix in module configuration to disambiguate!"
     """
-    zcat \\
+    gzip -dc \\
         $args \\
         $fastq | \\
     chopper \\

@@ -27,7 +27,7 @@ workflow SOMATEM {
 
     ch_versions = channel.empty()
     ch_key_outputs = channel.empty()
-    ch_deacon_index = channel.empty()
+    ch_host_index = channel.empty()
     ch_lemur_db = channel.empty()
     ch_checkm2_db = channel.empty()
     ch_bakta_db = channel.empty()
@@ -41,7 +41,7 @@ workflow SOMATEM {
     if (params.analysis_type != "seqscreen") {
         DOWNLOAD_DBS(params.analysis_type, params.deacon_index,
                 params.lemur_db_zenodo_id, params.checkm2_db_zenodo_id)
-        ch_deacon_index = DOWNLOAD_DBS.out.ch_deacon_index
+        ch_host_index = DOWNLOAD_DBS.out.ch_host_index
         ch_lemur_db = DOWNLOAD_DBS.out.ch_lemur_db
         ch_checkm2_db = DOWNLOAD_DBS.out.ch_checkm2_db
         ch_bakta_db = DOWNLOAD_DBS.out.ch_bakta_db
@@ -58,7 +58,7 @@ workflow SOMATEM {
         ch_clean_reads = ch_samplesheet
         ch_summary_reports = channel.empty()
     } else {
-        PREPROCESSING(ch_samplesheet, ch_deacon_index, contam_ref)
+        PREPROCESSING(ch_samplesheet, ch_host_index, contam_ref)
         ch_versions = ch_versions.mix(PREPROCESSING.out.versions)
         ch_clean_reads = PREPROCESSING.out.clean_reads
         ch_summary_reports = PREPROCESSING.out.summary_report

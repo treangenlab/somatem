@@ -47,7 +47,7 @@ echo "source /path/to/somatem_env.sh" >> ~/.bashrc
 
 | Command | Purpose |
 | --- | --- |
-| `somatem pre_processing` | NanoPlot QC, Chopper filtering, and Deacon host depletion |
+| `somatem pre_processing` | NanoPlot QC, Chopper filtering, and optional host removal with Deacon or Hostile |
 | `somatem 16S` | Emu 16S profiling and Taxburst visualization |
 | `somatem taxonomic_profiling` | Metagenomic profiling with Sylph (default), Lemur + MAGnet, Kraken2, or SingleM |
 | `somatem assembly_mags` | Flye assembly, AGB graph reports, read mapping, Pigeon/SemiBin2 binning, CheckM2 assessment, SingleM appraisal, and Bakta annotation |
@@ -57,6 +57,16 @@ echo "source /path/to/somatem_env.sh" >> ~/.bashrc
 | `somatem pre_download_databases` | Pre-fetch databases for the selected configuration |
 
 Each subworkflow will have a dedicated page in the [Somatem wiki](https://github.com/treangenlab/somatem/wiki) covering inputs, options, databases, and examples. Common options are `--input`, `--outdir`, `--threads`, `--data_type`, and `-params-file`; run `somatem help` for the current CLI reference.
+
+### MAG assembly with a single host genome
+
+Supply one host FASTA to select Hostile for all samples in the run. For example, to assemble dog gut samples:
+
+```bash
+somatem assembly_mags -i samples.csv -o results --sample_environment dog_gut --hostile_reference dog.fna
+```
+
+Somatem builds the minimap2 index once and uses Hostile to remove matching reads before Chopper and assembly. The reference can be `.fna`, `.fa`, or `.fasta`, optionally gzipped. To reuse the index in a later run, pass `--hostile_reference results/hostile/dog.mmi`. With the option omitted, Somatem uses the existing Deacon settings, which enable host removal by default for human and mouse metagenomes.
 
 ### Isolate batches and assembly recovery
 

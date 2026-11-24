@@ -122,6 +122,7 @@ Examples:
   somatem taxonomic_profiling -i samples.csv -o results --sylph_db /path/to/custom.syldb
   somatem taxonomic_profiling --data_type 16S -i samples.csv -o results
   somatem assembly_mags -i samples.csv -o results
+  somatem assembly_mags -i samples.csv -o results --sample_environment dog_gut --hostile_reference dog.fna
   somatem isolate_analysis -i samples.csv -o results
   somatem seqscreen -i samples.csv -o results --seqscreen_db /path/to/SeqScreenDB_23.4
   somatem genome_dynamics -i samples.csv -o results

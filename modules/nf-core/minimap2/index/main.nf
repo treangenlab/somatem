@@ -22,12 +22,14 @@ process MINIMAP2_INDEX {
 
     script:
     def args = task.ext.args ?: ''
+    def ref = fasta.name.replace("'", "'\\''")
+    def prefix = fasta.baseName.replace("'", "'\\''")
     """
     minimap2 \\
         -t $task.cpus \\
-        -d ${fasta.baseName}.mmi \\
+        -d '${prefix}.mmi' \\
         $args \\
-        $fasta
+        './${ref}'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -36,8 +38,9 @@ process MINIMAP2_INDEX {
     """
 
     stub:
+    def prefix = fasta.baseName.replace("'", "'\\''")
     """
-    touch ${fasta.baseName}.mmi
+    touch -- '${prefix}.mmi'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

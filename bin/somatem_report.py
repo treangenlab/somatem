@@ -32,7 +32,6 @@ WORKFLOW_COPY = {
         ),
         "methods": [
             "Raw long-read quality was assessed with NanoPlot before filtering.",
-            "When enabled, host-derived reads were depleted with Deacon using the configured panhost minimizer index.",
             "Reads were filtered with Chopper using the configured minimum quality and length thresholds.",
             "Final NanoPlot quality summaries were generated from the cleaned read set.",
         ],
@@ -330,6 +329,8 @@ def parse_json_summaries(files: Iterable[Path]) -> list[tuple[str, dict[str, obj
             data = json.loads(text)
         except Exception:
             continue
+        if path.name.endswith(".hostile.summary.json") and isinstance(data, list) and len(data) == 1:
+            data = data[0]
         if isinstance(data, dict):
             flat = {}
             for key, value in data.items():
@@ -1240,7 +1241,13 @@ def main() -> int:
     if json_blocks:
         sections.append(section("Structured Summaries", "".join(json_blocks)))
 
-    methods = "".join(f"<li>{esc(item)}</li>" for item in workflow_info.get("methods", []))
+    method_steps = list(workflow_info.get("methods", []))
+    if args.workflow == "pre_processing":
+        if any(p.name.endswith(".hostile.summary.json") for p in files):
+            method_steps.insert(1, "Hostile removed long reads that aligned to the supplied host reference with minimap2.")
+        elif any(p.name.endswith(".deacon.summary.json") for p in files):
+            method_steps.insert(1, "Deacon depleted host-derived reads using the configured minimizer index.")
+    methods = "".join(f"<li>{esc(item)}</li>" for item in method_steps)
     sections.append(section(
         "Methods",
         "<p>The methods summary below describes the analysis steps represented in this report. "

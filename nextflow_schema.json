@@ -146,6 +146,13 @@
                 "null"
             ]
         },
+        "hostile_reference": {
+            "type": "string",
+            "format": "file-path",
+            "exists": true,
+            "pattern": "\\.(?:(?:fa|fna|fasta)(?:\\.gz)?|mmi)$",
+            "description": "Select Hostile for host removal using one host FASTA (.fa, .fna, .fasta, optionally gzipped) or a minimap2 .mmi index shared by all samples."
+        },
         "deacon_index": {
             "type": "string",
             "description": "Prebuilt Deacon index name (panhuman-1 or panmouse-1), or a path to a custom .idx file.",
